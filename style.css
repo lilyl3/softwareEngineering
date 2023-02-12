@@ -1,0 +1,21 @@
+body {
+    margin: 0;
+    font-family: 'Open Sans', sans-serif;
+  }
+  
+  h1, h2, h3, p {
+    font-family: 'Roboto', sans-serif;
+    font-weight: normal;
+  }
+  
+  h1 {
+    font-size: 48px;
+  }
+  
+  p {
+    font-size: 24px;
+  }
+
+  .material-icons {
+    padding-right: 10px;
+  }

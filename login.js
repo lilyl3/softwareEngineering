@@ -24,6 +24,9 @@ import {
     addDoc,
     collection,
     query,
+    where,
+    doc,
+    updateDoc,
     orderBy,
     onSnapshot,
     getDocs
@@ -53,7 +56,7 @@ async function main() {
       return false;
     });
 
-    const querySnapshot = await getDocs(collection(db, "users"));
+    var querySnapshot = await getDocs(collection(db, "users"));
     userbook.innerHTML = '';
     querySnapshot.forEach((doc) => {
         //console.log(`${doc.id} => ${doc.data().username}, ${doc.data().password}`);
@@ -61,5 +64,61 @@ async function main() {
         entry.textContent = doc.data().username + ': ' + doc.data().password;
         userbook.appendChild(entry);
     });
+
+    const DeckID = "math"; //this will vary depending on which deck the user selected
+    const nullDate = "2023/1/1";
+    var nowDate = new Date();
+    nowDate = nowDate.getFullYear()+'/'+(nowDate.getMonth()+1)+'/'+nowDate.getDate();
+    console.log(nowDate);
+    //query all flashcards in deck DeckID
+    const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", DeckID));
+    var flashcardSnapshot = await getDocs(flashcards);
+
+    if (flashcardSnapshot.empty){
+      console.log("Empty snapsot!!")
+    }
+    var resumeSession = false;
+    /* IF non-NUll nextDateAppearance exists AND non-NULL nextDateAppearance != currentDate
+	    # new review, not resuming session
+	    Set all nextDateAppearance equal to NULL
+    ENDIF */
+    let flashcardID = [];
+    var counter = 0;
+    
+    flashcardSnapshot.forEach((flashcardDoc) => {
+        var flashcardDate = flashcardDoc.data().nextDateAppearance;
+        flashcardID[counter] = flashcardDoc.id;
+        counter = counter + 1;
+        //If we store Date as a timestamp, it is actually stored as:
+        // ir {seconds: 1676361600, nanoseconds: 685000000}
+        // nanoseconds:685000000
+        // seconds:1676361600
+        // flashcardDate = flashcardDate.getFullYear()+'/'+(flashcardDate.getMonth()+1)+'/'+flashcardDate.getDate();
+
+        //Store Date as a string
+        console.log(flashcardDate);
+        if (flashcardDate === nowDate){
+            resumeSession = true;
+            //break; -> JavaScript gives me an error! BUT apparently this is not expensive
+        }
+        // doc.data() is never undefined for query doc snapshots
+    });
+   
+    console.log(flashcardID);
+
+    if (!resumeSession){
+        console.log("New Review!");
+        for (let i = 0; i < flashcardID.length; i++) {
+          const flashcard = doc(db, "Flashcard", flashcardID[i]);
+          // Set the "nextDateAppearance" field to nullDate
+          await updateDoc(flashcard, {
+            nextDateAppearance:nullDate
+          });
+        }
+    }
+    else{
+      console.log("Resume session!");
+    }
 }
-main();
+
+main();//

@@ -27,6 +27,7 @@ import {
     where,
     doc,
     updateDoc,
+    getDoc, 
     orderBy,
     onSnapshot,
     getDocs
@@ -38,6 +39,18 @@ const form = document.getElementById('loginpage');
 const username = document.getElementById('username');
 const password = document.getElementById('password');
 const userbook = document.getElementById('userbook');
+const reviewSession = document.getElementById('reviewSession');
+
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));    //idea of permutation: first (i+1) items to choose from since floored
+    console.log(j);
+    const temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+  }
+  return arr;
+}
 
 async function main() {  
     // Listen to the form submission
@@ -65,8 +78,19 @@ async function main() {
         userbook.appendChild(entry);
     });
 
+    // What if user click QUIT in middle of resume session
+
+    //************************************** FUNCTION dailyReview ************************************** */
+    // IF user clicks on DeckID -> start review
+    // PARAMETERS for function dailyReview()
     const DeckID = "math"; //this will vary depending on which deck the user selected
+    const orderType = "LowHigh";
+
+    //CONSTANTs
+    const maxLevel = 10;
     const nullDate = "2023/1/1";
+
+    //get curret date
     var nowDate = new Date();
     nowDate = nowDate.getFullYear()+'/'+(nowDate.getMonth()+1)+'/'+nowDate.getDate();
     console.log(nowDate);
@@ -77,18 +101,20 @@ async function main() {
     if (flashcardSnapshot.empty){
       console.log("Empty snapsot!!")
     }
+
+    //************Is USER RESUMing or STARTing a new review session*****************/
     var resumeSession = false;
     /* IF non-NUll nextDateAppearance exists AND non-NULL nextDateAppearance != currentDate
 	    # new review, not resuming session
 	    Set all nextDateAppearance equal to NULL
     ENDIF */
-    let flashcardID = [];
-    var counter = 0;
+    var flashcardID = [];       //holds ID of flashcards never reviewed
+    //Note: Flashcard level should carry over
+    var flashcardLevel = [];    //holds Level of flashcard nevery reviewed
+    var counter = 0;            //total flashcards to reviewed in this session
     
     flashcardSnapshot.forEach((flashcardDoc) => {
         var flashcardDate = flashcardDoc.data().nextDateAppearance;
-        flashcardID[counter] = flashcardDoc.id;
-        counter = counter + 1;
         //If we store Date as a timestamp, it is actually stored as:
         // ir {seconds: 1676361600, nanoseconds: 685000000}
         // nanoseconds:685000000
@@ -101,16 +127,23 @@ async function main() {
             resumeSession = true;
             //break; -> JavaScript gives me an error! BUT apparently this is not expensive
         }
+        else{
+          //flashcard was NOT viewed in CURRENT date
+          flashcardID[counter] = flashcardDoc.id;
+          flashcardLevel[counter] = flashcardDoc.data().Level;
+          counter = counter + 1;
+        }
         // doc.data() is never undefined for query doc snapshots
     });
    
     console.log(flashcardID);
+    console.log(flashcardLevel);
 
     if (!resumeSession){
         console.log("New Review!");
+        //reset all nextDateAppearance = nullDate
         for (let i = 0; i < flashcardID.length; i++) {
           const flashcard = doc(db, "Flashcard", flashcardID[i]);
-          // Set the "nextDateAppearance" field to nullDate
           await updateDoc(flashcard, {
             nextDateAppearance:nullDate
           });
@@ -119,6 +152,72 @@ async function main() {
     else{
       console.log("Resume session!");
     }
+    //*************** END: Determined whether RESUME or NEW ********************************* */
+
+    //********** START: Determine the order in which flashcards will be reviewd ***************/
+
+    var orderReview = [];                       //flashcard ID in order of which flashcards will be reviewed first
+    if (orderType === "Random"){
+      orderReview = Array.from(Array(counter).keys());
+      console.log(orderReview);                 //before shuffled
+      orderReview = shuffle(orderReview);       //reshuffle the indicies
+      console.log(orderReview);                 //after shuffled
+      orderReview = orderReview.map(item => flashcardID[item]);
+      console.log(orderReview);
+    }
+    else if (orderType === "LowHigh"){
+      console.log("LowHigh");
+      const maxLevel = Math.max.apply(null, flashcardLevel);    //maximum level of any flashcard from DeckID
+      console.log("Max Level:", maxLevel);
+
+      for (let level = 0; level <= maxLevel; level++){
+        console.log("Level:", level);
+        var maskLevel = flashcardLevel.map(item => item == level);
+        var indicesLevel = flashcardID.filter((item, i) => maskLevel[i]);   //indices of flashcards with a particular level
+        indicesLevel = shuffle(indicesLevel);  
+        orderReview = orderReview.concat(indicesLevel);
+      }
+      console.log(orderReview);
+    }
+    else{
+      console.log("ERROR: only 2 possible review types");
+    }
+
+    //Start Reviewing Flashcards
+    for (let index = 0; index < counter; index++){
+      var flashcardDoc = doc(db, "Flashcard", orderReview[index]);
+      flashcardDoc = await getDoc(flashcardDoc);
+
+      //display Question
+      reviewSession.innerHTML = '';
+      const reviewedFlashcard = document.createElement('p');
+      reviewedFlashcard.textContent = "Question: " + flashcardDoc.data().Question;
+      reviewSession.appendChild(reviewedFlashcard);
+    }
+
+    //   flashcard = DeckName[indices[i]]
+    //   IF flashcard correctly answered AND level < maxLevel
+    //       level += 1
+    //   ENDIF
+    //       ELSE
+    //           IF level != 0
+    //               level -= 1
+    //           ENDIF
+    //   ENDELSE
+    //   flashcard[NextAppearanceDate] = currentDate
+    //       IF Pause button pressed
+    //           break
+    //       ENDIF
+    // ENDFOR
+
+    // IF finished reviewing all flashcards
+    //   Set NextAppearanceDate = Null for all flashcards in DeckName
+    //   #Users can either 1) Return to Home or 2) Start new Review Session
+    // ENDIF
+
+
+    //*******************************END FUNCTION dailyReview ************************************** */
+
 }
 
-main();//
+main();

@@ -200,12 +200,37 @@ async function main() {
       flashcardDoc = await getDoc(flashcardDoc);
 
       //display Question
-      document.getElementById('question').innerText = "Question: " + flashcardDoc.data().Question;
+      document.getElementById('question').innerText = flashcardDoc.data().Question;
       //wait for user to press reveal answer button
       await waitForRevealAnswer(index);
+      //remove the reveal button once the user has pressed it
       reviewSession.removeChild(document.getElementById('revealButton'));
   
+      //***** Reveal answer to question *************
+
+      //display Answer heading
+      const answerHeading = document.createElement('h2');
+      answerHeading.innerHTML = "Answer";
+      answerHeading.id = "answerH";
+      reviewSession.appendChild(answerHeading);
+      //display Answer
+      const flashcardAnswer = document.createElement('p');
+      flashcardAnswer.innerHTML = flashcardDoc.data().Answer;
+      flashcardAnswer.id = "flashcardAnswer";
+      reviewSession.appendChild(flashcardAnswer);
+
       //once answer is revealed, user must select whether they answered it correctly/incorrectly
+      //create correct & incorrect buttons
+      const correct = document.createElement('button');
+      correct.innerHTML = "Correct";
+      correct.id = "correct";
+      reviewSession.appendChild(correct);
+
+      const incorrect = document.createElement('button');
+      incorrect.innerHTML = "Incorrect";
+      incorrect.id = "incorrect";
+      reviewSession.appendChild(incorrect);
+
       var correctlyAnswered = false;
       var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
       // correct.click("click", function() {
@@ -221,6 +246,14 @@ async function main() {
       //     updateLevel = updateLevel - 1;
       //   }
       // })
+
+      const delay = ms => new Promise(res => setTimeout(res, ms));
+      await delay(5000);
+      // //remove the answer heading & flashcard answer once user has selected correct/incorrect
+      reviewSession.removeChild(answerHeading);
+      reviewSession.removeChild(flashcardAnswer);
+      reviewSession.removeChild(correct);
+      reviewSession.removeChild(incorrect);
     }
 
     //   flashcard = DeckName[indices[i]]

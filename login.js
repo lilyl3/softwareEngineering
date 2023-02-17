@@ -39,6 +39,7 @@ const form = document.getElementById('loginpage');
 const username = document.getElementById('username');
 const password = document.getElementById('password');
 const reviewSession = document.getElementById('reviewSession');
+var correctlyAnswered; //boolean; true if user correctly answered question; else, false
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -51,7 +52,7 @@ function shuffle(arr){
   return arr;
 }
 
-function waitForRevealAnswer(index) {
+function waitForRevealAnswer() {
   return new Promise((resolve) => {
     var revealButton = document.createElement("button");
     revealButton.id = "revealButton";
@@ -61,6 +62,31 @@ function waitForRevealAnswer(index) {
     revealButton.addEventListener("click", resolve);
   })
 }
+
+function waitForCorrectIncorrectResponse() {
+  return new Promise((resolve) => {
+    //create correct & incorrect buttons
+    const correct = document.createElement('button');
+    correct.innerHTML = "Correct";
+    correct.id = "correct";
+    reviewSession.appendChild(correct);
+
+    const incorrect = document.createElement('button');
+    incorrect.innerHTML = "Incorrect";
+    incorrect.id = "incorrect";
+    reviewSession.appendChild(incorrect);
+    
+    correct.addEventListener("click", handler => {
+      console.log('correct click');
+      correctlyAnswered = true;
+      resolve(handler);
+    }, { once: true });
+    incorrect.addEventListener("click", handler => {
+      console.log('incorrect click');
+      correctlyAnswered = false;
+      resolve(handler);
+    }, { once: true });
+})}
 
 async function main() {  
     // Listen to the form submission
@@ -195,14 +221,14 @@ async function main() {
 
     //Start Reviewing Flashcards
     for (let index = 0; index < counter; index++){
-      console.log("Index: ", index);
-      var flashcardDoc = doc(db, "Flashcard", orderReview[index]);
-      flashcardDoc = await getDoc(flashcardDoc);
+      console.log("Flashcard Index in Review: ", index);
+      const flashcard = doc(db, "Flashcard", orderReview[index]);
+      const flashcardDoc = await getDoc(flashcard);
 
       //display Question
       document.getElementById('question').innerText = flashcardDoc.data().Question;
       //wait for user to press reveal answer button
-      await waitForRevealAnswer(index);
+      await waitForRevealAnswer();
       //remove the reveal button once the user has pressed it
       reviewSession.removeChild(document.getElementById('revealButton'));
   
@@ -219,52 +245,37 @@ async function main() {
       flashcardAnswer.id = "flashcardAnswer";
       reviewSession.appendChild(flashcardAnswer);
 
-      //once answer is revealed, user must select whether they answered it correctly/incorrectly
-      //create correct & incorrect buttons
-      const correct = document.createElement('button');
-      correct.innerHTML = "Correct";
-      correct.id = "correct";
-      reviewSession.appendChild(correct);
-
-      const incorrect = document.createElement('button');
-      incorrect.innerHTML = "Incorrect";
-      incorrect.id = "incorrect";
-      reviewSession.appendChild(incorrect);
-
-      var correctlyAnswered = false;
+      //wait for user to select whether they correct answered question or not
+      await waitForCorrectIncorrectResponse();
+      console.log("CorrectlyAnswered: ", correctlyAnswered);
+    
+      //update flashcard level based on whether correctly answered the flashcard question
       var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
-      // correct.click("click", function() {
-      //   console.log("Correct Button clicked")
-      //   correctlyAnswered = true;
-      //   if (updateLevel < maximumLevel){
-      //     updateLevel = updateLevel + 1;
-      //   }
-      // });
-      // incorrect.addEventListener("click", function(){
-      //   //minimum level = 0
-      //   if (updateLevel > 0){
-      //     updateLevel = updateLevel - 1;
-      //   }
-      // })
+      console.log("Flashcard current level", updateLevel);
+      if (updateLevel < 10 && correctlyAnswered){
+        ++updateLevel;
+        await updateDoc(flashcard, {
+          Level:updateLevel
+        });
+      }
+      else if(updateLevel > 0 && !correctlyAnswered){
+        --updateLevel;
+        await updateDoc(flashcard, {
+          Level:updateLevel
+        });
+      }
+      else{
+        console.log("ERROR: Something is wrong with update flashcard level")
+      }
+      console.log("Flashcard NEW level", updateLevel);
 
-      const delay = ms => new Promise(res => setTimeout(res, ms));
-      await delay(5000);
-      // //remove the answer heading & flashcard answer once user has selected correct/incorrect
+      //remove the answer heading & flashcard answer once user has selected correct/incorrect
       reviewSession.removeChild(answerHeading);
       reviewSession.removeChild(flashcardAnswer);
       reviewSession.removeChild(correct);
       reviewSession.removeChild(incorrect);
     }
 
-    //   flashcard = DeckName[indices[i]]
-    //   IF flashcard correctly answered AND level < maxLevel
-    //       level += 1
-    //   ENDIF
-    //       ELSE
-    //           IF level != 0
-    //               level -= 1
-    //           ENDIF
-    //   ENDELSE
     //   flashcard[NextAppearanceDate] = currentDate
     //       IF Pause button pressed
     //           break

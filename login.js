@@ -24,6 +24,10 @@ import {
     addDoc,
     collection,
     query,
+    where,
+    doc,
+    updateDoc,
+    getDoc, 
     orderBy,
     onSnapshot,
     getDocs
@@ -61,5 +65,27 @@ async function main() {
         entry.textContent = doc.data().username + ': ' + doc.data().password;
         userbook.appendChild(entry);
     });
+}
+
+function CardCreate(AnswerD, DeckIDD, LevelD, QuestionD, nextDateAppearanceD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
+{
+  //the 'D' was added to the variables to distinguish them as the data
+  //document ID for these will end up being randomized
+  db.collection("Flashcard").add({
+    Answer: AnswerD,
+    DeckID: DeckIDD,
+    Question: QuestionD,
+    nextDateAppearance: nextDateAppearanceD
+  });
+}
+
+function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
+{
+  //this variation allows us to specify the document ID rather than letting it randomize
+  db.collection("decks").doc(DeckNameD).set({
+    DeckName: DeckNameD,
+    reviewType: reviewTypeD,
+    userID: userIDD
+  });
 }
 main();

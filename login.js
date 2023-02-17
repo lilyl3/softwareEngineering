@@ -38,7 +38,6 @@ let db = getFirestore(app);
 const form = document.getElementById('loginpage');
 const username = document.getElementById('username');
 const password = document.getElementById('password');
-const userbook = document.getElementById('userbook');
 const reviewSession = document.getElementById('reviewSession');
 
 function shuffle(arr){
@@ -50,6 +49,17 @@ function shuffle(arr){
     arr[j] = temp;
   }
   return arr;
+}
+
+function waitForRevealAnswer(index) {
+  return new Promise((resolve) => {
+    var revealButton = document.createElement("button");
+    revealButton.id = "revealButton";
+    revealButton.innerHTML = "Reveal Answer";
+    reviewSession.appendChild(revealButton);
+    //var theButton = document.getElementById("reveal");
+    revealButton.addEventListener("click", resolve);
+  })
 }
 
 async function main() {  
@@ -69,14 +79,14 @@ async function main() {
       return false;
     });
 
-    var querySnapshot = await getDocs(collection(db, "users"));
-    userbook.innerHTML = '';
-    querySnapshot.forEach((doc) => {
-        //console.log(`${doc.id} => ${doc.data().username}, ${doc.data().password}`);
-        const entry = document.createElement('p');
-        entry.textContent = doc.data().username + ': ' + doc.data().password;
-        userbook.appendChild(entry);
-    });
+    // var querySnapshot = await getDocs(collection(db, "users"));
+    // userbook.innerHTML = '';
+    // querySnapshot.forEach((doc) => {
+    //     //console.log(`${doc.id} => ${doc.data().username}, ${doc.data().password}`);
+    //     const entry = document.createElement('p');
+    //     entry.textContent = doc.data().username + ': ' + doc.data().password;
+    //     userbook.appendChild(entry);
+    // });
 
     // What if user click QUIT in middle of resume session
 
@@ -87,7 +97,7 @@ async function main() {
     const orderType = "LowHigh";
 
     //CONSTANTs
-    const maxLevel = 10;
+    const maximumLevel = 10;
     const nullDate = "2023/1/1";
 
     //get curret date
@@ -185,14 +195,32 @@ async function main() {
 
     //Start Reviewing Flashcards
     for (let index = 0; index < counter; index++){
+      console.log("Index: ", index);
       var flashcardDoc = doc(db, "Flashcard", orderReview[index]);
       flashcardDoc = await getDoc(flashcardDoc);
 
       //display Question
-      reviewSession.innerHTML = '';
-      const reviewedFlashcard = document.createElement('p');
-      reviewedFlashcard.textContent = "Question: " + flashcardDoc.data().Question;
-      reviewSession.appendChild(reviewedFlashcard);
+      document.getElementById('question').innerText = "Question: " + flashcardDoc.data().Question;
+      //wait for user to press reveal answer button
+      await waitForRevealAnswer(index);
+      reviewSession.removeChild(document.getElementById('revealButton'));
+  
+      //once answer is revealed, user must select whether they answered it correctly/incorrectly
+      var correctlyAnswered = false;
+      var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
+      // correct.click("click", function() {
+      //   console.log("Correct Button clicked")
+      //   correctlyAnswered = true;
+      //   if (updateLevel < maximumLevel){
+      //     updateLevel = updateLevel + 1;
+      //   }
+      // });
+      // incorrect.addEventListener("click", function(){
+      //   //minimum level = 0
+      //   if (updateLevel > 0){
+      //     updateLevel = updateLevel - 1;
+      //   }
+      // })
     }
 
     //   flashcard = DeckName[indices[i]]

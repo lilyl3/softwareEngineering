@@ -42,6 +42,7 @@ const form = document.getElementById('loginpage');
 const username = document.getElementById('username');
 const password = document.getElementById('password');
 const reviewSession = document.getElementById('reviewSession');
+const reviewAnswerSession = document.getElementById('reviewAnswerSession');
 var correctlyAnswered; //boolean; true if user correctly answered question; else, false
 
 function shuffle(arr){
@@ -74,12 +75,18 @@ function waitForCorrectIncorrectResponse() {
     const correct = document.createElement('button');
     correct.innerHTML = "Correct";
     correct.id = "correct";
-    reviewSession.appendChild(correct);
+    correct.style.backgroundColor = "#4CAF50";
+    correct.style.color = "white";
+    correct.style.border = "none";
+    reviewAnswerSession.appendChild(correct);
 
     const incorrect = document.createElement('button');
     incorrect.innerHTML = "Incorrect";
     incorrect.id = "incorrect";
-    reviewSession.appendChild(incorrect);
+    incorrect.style.backgroundColor = "#f44336";
+    incorrect.style.color = "white";
+    incorrect.style.border = "none";
+    reviewAnswerSession.appendChild(incorrect);
     
     correct.addEventListener("click", handler => {
       console.log('correct click');
@@ -209,7 +216,11 @@ async function dailyReview(DeckID){
     const flashcardDoc = await getDoc(flashcard);
 
     //display Question
-    document.getElementById('question').innerText = flashcardDoc.data().Question;
+    var question = document.getElementById('question');
+    question.innerText = flashcardDoc.data().Question;
+    //question.style.borderWidth = "3px";     
+    //to add style in dynamically: https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
+
     //wait for user to press reveal answer button
     await waitForRevealAnswer();
     //remove the reveal button once the user has pressed it
@@ -221,12 +232,12 @@ async function dailyReview(DeckID){
     const answerHeading = document.createElement('h2');
     answerHeading.innerHTML = "Answer";
     answerHeading.id = "answerH";
-    reviewSession.appendChild(answerHeading);
+    reviewAnswerSession.appendChild(answerHeading);
     //display Answer
     const flashcardAnswer = document.createElement('p');
     flashcardAnswer.innerHTML = flashcardDoc.data().Answer;
     flashcardAnswer.id = "flashcardAnswer";
-    reviewSession.appendChild(flashcardAnswer);
+    reviewAnswerSession.appendChild(flashcardAnswer);
 
     //wait for user to select whether they correct answered question or not
     await waitForCorrectIncorrectResponse();
@@ -236,7 +247,7 @@ async function dailyReview(DeckID){
     //update flashcard level based on whether correctly answered the flashcard question
     var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
     console.log("Flashcard current level", updateLevel);
-    if (updateLevel < 10 && correctlyAnswered){
+    if (updateLevel < maximumLevel && correctlyAnswered){
       ++updateLevel;
       await updateDoc(flashcard, {
         Level:updateLevel,
@@ -259,10 +270,10 @@ async function dailyReview(DeckID){
     console.log("Flashcard NEW level", updateLevel);
 
     //remove the answer heading & flashcard answer once user has selected correct/incorrect
-    reviewSession.removeChild(answerHeading);
-    reviewSession.removeChild(flashcardAnswer);
-    reviewSession.removeChild(correct);
-    reviewSession.removeChild(incorrect);
+    reviewAnswerSession.removeChild(answerHeading);
+    reviewAnswerSession.removeChild(flashcardAnswer);
+    reviewAnswerSession.removeChild(correct);
+    reviewAnswerSession.removeChild(incorrect);
 
     //   flashcard[NextAppearanceDate] = currentDate
     //       IF Pause button pressed

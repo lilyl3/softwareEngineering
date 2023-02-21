@@ -35,9 +35,22 @@ import {
 
 let db = getFirestore(app);
 
+function addZero2Date(num){
+  if (num < 10){
+    return '0' + num;
+  }
+  return num;
+}
+
 //CONSTANTs
 const maximumLevel = 10;
-const nullDate = "2023/1/1";
+const nullDate = "2023/01/01";
+//get current date
+var nowDate = new Date();
+nowDate = nowDate.getFullYear()+'/'+addZero2Date((nowDate.getMonth()+1))+'/'+ addZero2Date(nowDate.getDate());
+console.log(nowDate);
+
+//Document Elements
 const form = document.getElementById('loginpage');
 const username = document.getElementById('username');
 const password = document.getElementById('password');
@@ -103,19 +116,9 @@ function waitForCorrectIncorrectResponse() {
 // RESUME not yet implemented
 // IF user clicks on DeckID -> start review
 // PARAMETERS for function dailyReview(): DeckID
-async function dailyReview(DeckID){
+async function dailyReview(DeckID, orderType){
   //Retrieve the orderType = determines the order that flashcards will be reviewed
 
-  //if orderType used by ALL review types, move following block to the main!
-  var flashcardDeck = doc(db, "decks", DeckID);
-  flashcardDeck = await getDoc(flashcardDeck);
-  const orderType = flashcardDeck.data().orderType;
-  console.log("OrderType: ", orderType)
-
-  //get curret date
-  var nowDate = new Date();
-  nowDate = nowDate.getFullYear()+'/'+(nowDate.getMonth()+1)+'/'+nowDate.getDate();
-  console.log(nowDate);
   //query all flashcards in deck DeckID
   const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", DeckID));
   var flashcardSnapshot = await getDocs(flashcards);
@@ -184,12 +187,9 @@ async function dailyReview(DeckID){
 
   var orderReview = [];                       //flashcard ID in order of which flashcards will be reviewed first
   if (orderType === "Random"){
-    orderReview = Array.from(Array(counter).keys());
-    console.log(orderReview);                 //before shuffled
-    orderReview = shuffle(orderReview);       //reshuffle the indicies
-    console.log(orderReview);                 //after shuffled
-    orderReview = orderReview.map(item => flashcardID[item]);
-    console.log(orderReview);
+    console.log("Before Shuffle: ", orderReview);                 //before shuffled
+    orderReview = shuffle(flashcardID);
+    console.log("After Shuffle: ", orderReview);                 //after shuffled
   }
   else if (orderType === "LowHigh"){
     console.log("LowHigh");
@@ -294,6 +294,113 @@ async function dailyReview(DeckID){
   return;
 }
 
+//Decks with reviewType = "Continuous" MUST have a resume field!!!
+async function continuousReview(DeckID, orderType, numberNewCards, resume){
+  //new cards nextDateAppearance = nullDate
+  //cards reviewed at least once have nextDateAppearance > nullDate && < currentDate
+  var newCardID = [];             //IDs of all cards not yet reveiwed
+  var reviewCardID = [];          //IDs of all cards to be reviewed
+  var counter = 0;
+
+  //query all flashcards in deck DeckID
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", DeckID));
+  var flashcardSnapshot = await getDocs(flashcards);
+
+  flashcardSnapshot.forEach((flashcardDoc) => {
+    var nextDateAppearance = flashcardDoc.data().nextDateAppearance;
+    if (nextDateAppearance === nullDate){
+      //new card
+      newCardID[counter] = flashcardDoc.id;
+    }
+    else if (nextDateAppearance <= nowDate){
+      // 	IF nextDateAppearance < currentDate
+      // 		Set nextDateAppearance = currentDate
+      reviewCardID[counter] = flashcardDoc.id;
+    }
+    else{
+      //nextDateAppearance > now Date
+      //card will not be reviewed today BUt will be in the future
+    }
+    counter = counter + 1;
+  });
+
+  if (!resume && newCardID.length > 0){
+    console.log("New session + new cards still to review")
+    //user is not resuming a session
+    //if there are still new cards to review, randomly select numNewCards to be reviewed
+    newCardID = shuffle(newCardID);
+    reviewCardID = concat(reviewCardID, newCardID.slice(0, numberNewCards));
+  }
+
+  //set nextDateAppearance for all cards to be reviewed today = nowDate
+  //sets newCards from null -> nowDate
+  //sets reviewedCards < nowDate to nowDate
+  for (var i = 0; i < reviewCardID.length; i++){
+    var flashcard = doc(db, "Flashcard", reviewCardID[i]);
+    flashcard = await getDoc(flashcard);
+    const nextDateAppearance = flashcard.data().nextDateAppearance;
+    if(nextDateAppearance !== nowDate){
+      await updateDoc(flashcard, {
+        nextDateAppearance:nowDate
+      });
+    }
+  }
+
+  if (orderType === "Random"){
+    reviewCardID = shuffle(reviewCardID);
+  }
+  else if (orderType === "LowHigh"){
+
+  }
+  else{
+    console.log("ERROR: Not a valid orderType")
+  }
+
+}
+	
+// ELSE #orderType = LowHigh
+// 	# maxLevelInDeck may NOT be the same as maxLevel (it could be)
+// maxLevelInDeck = maximum level of any flashcard from DeckName
+// reshuffled_indices = []
+//     		FOR level = 0:maxLevelInDeck
+//             temp = indices such that Level = level
+//             temp_n = length(temp)
+//             randomize = RANDOM_INT array of integers between 0 and temp_n - 1
+//             reshuffled_indices.append(temp[randomize])
+//      		ENDFOR
+// 		indices = reshuffled_indices;
+// ENDELSE
+
+// FOR i = 0:n-1
+//         flashcard = DeckName[indices[i]]
+//         IF flashcard correctly answered AND level < maxLevel
+//             level += 1
+// 	 ENDIF
+//         ELSE
+//             IF level != 0
+//                 level -= 1
+//             ENDIF
+// 	 ENDELSE
+// 	 nextAppearanceDate += 1.75**(level)
+// 	 IF nextAppearanceDate - currentDate > 400
+// 		print(“Flashcard “burned” out! You have memorized the flashcard!!”)
+// 	 ENDIF
+//         IF Pause button pressed
+// 		IF there are still new cards to review
+// 	 		Add key-value: Resume = True to the Deck
+// ENDIF  
+//         	break
+//         ENDIF
+//     	ENDFOR
+	
+// 	# Finished reviewing all flashcards
+//     	IF key Resume exists
+// 		Remove key Resume
+// 	ENDIF
+//     	#Users return to Home
+// ENDFUNCTION
+
+
 async function main() {  
     // Listen to the form submission
     form.addEventListener('submit', async e => {
@@ -315,11 +422,12 @@ async function main() {
     var deck = doc(db, "decks", DeckID);
     deck = await getDoc(deck);
     const reviewType = deck.data().reviewType;
-    //console.log("reviewType: ", reviewType)
 
     if (reviewType == "Daily"){
       console.log("Daily")
-      await dailyReview(DeckID);
+      const orderType = deck.data().orderType;
+      console.log("OrderType: ", orderType)
+      await dailyReview(DeckID, orderType);
     }
     else if (reviewType == "Continuous"){
       console.log("Continuous")

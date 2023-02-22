@@ -90,7 +90,6 @@ function waitForRevealAnswer() {
     revealButton.id = "revealButton";
     revealButton.innerHTML = "Reveal Answer";
     reviewSession.appendChild(revealButton);
-    //var theButton = document.getElementById("reveal");
     revealButton.addEventListener("click", resolve);
   })
 }
@@ -128,8 +127,86 @@ function waitForCorrectIncorrectResponse() {
 })}
 
 // RESUME not yet implemented
-// IF user clicks on DeckID -> start review
-// PARAMETERS for function dailyReview(): DeckID
+//reviewOrder = flashcardIDs in order of how they will be reviewed
+// IF Pause button pressed
+// 	 		Add key-value: Resume = True to the Deck
+// ENDIF 
+async function reviewingFlashcards(reviewOrder, reviewType){
+  for (let index = 0; index < reviewOrder.length; index++){
+    console.log("Flashcard ID in Review: ", reviewOrder[index]);
+    const flashcard = doc(db, "Flashcard", reviewOrder[index]);
+    const flashcardDoc = await getDoc(flashcard);
+
+    //display Question
+    var question = document.getElementById('question');
+    question.innerText = flashcardDoc.data().Question;    
+    //to add style in dynamically: https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
+
+    //wait for user to press reveal answer button
+    await waitForRevealAnswer();
+    //remove the reveal button once the user has pressed it
+    reviewSession.removeChild(document.getElementById('revealButton'));
+
+    //***** Reveal answer to question *************
+    //display Answer heading
+    const answerHeading = document.createElement('h2');
+    answerHeading.innerHTML = "Answer";
+    reviewAnswerSession.appendChild(answerHeading);
+    //display Answer
+    const flashcardAnswer = document.createElement('p');
+    flashcardAnswer.innerHTML = flashcardDoc.data().Answer;
+    reviewAnswerSession.appendChild(flashcardAnswer);
+
+    //wait for user to select whether they correct answered question or not
+    await waitForCorrectIncorrectResponse();
+    console.log("CorrectlyAnswered: ", correctlyAnswered);
+  
+    //update nextDateAppearance = now/current date => flashcard already reviewed
+    //update flashcard level based on whether correctly answered the flashcard question
+    var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
+    console.log("Flashcard current level", updateLevel);
+    
+    if (updateLevel < maximumLevel && correctlyAnswered){
+      ++updateLevel;
+    }
+    else if(updateLevel > 0 && !correctlyAnswered){
+      --updateLevel;
+    }
+    else{
+      console.log("No update to the flashcard level")
+    }
+    console.log("Flashcard NEW level", updateLevel);
+
+    var updateNextDateAppr = nowDate;
+    if (reviewType === "Continuous"){
+      var date = new Date();                              //get current date
+      date.setDate(date.getDate() + (2*updateLevel));     //next date to be reviewed is 2*updateLevel days later
+      updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
+    }
+
+    await updateDoc(flashcard, {
+      Level:updateLevel,
+      nextDateAppearance: nowDate
+    });
+
+    if (updateLevel === maximumLevel){
+      //user has MASTERED the flashcard
+      //Notify user whether they want to burn the card = no longer appears in review sessions
+      //NOT yet implemented
+      console.log("Maximum level reached!")
+    }
+
+    //remove the answer heading & flashcard answer once user has selected correct/incorrect
+    reviewAnswerSession.removeChild(answerHeading);
+    reviewAnswerSession.removeChild(flashcardAnswer);
+    reviewAnswerSession.removeChild(document.getElementById('correct'));
+    reviewAnswerSession.removeChild(document.getElementById('incorrect'));
+  }
+  return;
+}
+
+//ASSUMPTION: all nextDateAppearance = {nullDate, nowDate}
+//BUT maybe better just to have a resume field associated a deck
 async function dailyReview(DeckID, orderType){
   //Retrieve the orderType = determines the order that flashcards will be reviewed
 
@@ -164,11 +241,9 @@ async function dailyReview(DeckID, orderType){
       // seconds:1676361600
       // flashcardDate = flashcardDate.getFullYear()+'/'+(flashcardDate.getMonth()+1)+'/'+flashcardDate.getDate();
 
-      //Store Date as a string
       console.log(flashcardDate);
       if (flashcardDate === nowDate){
           resumeSession = true;
-          //break; -> JavaScript gives me an error! BUT apparently this is not expensive
       }
       else{
         //flashcard was NOT viewed in CURRENT date
@@ -214,81 +289,10 @@ async function dailyReview(DeckID, orderType){
   else{
     console.log("ERROR: only 2 possible review types");
   }
-
   console.log("After Shuffle: ", orderReview);                 //after shuffled
 
-  //Start Reviewing Flashcards
-  for (let index = 0; index < counter; index++){
-    console.log("Flashcard Index in Review: ", index);
-    const flashcard = doc(db, "Flashcard", orderReview[index]);
-    const flashcardDoc = await getDoc(flashcard);
-
-    //display Question
-    var question = document.getElementById('question');
-    question.innerText = flashcardDoc.data().Question;
-    //question.style.borderWidth = "3px";     
-    //to add style in dynamically: https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
-
-    //wait for user to press reveal answer button
-    await waitForRevealAnswer();
-    //remove the reveal button once the user has pressed it
-    reviewSession.removeChild(document.getElementById('revealButton'));
-
-    //***** Reveal answer to question *************
-
-    //display Answer heading
-    const answerHeading = document.createElement('h2');
-    answerHeading.innerHTML = "Answer";
-    answerHeading.id = "answerH";
-    reviewAnswerSession.appendChild(answerHeading);
-    //display Answer
-    const flashcardAnswer = document.createElement('p');
-    flashcardAnswer.innerHTML = flashcardDoc.data().Answer;
-    flashcardAnswer.id = "flashcardAnswer";
-    reviewAnswerSession.appendChild(flashcardAnswer);
-
-    //wait for user to select whether they correct answered question or not
-    await waitForCorrectIncorrectResponse();
-    console.log("CorrectlyAnswered: ", correctlyAnswered);
-  
-    //update nextDateAppearance = now/current date => flashcard already reviewed
-    //update flashcard level based on whether correctly answered the flashcard question
-    var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
-    console.log("Flashcard current level", updateLevel);
-    if (updateLevel < maximumLevel && correctlyAnswered){
-      ++updateLevel;
-      await updateDoc(flashcard, {
-        Level:updateLevel,
-        nextDateAppearance: nowDate
-      });
-    }
-    else if(updateLevel > 0 && !correctlyAnswered){
-      --updateLevel;
-      await updateDoc(flashcard, {
-        Level:updateLevel,
-        nextDateAppearance: nowDate
-      });
-    }
-    else{
-      console.log("No update to the flashcard level")
-      await updateDoc(flashcard, {
-        nextDateAppearance: nowDate
-      });
-    }
-    console.log("Flashcard NEW level", updateLevel);
-
-    //remove the answer heading & flashcard answer once user has selected correct/incorrect
-    reviewAnswerSession.removeChild(answerHeading);
-    reviewAnswerSession.removeChild(flashcardAnswer);
-    reviewAnswerSession.removeChild(correct);
-    reviewAnswerSession.removeChild(incorrect);
-
-    //   flashcard[NextAppearanceDate] = currentDate
-    //       IF Pause button pressed
-    //           break
-    //       ENDIF
-    // ENDFOR
-  }
+  //Start reviewing flashcards
+  await reviewingFlashcards(orderReview, "Daily");
 
   // Finished reviewing all flashcards
   // Set NextAppearanceDate = Null for all flashcards in DeckName
@@ -374,38 +378,10 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   console.log("After reorder LowHigh: ", reviewCardID);
 
   //Start reviewing Flashcards
+  await reviewingFlashcards(reviewCardID, "Continuous");
 
-
+  return;
 }
-// FOR i = 0:n-1
-//         flashcard = DeckName[indices[i]]
-//         IF flashcard correctly answered AND level < maxLevel
-//             level += 1
-// 	 ENDIF
-//         ELSE
-//             IF level != 0
-//                 level -= 1
-//             ENDIF
-// 	 ENDELSE
-// 	 nextAppearanceDate += 1.75**(level)
-// 	 IF nextAppearanceDate - currentDate > 400
-// 		print(“Flashcard “burned” out! You have memorized the flashcard!!”)
-// 	 ENDIF
-
-//   IF Pause button pressed
-// 	 		Add key-value: Resume = True to the Deck
-// ENDIF  
-//         	break
-//         ENDIF
-//     	ENDFOR
-	
-// 	# Finished reviewing all flashcards
-//     	IF key Resume exists
-// 		Remove key Resume
-// 	ENDIF
-//     	#Users return to Home
-// ENDFUNCTION
-
 
 async function main() {  
     // Listen to the form submission

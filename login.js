@@ -69,6 +69,20 @@ function shuffle(arr){
   return arr;
 }
 
+function reorderByLowHigh(arrLevel, arrID, maxLevel){
+  var tempReviewID = [];
+  for (let level = 0; level <= maxLevel; level++){
+    console.log("Level:", level);
+    var maskLevel = arrLevel.map(item => item == level);
+    var indicesLevel = arrID.filter((item, i) => maskLevel[i]);   //indices of flashcards with a particular level
+    console.log("Indices: ", indicesLevel);
+    indicesLevel = shuffle(indicesLevel);  
+    tempReviewID = tempReviewID.concat(indicesLevel);
+  }
+
+  return tempReviewID;
+}
+
 //waits for user to indicate that they want to see answer to flashcard question
 function waitForRevealAnswer() {
   return new Promise((resolve) => {
@@ -185,29 +199,23 @@ async function dailyReview(DeckID, orderType){
 
   //********** START: Determine the order in which flashcards will be reviewd ***************/
 
+  console.log("Before Shuffle: ", flashcardID);  
   var orderReview = [];                       //flashcard ID in order of which flashcards will be reviewed first
   if (orderType === "Random"){
-    console.log("Before Shuffle: ", orderReview);                 //before shuffled
     orderReview = shuffle(flashcardID);
-    console.log("After Shuffle: ", orderReview);                 //after shuffled
   }
   else if (orderType === "LowHigh"){
     console.log("LowHigh");
     const maxLevel = Math.max.apply(null, flashcardLevel);    //maximum level of any flashcard from DeckID
     console.log("Max Level:", maxLevel);
 
-    for (let level = 0; level <= maxLevel; level++){
-      console.log("Level:", level);
-      var maskLevel = flashcardLevel.map(item => item == level);
-      var indicesLevel = flashcardID.filter((item, i) => maskLevel[i]);   //indices of flashcards with a particular level
-      indicesLevel = shuffle(indicesLevel);  
-      orderReview = orderReview.concat(indicesLevel);
-    }
-    console.log(orderReview);
+    orderReview = reorderByLowHigh(flashcardLevel, flashcardID, maxLevel);
   }
   else{
     console.log("ERROR: only 2 possible review types");
   }
+
+  console.log("After Shuffle: ", orderReview);                 //after shuffled
 
   //Start Reviewing Flashcards
   for (let index = 0; index < counter; index++){
@@ -298,8 +306,9 @@ async function dailyReview(DeckID, orderType){
 async function continuousReview(DeckID, orderType, numberNewCards, resume){
   //new cards nextDateAppearance = nullDate
   //cards reviewed at least once have nextDateAppearance > nullDate && < currentDate
-  var newCardID = [];             //IDs of all cards not yet reveiwed
+  var newCardID = [];             //IDs of all cards not yet reveiwed; newCard Level = 0
   var reviewCardID = [];          //IDs of all cards to be reviewed
+  var reviewCardLevel = [];       //level of all cards that have been reviewed
   var counter = 0;
 
   //query all flashcards in deck DeckID
@@ -316,6 +325,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
       // 	IF nextDateAppearance < currentDate
       // 		Set nextDateAppearance = currentDate
       reviewCardID[counter] = flashcardDoc.id;
+      reviewCardLevel[counter] = flashcardDoc.data().Level;
     }
     else{
       //nextDateAppearance > now Date
@@ -330,6 +340,8 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     //if there are still new cards to review, randomly select numNewCards to be reviewed
     newCardID = shuffle(newCardID);
     reviewCardID = concat(reviewCardID, newCardID.slice(0, numberNewCards));
+    //append level = 0 of new cards
+    reviewCardLevel = concat(reviewCardLevel, new Array(numberNewCards).fill(0));
   }
 
   //set nextDateAppearance for all cards to be reviewed today = nowDate
@@ -346,31 +358,25 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     }
   }
 
+  console.log("Before reorder LowHigh: ", reviewCardID);
   if (orderType === "Random"){
     reviewCardID = shuffle(reviewCardID);
   }
   else if (orderType === "LowHigh"){
+    const maxReviewLevel = Math.max.apply(null, reviewCardLevel);    //maximum level of to be reviewed flashcard from DeckID
+    console.log("Max Level:", maxReviewLevel);
 
+    reviewCardID = reorderByLowHigh(reviewCardLevel, reviewCardID, maxReviewLevel);
   }
   else{
     console.log("ERROR: Not a valid orderType")
   }
+  console.log("After reorder LowHigh: ", reviewCardID);
+
+  //Start reviewing Flashcards
+
 
 }
-	
-// ELSE #orderType = LowHigh
-// 	# maxLevelInDeck may NOT be the same as maxLevel (it could be)
-// maxLevelInDeck = maximum level of any flashcard from DeckName
-// reshuffled_indices = []
-//     		FOR level = 0:maxLevelInDeck
-//             temp = indices such that Level = level
-//             temp_n = length(temp)
-//             randomize = RANDOM_INT array of integers between 0 and temp_n - 1
-//             reshuffled_indices.append(temp[randomize])
-//      		ENDFOR
-// 		indices = reshuffled_indices;
-// ENDELSE
-
 // FOR i = 0:n-1
 //         flashcard = DeckName[indices[i]]
 //         IF flashcard correctly answered AND level < maxLevel
@@ -385,8 +391,8 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
 // 	 IF nextAppearanceDate - currentDate > 400
 // 		print(“Flashcard “burned” out! You have memorized the flashcard!!”)
 // 	 ENDIF
-//         IF Pause button pressed
-// 		IF there are still new cards to review
+
+//   IF Pause button pressed
 // 	 		Add key-value: Resume = True to the Deck
 // ENDIF  
 //         	break

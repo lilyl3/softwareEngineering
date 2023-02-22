@@ -27,7 +27,8 @@ import {
     where,
     doc,
     updateDoc,
-    getDoc, 
+    getDoc,
+    deleteDoc, 
     orderBy,
     onSnapshot,
     getDocs
@@ -87,5 +88,43 @@ function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCre
     reviewType: reviewTypeD,
     userID: userIDD
   });
+}
+
+function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
+{
+  //create reference variables for the document and the data that will be updated
+  const CardRef = doc(db, "Flashcard", DocID);
+  const data = {
+    Question: Question,
+    Answer: Answer
+  };
+  //function that updates the document; adds info to the console if successful or not
+  updateDoc(CardRef, data).then(docRef => {
+    console.log("Updates have been made to the card");
+  }).catch(error => {
+    console.log(error);
+    })
+}
+
+function DeleteCard(DocID) //it is expected that the id of the card being deleted will be provided to this function
+{
+  const CardRef = doc(db, "Flashcard", DocID);
+  deleteDoc(CardRef).then(() => {
+    console.log("Entire Document has been deleted successfully.")
+    }).catch(error => {
+    console.log(error);
+    });
+}
+
+function DeleteDeck(DocID) //it is expected that the id of the deck being deleted will be provided to this function
+{
+  //*NOTE* secondary functionallity needed: if deck is empty, then delete the deck
+  //                                        if deck is not empty, then confirm that the user wants to delete the deck
+  const DeckRef = doc(db, "decks", DocID);
+  deleteDoc(CardRef).then(() => {
+    console.log("Entire Document has been deleted successfully.")
+    }).catch(error => {
+    console.log(error);
+    });
 }
 main();

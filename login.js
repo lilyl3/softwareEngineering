@@ -180,13 +180,19 @@ async function reviewingFlashcards(reviewOrder, reviewType){
     var updateNextDateAppr = nowDate;
     if (reviewType === "Continuous"){
       var date = new Date();                              //get current date
-      date.setDate(date.getDate() + (2*updateLevel));     //next date to be reviewed is 2*updateLevel days later
+      if (updateLevel === 0){
+        //if level = 0, review flashcard the following day
+        date.setDate(date.getDate() + 1);
+      }
+      else{
+        date.setDate(date.getDate() + (2*updateLevel));     //next date to be reviewed is 2*updateLevel days later
+      }
       updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
     }
 
     await updateDoc(flashcard, {
       Level:updateLevel,
-      nextDateAppearance: nowDate
+      nextDateAppearance: updateNextDateAppr
     });
 
     if (updateLevel === maximumLevel){
@@ -314,6 +320,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   var reviewCardID = [];          //IDs of all cards to be reviewed
   var reviewCardLevel = [];       //level of all cards that have been reviewed
   var counter = 0;
+  var index = 0;
 
   //query all flashcards in deck DeckID
   const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", DeckID));
@@ -323,44 +330,59 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     var nextDateAppearance = flashcardDoc.data().nextDateAppearance;
     if (nextDateAppearance === nullDate){
       //new card
-      newCardID[counter] = flashcardDoc.id;
+      newCardID[index] = flashcardDoc.id;
+      ++index;
     }
     else if (nextDateAppearance <= nowDate){
       // 	IF nextDateAppearance < currentDate
       // 		Set nextDateAppearance = currentDate
       reviewCardID[counter] = flashcardDoc.id;
       reviewCardLevel[counter] = flashcardDoc.data().Level;
+      ++counter;
     }
     else{
       //nextDateAppearance > now Date
       //card will not be reviewed today BUt will be in the future
+      console.log(flashcardDoc.id, " to be reviewed in the future")
     }
-    counter = counter + 1;
   });
 
+  //if user has finished reviewing ALL flashcards for the day, inform them!
+  if (reviewCardID.length === 0 && newCardID.length === 0){
+    //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
+    alert("No flashcards to be reviewed today!");
+    return;
+  }
+
+  console.log("Review cards: ", reviewCardID);
   if (!resume && newCardID.length > 0){
     console.log("New session + new cards still to review")
     //user is not resuming a session
     //if there are still new cards to review, randomly select numNewCards to be reviewed
+    console.log("New cards before shuffle: ",  newCardID);
     newCardID = shuffle(newCardID);
-    reviewCardID = concat(reviewCardID, newCardID.slice(0, numberNewCards));
+    console.log("New cards After shuffle: ",  newCardID);
+    reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
     //append level = 0 of new cards
-    reviewCardLevel = concat(reviewCardLevel, new Array(numberNewCards).fill(0));
+    reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
   }
+  console.log("Review cards: ", reviewCardID);
 
   //set nextDateAppearance for all cards to be reviewed today = nowDate
   //sets newCards from null -> nowDate
   //sets reviewedCards < nowDate to nowDate
   for (var i = 0; i < reviewCardID.length; i++){
-    var flashcard = doc(db, "Flashcard", reviewCardID[i]);
-    flashcard = await getDoc(flashcard);
-    const nextDateAppearance = flashcard.data().nextDateAppearance;
+    const flashcard = doc(db, "Flashcard", reviewCardID[i]);
+    const flashcardSnap = await getDoc(flashcard);
+    var nextDateAppearance = flashcardSnap.data().nextDateAppearance;
+    console.log("nextDateAppearance: ", nextDateAppearance)
     if(nextDateAppearance !== nowDate){
       await updateDoc(flashcard, {
         nextDateAppearance:nowDate
       });
     }
   }
+  console.log("Updated nextDateAppearance!")
 
   console.log("Before reorder LowHigh: ", reviewCardID);
   if (orderType === "Random"){
@@ -400,21 +422,22 @@ async function main() {
       return false;
     });
 
-    const DeckID = "math"; //this will vary depending on which deck the user selected
+    const DeckID = "multiplication"; //this will vary depending on which deck the user selected
     var deck = doc(db, "decks", DeckID);
     deck = await getDoc(deck);
     const reviewType = deck.data().reviewType;
+    const orderType = deck.data().orderType;
+    console.log("OrderType: ", orderType)
 
     if (reviewType == "Daily"){
       console.log("Daily")
-      const orderType = deck.data().orderType;
-      console.log("OrderType: ", orderType)
       await dailyReview(DeckID, orderType);
     }
     else if (reviewType == "Continuous"){
       console.log("Continuous")
-      //yet to be implemented
-      //await continuousReview(DeckID);
+      const resume = deck.data().resume;
+      const numNewCards = deck.data().numNewCards;
+      await continuousReview(DeckID, orderType, numNewCards, resume);
     }
     else{
       console.log("ERROR: not a valid review type")

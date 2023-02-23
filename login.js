@@ -57,6 +57,7 @@ const password = document.getElementById('password');
 const reviewSession = document.getElementById('reviewSession');
 const reviewAnswerSession = document.getElementById('reviewAnswerSession');
 var correctlyAnswered; //boolean; true if user correctly answered question; else, false
+var pause;
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -90,7 +91,22 @@ function waitForRevealAnswer() {
     revealButton.id = "revealButton";
     revealButton.innerHTML = "Reveal Answer";
     reviewSession.appendChild(revealButton);
-    revealButton.addEventListener("click", resolve);
+
+    var pauseReview = document.createElement('button');
+    pauseReview.id = "pauseReview";
+    pauseReview.innerHTML = "Pause Review";
+    reviewSession.appendChild(pauseReview);
+
+    revealButton.addEventListener("click", handler => {
+      console.log('pressed reveal');
+      pause = false;
+      resolve(handler);
+    }, { once: true });
+    pauseReview.addEventListener("click", handler => {
+      console.log('pressed pause review');
+      pause = true;
+      resolve(handler);
+    }, { once: true });
   })
 }
 
@@ -113,18 +129,78 @@ function waitForCorrectIncorrectResponse() {
     incorrect.style.color = "white";
     incorrect.style.border = "none";
     reviewAnswerSession.appendChild(incorrect);
+
+    var pauseReview = document.createElement('button');
+    pauseReview.id = "pauseReview";
+    pauseReview.innerHTML = "Pause Review";
+    reviewAnswerSession.appendChild(pauseReview);
     
     correct.addEventListener("click", handler => {
       console.log('correct click');
       correctlyAnswered = true;
+      pause = false;
       resolve(handler);
     }, { once: true });
     incorrect.addEventListener("click", handler => {
       console.log('incorrect click');
       correctlyAnswered = false;
+      pause = false;
+      resolve(handler);
+    }, { once: true });
+    pauseReview.addEventListener("click", handler => {
+      console.log('pressed pause');
+      pause = true;
       resolve(handler);
     }, { once: true });
 })}
+
+//recursive call = ensures that user does want to pause the session
+async function handlePauseRevealAnswer(){
+  await waitForRevealAnswer();
+  //remove the reveal button once the user has pressed it
+  reviewSession.removeChild(document.getElementById('revealButton'));
+  reviewSession.removeChild(document.getElementById('pauseReview'));
+
+  if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
+    pause = false;
+    await handlePauseRevealAnswer();
+  }
+
+  //if pause = false, then user wants to proceed and reveal answer
+  //if pause = true and confirm =  true, then return because user wants to pause
+  return;
+}
+
+//recursive call = ensures that user does want to pause the session
+async function handlePauseCorrectIncorrectResponse(answer){
+  //display Answer heading
+  const answerHeading = document.createElement('h2');
+  answerHeading.id = "answerHeading"
+  answerHeading.innerHTML = "Answer";
+  reviewAnswerSession.appendChild(answerHeading);
+  //display Answer
+  const flashcardAnswer = document.createElement('p');
+  flashcardAnswer.id = "flashcardAnswer"
+  flashcardAnswer.innerHTML = answer;
+  reviewAnswerSession.appendChild(flashcardAnswer);
+
+  await waitForCorrectIncorrectResponse();
+  //remove all dynamically added children
+  reviewAnswerSession.removeChild(document.getElementById('answerHeading'));
+  reviewAnswerSession.removeChild(document.getElementById('flashcardAnswer'));
+  reviewAnswerSession.removeChild(document.getElementById('correct'));
+  reviewAnswerSession.removeChild(document.getElementById('incorrect'));
+  reviewAnswerSession.removeChild(document.getElementById('pauseReview'));
+
+  if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
+    pause = false;
+    await handlePauseCorrectIncorrectResponse(answer);
+  }
+
+  //if pause = false, then user indicated whether they correctly/incorrectly answered the question
+  //if pause = true and confirm =  true, then return because user wants to pause
+  return;
+}
 
 // RESUME not yet implemented
 //reviewOrder = flashcardIDs in order of how they will be reviewed
@@ -139,28 +215,23 @@ async function reviewingFlashcards(reviewOrder, reviewType){
 
     //display Question
     var question = document.getElementById('question');
-    question.innerText = flashcardDoc.data().Question;    
+    question.innerText = flashcardDoc.data().Question;  
+    var answer = flashcardDoc.data().Answer;  
     //to add style in dynamically: https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
 
-    //wait for user to press reveal answer button
-    await waitForRevealAnswer();
-    //remove the reveal button once the user has pressed it
-    reviewSession.removeChild(document.getElementById('revealButton'));
+    await handlePauseRevealAnswer();
+    if (pause){
+      console.log("User has paused review session")
+      break;
+    }
 
-    //***** Reveal answer to question *************
-    //display Answer heading
-    const answerHeading = document.createElement('h2');
-    answerHeading.innerHTML = "Answer";
-    reviewAnswerSession.appendChild(answerHeading);
-    //display Answer
-    const flashcardAnswer = document.createElement('p');
-    flashcardAnswer.innerHTML = flashcardDoc.data().Answer;
-    reviewAnswerSession.appendChild(flashcardAnswer);
-
-    //wait for user to select whether they correct answered question or not
-    await waitForCorrectIncorrectResponse();
-    console.log("CorrectlyAnswered: ", correctlyAnswered);
-  
+    //***** Reveal answer to question  &% wait for user to respond *************
+    await handlePauseCorrectIncorrectResponse(answer);
+    if (pause){
+      console.log("User has paused review session")
+      break;
+    }
+    
     //update nextDateAppearance = now/current date => flashcard already reviewed
     //update flashcard level based on whether correctly answered the flashcard question
     var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
@@ -201,12 +272,6 @@ async function reviewingFlashcards(reviewOrder, reviewType){
       //NOT yet implemented
       console.log("Maximum level reached!")
     }
-
-    //remove the answer heading & flashcard answer once user has selected correct/incorrect
-    reviewAnswerSession.removeChild(answerHeading);
-    reviewAnswerSession.removeChild(flashcardAnswer);
-    reviewAnswerSession.removeChild(document.getElementById('correct'));
-    reviewAnswerSession.removeChild(document.getElementById('incorrect'));
   }
   return;
 }
@@ -422,7 +487,7 @@ async function main() {
       return false;
     });
 
-    const DeckID = "multiplication"; //this will vary depending on which deck the user selected
+    const DeckID = "math"; //this will vary depending on which deck the user selected
     var deck = doc(db, "decks", DeckID);
     deck = await getDoc(deck);
     const reviewType = deck.data().reviewType;

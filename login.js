@@ -208,7 +208,16 @@ async function handlePauseCorrectIncorrectResponse(answer){
 // 	 		Add key-value: Resume = True to the Deck
 // ENDIF 
 async function reviewingFlashcards(reviewOrder, reviewType){
+  //<p> element that indicates num_cards_reviewed / total_cards_2be_reviewed
+  var progress = document.getElementById('progress');
+  progress.style.textAlign = "center";
+  // progress.id = "progress";
+  // reviewSession.appendChild(progress);
+  var questionHeader = document.getElementById('questionHeader');
+  questionHeader.innerHTML = "Question";
+
   for (let index = 0; index < reviewOrder.length; index++){
+    progress.innerHTML = "Progress: " + (index+1) + "/" + reviewOrder.length;
     console.log("Flashcard ID in Review: ", reviewOrder[index]);
     const flashcard = doc(db, "Flashcard", reviewOrder[index]);
     const flashcardDoc = await getDoc(flashcard);
@@ -260,6 +269,7 @@ async function reviewingFlashcards(reviewOrder, reviewType){
       }
       updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
     }
+    console.log("updated nextDateAppearance: " + updateNextDateAppr)
 
     await updateDoc(flashcard, {
       Level:updateLevel,
@@ -395,12 +405,14 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     var nextDateAppearance = flashcardDoc.data().nextDateAppearance;
     if (nextDateAppearance === nullDate){
       //new card
+      console.log("new card: " + flashcardDoc.id)
       newCardID[index] = flashcardDoc.id;
       ++index;
     }
     else if (nextDateAppearance <= nowDate){
       // 	IF nextDateAppearance < currentDate
       // 		Set nextDateAppearance = currentDate
+      console.log("old card: " + flashcardDoc.id)
       reviewCardID[counter] = flashcardDoc.id;
       reviewCardLevel[counter] = flashcardDoc.data().Level;
       ++counter;
@@ -419,6 +431,9 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     return;
   }
 
+  var newCards2Review = newCardID.length;     //total number of new cards to be reviewed
+  var oldCards2Review = reviewCardID.length;  //total number of OLD cards to be reviewed
+
   console.log("Review cards: ", reviewCardID);
   if (!resume && newCardID.length > 0){
     console.log("New session + new cards still to review")
@@ -427,7 +442,15 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     console.log("New cards before shuffle: ",  newCardID);
     newCardID = shuffle(newCardID);
     console.log("New cards After shuffle: ",  newCardID);
-    reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
+
+    //check if number of new cards left > fixed numberNewCards
+    if (newCardID.length >= numberNewCards){
+      reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
+      newCards2Review = numberNewCards;
+    }
+    else{
+      reviewCardID = reviewCardID.concat(newCardID);
+    }
     //append level = 0 of new cards
     reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
   }
@@ -464,6 +487,13 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   }
   console.log("After reorder LowHigh: ", reviewCardID);
 
+  if (newCards2Review > 0){
+    //set heading indicating the number of NEW and OLD cards being reviewed
+    var newOldCards = document.getElementById('newOldCards');
+    newOldCards.style.float = "right";
+    newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
+  }
+
   //Start reviewing Flashcards
   await reviewingFlashcards(reviewCardID, "Continuous");
 
@@ -487,7 +517,7 @@ async function main() {
       return false;
     });
 
-    const DeckID = "math"; //this will vary depending on which deck the user selected
+    const DeckID = "multiplication"; //this will vary depending on which deck the user selected
     var deck = doc(db, "decks", DeckID);
     deck = await getDoc(deck);
     const reviewType = deck.data().reviewType;

@@ -28,8 +28,6 @@ import {
     doc,
     updateDoc,
     getDoc, 
-    orderBy,
-    onSnapshot,
     getDocs
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
@@ -365,14 +363,16 @@ async function dailyReview(DeckID, orderType){
   //Start reviewing flashcards
   await reviewingFlashcards(orderReview, "Daily");
 
-  // Finished reviewing all flashcards
-  // Set NextAppearanceDate = Null for all flashcards in DeckName
-  for (let i = 0; i < allIDs.length; i++) {
-    const flashcard = doc(db, "Flashcard", allIDs[i]);
-    await updateDoc(flashcard, {
-      nextDateAppearance:nullDate
-    });
-  }
+  if (!pause){
+    // Finished reviewing all flashcards
+    // Set NextAppearanceDate = Null for all flashcards in DeckName
+    for (let i = 0; i < allIDs.length; i++) {
+      const flashcard = doc(db, "Flashcard", allIDs[i]);
+      await updateDoc(flashcard, {
+        nextDateAppearance:nullDate
+      });
+    }
+  } 
 
   return;
 }
@@ -488,8 +488,8 @@ async function main() {
     });
 
     const DeckID = "math"; //this will vary depending on which deck the user selected
-    var deck = doc(db, "decks", DeckID);
-    deck = await getDoc(deck);
+    var deckDoc = doc(db, "decks", DeckID);
+    var deck = await getDoc(deckDoc);
     const reviewType = deck.data().reviewType;
     const orderType = deck.data().orderType;
     console.log("OrderType: ", orderType)
@@ -503,10 +503,22 @@ async function main() {
       const resume = deck.data().resume;
       const numNewCards = deck.data().numNewCards;
       await continuousReview(DeckID, orderType, numNewCards, resume);
-    }
+
+      //only need to update resume for decks with reviewType = Continuous
+      var resumeInNextSession = false;
+      if (pause){
+        resumeInNextSession = true;
+      }
+      await updateDoc(deckDoc, {
+        resume: resumeInNextSession
+      });
+      
+      console.log("updated resume field!")
+      }
     else{
       console.log("ERROR: not a valid review type")
     }
+
     console.log("return to the main!")
     //   #Users can either 1) Return to Home or 2) Start new Review Session
 

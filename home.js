@@ -47,7 +47,6 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
 }
 
 //OrderType by default = "Random"
-//resume by default = false
 function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
 {
   //this variation allows us to specify the document ID rather than letting it randomize
@@ -55,8 +54,7 @@ function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCre
     DeckName: DeckNameD,
     reviewType: reviewTypeD,
     userID: userIDD,
-    orderType: defaultOrderType,
-    resume: false
+    orderType: defaultOrderType
   });
 }
 

@@ -200,11 +200,7 @@ async function handlePauseCorrectIncorrectResponse(answer){
   return;
 }
 
-// RESUME not yet implemented
 //reviewOrder = flashcardIDs in order of how they will be reviewed
-// IF Pause button pressed
-// 	 		Add key-value: Resume = True to the Deck
-// ENDIF 
 async function reviewingFlashcards(reviewOrder, reviewType){
   //<p> element that indicates num_cards_reviewed / total_cards_2be_reviewed
   var progress = document.getElementById('progress');
@@ -424,13 +420,6 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     }
   });
 
-  //if user has finished reviewing ALL flashcards for the day, inform them!
-  if (reviewCardID.length === 0 && newCardID.length === 0){
-    //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
-    alert("No flashcards to be reviewed today!");
-    return;
-  }
-
   var newCards2Review = newCardID.length;     //total number of new cards to be reviewed
   var oldCards2Review = reviewCardID.length;  //total number of OLD cards to be reviewed
 
@@ -455,6 +444,14 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
   }
   console.log("Review cards: ", reviewCardID);
+
+  //if user has finished reviewing ALL flashcards for the day, inform them!
+  if (reviewCardID.length === 0){
+    //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
+    alert("No flashcards to be reviewed today!");
+    return;
+  }
+
 
   //set nextDateAppearance for all cards to be reviewed today = nowDate
   //sets newCards from null -> nowDate
@@ -517,7 +514,7 @@ async function main() {
       return false;
     });
 
-    const DeckID = "math"; //this will vary depending on which deck the user selected
+    const DeckID = "multiplication"; //this will vary depending on which deck the user selected
     var deckDoc = doc(db, "decks", DeckID);
     var deck = await getDoc(deckDoc);
     const reviewType = deck.data().reviewType;
@@ -530,17 +527,19 @@ async function main() {
     }
     else if (reviewType == "Continuous"){
       console.log("Continuous")
-      const resume = deck.data().resume;
+      const resumeDate = deck.data().resume;
+      var resume = false;
+      console.log("resumeDate: ",  resumeDate)
+      if (resumeDate === nowDate){
+        resume = true;
+        console.log("resuming...")
+      }
       const numNewCards = deck.data().numNewCards;
       await continuousReview(DeckID, orderType, numNewCards, resume);
 
       //only need to update resume for decks with reviewType = Continuous
-      var resumeInNextSession = false;
-      if (pause){
-        resumeInNextSession = true;
-      }
       await updateDoc(deckDoc, {
-        resume: resumeInNextSession
+        resume: nowDate
       });
       
       console.log("updated resume field!")

@@ -28,26 +28,35 @@ import {
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
 let db = getFirestore(app);
+const nullDate = "2023/01/01";
+const defaultOrderType = "Random";
 
-function CardCreate(AnswerD, DeckIDD, LevelD, QuestionD, nextDateAppearanceD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
+//Level initialized to 0
+//nextDateAppearance initialize to nullDate
+function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
 {
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
   db.collection("Flashcard").add({
     Answer: AnswerD,
+    Level: 0,
     DeckID: DeckIDD,
     Question: QuestionD,
-    nextDateAppearance: nextDateAppearanceD
+    nextDateAppearance: nullDate
   });
 }
 
+//OrderType by default = "Random"
+//resume by default = false
 function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
 {
   //this variation allows us to specify the document ID rather than letting it randomize
   db.collection("decks").doc(DeckNameD).set({
     DeckName: DeckNameD,
     reviewType: reviewTypeD,
-    userID: userIDD
+    userID: userIDD,
+    orderType: defaultOrderType,
+    resume: false
   });
 }
 

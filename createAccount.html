@@ -41,7 +41,7 @@
 
     <body>
 
-      <script type="module" src="./login.js"></script>
+      <script type="module" src="./createAccount.js"></script>
         <section id="loginpage">
               <br />
               <br />
@@ -61,7 +61,8 @@
                 <br />
                 <input type="text" id="username">
                 <br/>
-                <br />
+                <p id = "warningMessage"></p>
+                <br/>
                 <span>It is recommended that a strong
                     <br />password has the following:
                     <br />- at least 8 characters
@@ -76,7 +77,7 @@
                 <input type="text" id="password">
                 <br/>
                 <br />
-                <button type="submit" class="loginButton">
+                <button type="submit" id = "submitButton" class="loginButton">
                   <span>Create</span>
                 </button>
                 <br />

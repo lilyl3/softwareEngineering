@@ -498,22 +498,6 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
 }
 
 async function main() {  
-    // Listen to the form submission
-    form.addEventListener('submit', async e => {
-      // Prevent the default form redirect
-      e.preventDefault();
-      // Write a new message to the database collection "guestbook"
-      addDoc(collection(db, 'users'), {
-        username: username.value,
-        password: password.value
-      });
-      // clear message input fields
-      username.value = '';
-      password.value = '';
-      // Return false to avoid redirect
-      return false;
-    });
-
     const DeckID = "multiplication"; //this will vary depending on which deck the user selected
     var deckDoc = doc(db, "decks", DeckID);
     var deck = await getDoc(deckDoc);

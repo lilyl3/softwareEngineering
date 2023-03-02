@@ -28,8 +28,6 @@ import {
     doc,
     updateDoc,
     getDoc, 
-    orderBy,
-    onSnapshot,
     getDocs
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
@@ -51,14 +49,16 @@ nowDate = nowDate.getFullYear()+'/'+addZero2Date((nowDate.getMonth()+1))+'/'+ ad
 console.log(nowDate);
 
 //Document Elements
-const form = document.getElementById('loginpage');
-const username = document.getElementById('username');
-const password = document.getElementById('password');
 const reviewSession = document.getElementById('reviewSession');
 const reviewAnswerSession = document.getElementById('reviewAnswerSession');
-const answerHeading = document.getElementById('answerHeading');
 const correctButtons = document.getElementById('correctButtons');
+
+
 var correctlyAnswered; //boolean; true if user correctly answered question; else, false
+var pause;
+//of flashcards reviewed,...
+var numCorrect = 0;       //number of flashcards correctly answered
+var numIncorrect = 0;     //number of flashcards incorrectly answered
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -93,11 +93,31 @@ function waitForRevealAnswer() {
     revealButton.innerHTML = "Reveal Answer";
     revealButton.style.color = "white";
     revealButton.style.backgroundColor = "#0041CA";
-    revealButton.style.padding = "8px";
-    revealButton.style.selfAlign = "center";
+    revealButton.style.padding = "15px";
+    revealButton.style.width = "25%";
+    revealButton.style.fontSize = "18px";
+    //revealButton.style.selfAlign = "center";      //Anthony used to align center, but with pause button
     revealButton.style.border = "white";
     reviewSession.appendChild(revealButton);
-    revealButton.addEventListener("click", resolve);
+
+    var pauseReview = document.createElement('button');
+    pauseReview.id = "pauseReview";
+    pauseReview.innerHTML = "Pause Review";
+    pauseReview.style.padding = "15px";
+    pauseReview.style.width = "25%";
+    pauseReview.style.fontSize = "18px";
+    reviewSession.appendChild(pauseReview);
+
+    revealButton.addEventListener("click", handler => {
+      console.log('pressed reveal');
+      pause = false;
+      resolve(handler);
+    }, { once: true });
+    pauseReview.addEventListener("click", handler => {
+      console.log('pressed pause review');
+      pause = true;
+      resolve(handler);
+    }, { once: true });
   })
 }
 
@@ -110,78 +130,150 @@ function waitForCorrectIncorrectResponse() {
     correct.id = "correct";
     correct.style.backgroundColor = "#0eaf29";
     correct.style.padding = "15px";
-    correct.style.width = "37.5%";
+    correct.style.width = "25%";
     correct.style.fontSize = "18px";
     correct.style.color = "white";
     correct.style.border = "none";
     correctButtons.appendChild(correct);
+    //reviewAnswerSession.appendChild(correct);             //Lily used to put it in reviewAnswerSession
 
     const incorrect = document.createElement('button');
     incorrect.innerHTML = "Incorrect";
     incorrect.id = "incorrect";
     incorrect.style.backgroundColor = "#f44336";
     incorrect.style.padding = "15px";
-    incorrect.style.width = "37.5%";
+    incorrect.style.width = "25%";
     incorrect.style.fontSize = "18px";
     incorrect.style.color = "white";
     incorrect.style.border = "none";
     correctButtons.appendChild(incorrect);
+    //reviewAnswerSession.appendChild(incorrect);
 
-    reviewAnswerSession.style.margin = "0 auto";
-    reviewAnswerSession.style.backgroundColor = "#0041CA";
-    reviewAnswerSession.style.color = "white";
-    reviewAnswerSession.style.width = "75%";
-    reviewAnswerSession.style.padding = "100px 0";
-    reviewAnswerSession.style.fontSize = "26px";     
-
+    var pauseReview = document.createElement('button');
+    pauseReview.id = "pauseReview";
+    pauseReview.innerHTML = "Pause Review";
+    pauseReview.style.padding = "15px";
+    pauseReview.style.width = "25%";
+    pauseReview.style.fontSize = "18px";
+    correctButtons.appendChild(pauseReview);
     
     correct.addEventListener("click", handler => {
-      console.log('correct click');
       correctlyAnswered = true;
+      pause = false;
+      ++numCorrect;
+      console.log("numCorrect: ", numCorrect)
       resolve(handler);
     }, { once: true });
     incorrect.addEventListener("click", handler => {
       console.log('incorrect click');
       correctlyAnswered = false;
+      ++numIncorrect;
+      console.log("numInCorrect: ", numIncorrect)
+      pause = false;
+      resolve(handler);
+    }, { once: true });
+    pauseReview.addEventListener("click", handler => {
+      console.log('pressed pause');
+      pause = true;
       resolve(handler);
     }, { once: true });
 })}
 
-// RESUME not yet implemented
+//recursive call = ensures that user does want to pause the session
+async function handlePauseRevealAnswer(){
+  await waitForRevealAnswer();
+  //remove the reveal button once the user has pressed it
+  reviewSession.removeChild(document.getElementById('revealButton'));
+  reviewSession.removeChild(document.getElementById('pauseReview'));
+
+  if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
+    pause = false;
+    await handlePauseRevealAnswer();
+  }
+
+  //if pause = false, then user wants to proceed and reveal answer
+  //if pause = true and confirm =  true, then return because user wants to pause
+  return;
+}
+
+//recursive call = ensures that user does want to pause the session
+async function handlePauseCorrectIncorrectResponse(answer){
+  //display Answer heading
+  // const answerHeading = document.getElementById('answerHeading');
+  // answerHeading.id = "answerHeading"
+  // answerHeading.innerHTML = "Answer";
+  // reviewAnswerSession.appendChild(answerHeading);
+
+  //display Answer
+  const flashcardAnswer = document.createElement('p');
+  flashcardAnswer.id = "flashcardAnswer"
+  flashcardAnswer.innerHTML = answer;
+  reviewAnswerSession.appendChild(flashcardAnswer);
+
+  await waitForCorrectIncorrectResponse();
+  //remove all dynamically added children
+  //answerHeading.innerHTML = "";
+  reviewAnswerSession.removeChild(document.getElementById('flashcardAnswer'));
+  correctButtons.removeChild(document.getElementById('correct'));
+  correctButtons.removeChild(document.getElementById('incorrect'));
+  correctButtons.removeChild(document.getElementById('pauseReview'));
+
+  if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
+    pause = false;
+    await handlePauseCorrectIncorrectResponse(answer);
+  }
+
+  //if pause = false, then user indicated whether they correctly/incorrectly answered the question
+  //if pause = true and confirm =  true, then return because user wants to pause
+  return;
+}
+
 //reviewOrder = flashcardIDs in order of how they will be reviewed
-// IF Pause button pressed
-// 	 		Add key-value: Resume = True to the Deck
-// ENDIF 
 async function reviewingFlashcards(reviewOrder, reviewType){
+  //<p> element that indicates num_cards_reviewed / total_cards_2be_reviewed
+  var progress = document.getElementById('progress');
+  progress.style.textAlign = "center";
+
+  //dynamically make question and answer header appear
+  // var questionHeader = document.getElementById('questionHeader');
+  // questionHeader.innerHTML = "Question";
+
+  // const answerHeading = document.getElementById('answerHeading');
+  // answerHeading.innerHTML = "Answer";
+
+  //dynamically style the reviewAnswerSession
+  // reviewAnswerSession.style.margin = "0 auto";
+  // reviewAnswerSession.style.backgroundColor = "#0041CA";
+  // reviewAnswerSession.style.color = "white";
+  // reviewAnswerSession.style.width = "75%";
+  // reviewAnswerSession.style.padding = "100px 0";
+  // reviewAnswerSession.style.fontSize = "26px";    
+
   for (let index = 0; index < reviewOrder.length; index++){
+    progress.innerHTML = "Progress: " + (index+1) + "/" + reviewOrder.length;
     console.log("Flashcard ID in Review: ", reviewOrder[index]);
     const flashcard = doc(db, "Flashcard", reviewOrder[index]);
     const flashcardDoc = await getDoc(flashcard);
 
     //display Question
     var question = document.getElementById('question');
-    question.innerText = flashcardDoc.data().Question;    
+    question.innerText = flashcardDoc.data().Question;  
+    var answer = flashcardDoc.data().Answer;  
     //to add style in dynamically: https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
 
-    //wait for user to press reveal answer button
-    await waitForRevealAnswer();
-    //remove the reveal button once the user has pressed it
-    reviewSession.removeChild(document.getElementById('revealButton'));
+    await handlePauseRevealAnswer();
+    if (pause){
+      console.log("User has paused review session")
+      break;
+    }
 
-    //***** Reveal answer to question *************
-    //display Answer heading
-    const answer = document.createElement('h2');
-    answer.innerHTML = "Answer";
-    answerHeading.appendChild(answer);
-    //display Answer
-    const flashcardAnswer = document.createElement('p');
-    flashcardAnswer.innerHTML = flashcardDoc.data().Answer;
-    reviewAnswerSession.appendChild(flashcardAnswer);
-
-    //wait for user to select whether they correct answered question or not
-    await waitForCorrectIncorrectResponse();
-    console.log("CorrectlyAnswered: ", correctlyAnswered);
-  
+    //***** Reveal answer to question  &% wait for user to respond *************
+    await handlePauseCorrectIncorrectResponse(answer);
+    if (pause){
+      console.log("User has paused review session")
+      break;
+    }
+    
     //update nextDateAppearance = now/current date => flashcard already reviewed
     //update flashcard level based on whether correctly answered the flashcard question
     var updateLevel = flashcardDoc.data().Level;        //get the flashcard's current level
@@ -201,13 +293,20 @@ async function reviewingFlashcards(reviewOrder, reviewType){
     var updateNextDateAppr = nowDate;
     if (reviewType === "Continuous"){
       var date = new Date();                              //get current date
-      date.setDate(date.getDate() + (2*updateLevel));     //next date to be reviewed is 2*updateLevel days later
+      if (updateLevel === 0){
+        //if level = 0, review flashcard the following day
+        date.setDate(date.getDate() + 1);
+      }
+      else{
+        date.setDate(date.getDate() + (2*updateLevel));     //next date to be reviewed is 2*updateLevel days later
+      }
       updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
     }
+    console.log("updated nextDateAppearance: " + updateNextDateAppr)
 
     await updateDoc(flashcard, {
       Level:updateLevel,
-      nextDateAppearance: nowDate
+      nextDateAppearance: updateNextDateAppr
     });
 
     if (updateLevel === maximumLevel){
@@ -216,12 +315,6 @@ async function reviewingFlashcards(reviewOrder, reviewType){
       //NOT yet implemented
       console.log("Maximum level reached!")
     }
-
-    //remove the answer heading & flashcard answer once user has selected correct/incorrect
-    reviewAnswerSession.removeChild(answerHeading);
-    reviewAnswerSession.removeChild(flashcardAnswer);
-    reviewAnswerSession.removeChild(document.getElementById('correct'));
-    reviewAnswerSession.removeChild(document.getElementById('incorrect'));
   }
   return;
 }
@@ -236,7 +329,7 @@ async function dailyReview(DeckID, orderType){
   var flashcardSnapshot = await getDocs(flashcards);
 
   if (flashcardSnapshot.empty){
-    console.log("Empty snapshot!!")
+    console.log("Empty snapsot!!")
   }
 
   //************Is USER RESUMing or STARTing a new review session*****************/
@@ -315,14 +408,16 @@ async function dailyReview(DeckID, orderType){
   //Start reviewing flashcards
   await reviewingFlashcards(orderReview, "Daily");
 
-  // Finished reviewing all flashcards
-  // Set NextAppearanceDate = Null for all flashcards in DeckName
-  for (let i = 0; i < allIDs.length; i++) {
-    const flashcard = doc(db, "Flashcard", allIDs[i]);
-    await updateDoc(flashcard, {
-      nextDateAppearance:nullDate
-    });
-  }
+  if (!pause){
+    // Finished reviewing all flashcards
+    // Set NextAppearanceDate = Null for all flashcards in DeckName
+    for (let i = 0; i < allIDs.length; i++) {
+      const flashcard = doc(db, "Flashcard", allIDs[i]);
+      await updateDoc(flashcard, {
+        nextDateAppearance:nullDate
+      });
+    }
+  } 
 
   return;
 }
@@ -335,53 +430,86 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   var reviewCardID = [];          //IDs of all cards to be reviewed
   var reviewCardLevel = [];       //level of all cards that have been reviewed
   var counter = 0;
+  var index = 0;
+  var total = 0;
 
   //query all flashcards in deck DeckID
   const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", DeckID));
   var flashcardSnapshot = await getDocs(flashcards);
 
   flashcardSnapshot.forEach((flashcardDoc) => {
+    ++total;
     var nextDateAppearance = flashcardDoc.data().nextDateAppearance;
     if (nextDateAppearance === nullDate){
       //new card
-      newCardID[counter] = flashcardDoc.id;
+      console.log("new card: " + flashcardDoc.id)
+      newCardID[index] = flashcardDoc.id;
+      ++index;
     }
     else if (nextDateAppearance <= nowDate){
       // 	IF nextDateAppearance < currentDate
       // 		Set nextDateAppearance = currentDate
+      console.log("old card: " + flashcardDoc.id)
       reviewCardID[counter] = flashcardDoc.id;
       reviewCardLevel[counter] = flashcardDoc.data().Level;
+      ++counter;
     }
     else{
       //nextDateAppearance > now Date
       //card will not be reviewed today BUt will be in the future
+      console.log(flashcardDoc.id, " to be reviewed in the future")
     }
-    counter = counter + 1;
   });
 
+  var newCards2Review = newCardID.length;     //total number of new cards to be reviewed 
+  var oldCards2Review = total - newCards2Review;
+  //var oldCards2Review = reviewCardID.length;  //total number of OLD cards to be reviewed
+
+  console.log("Review cards: ", reviewCardID);
   if (!resume && newCardID.length > 0){
     console.log("New session + new cards still to review")
     //user is not resuming a session
     //if there are still new cards to review, randomly select numNewCards to be reviewed
+    console.log("New cards before shuffle: ",  newCardID);
     newCardID = shuffle(newCardID);
-    reviewCardID = concat(reviewCardID, newCardID.slice(0, numberNewCards));
+    console.log("New cards After shuffle: ",  newCardID);
+
+    //check if number of new cards left > fixed numberNewCards
+    if (newCardID.length >= numberNewCards){
+      reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
+      //newCards2Review = numberNewCards;
+    }
+    else{
+      reviewCardID = reviewCardID.concat(newCardID);
+    }
     //append level = 0 of new cards
-    reviewCardLevel = concat(reviewCardLevel, new Array(numberNewCards).fill(0));
+    reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
   }
+  console.log("Review cards: ", reviewCardID);
+
+  //if user has finished reviewing ALL flashcards for the day, inform them!
+  if (reviewCardID.length === 0){
+    //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
+    alert("No flashcards to be reviewed today!");
+    return;
+  }
+
 
   //set nextDateAppearance for all cards to be reviewed today = nowDate
   //sets newCards from null -> nowDate
   //sets reviewedCards < nowDate to nowDate
   for (var i = 0; i < reviewCardID.length; i++){
-    var flashcard = doc(db, "Flashcard", reviewCardID[i]);
-    flashcard = await getDoc(flashcard);
-    const nextDateAppearance = flashcard.data().nextDateAppearance;
+    const flashcard = doc(db, "Flashcard", reviewCardID[i]);
+    const flashcardSnap = await getDoc(flashcard);
+    var nextDateAppearance = flashcardSnap.data().nextDateAppearance;
+    console.log("nextDateAppearance: ", nextDateAppearance)
     if(nextDateAppearance !== nowDate){
       await updateDoc(flashcard, {
         nextDateAppearance:nowDate
       });
     }
   }
+  console.log("Updated nextDateAppearance!")
 
   console.log("Before reorder LowHigh: ", reviewCardID);
   if (orderType === "Random"){
@@ -398,6 +526,12 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   }
   console.log("After reorder LowHigh: ", reviewCardID);
 
+  if (newCards2Review > 0){
+    //set heading indicating the number of NEW and OLD cards being reviewed
+    var newOldCards = document.getElementById('newOldCards');
+    newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
+  }
+
   //Start reviewing Flashcards
   await reviewingFlashcards(reviewCardID, "Continuous");
 
@@ -405,42 +539,56 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
 }
 
 async function main() {  
-    // Listen to the form submission
-    form.addEventListener('submit', async e => {
-      // Prevent the default form redirect
-      e.preventDefault();
-      // Write a new message to the database collection "guestbook"
-      addDoc(collection(db, 'users'), {
-        username: username.value,
-        password: password.value
-      });
-      // clear message input fields
-      username.value = '';
-      password.value = '';
-      // Return false to avoid redirect
-      return false;
-    });
+    
+    const DeckID = "math";                        //this will vary depending on which deck the user selected
+    sessionStorage.setItem("deckID", DeckID);     //should be set in home
 
-    const DeckID = "math"; //this will vary depending on which deck the user selected
-    var deck = doc(db, "decks", DeckID);
-    deck = await getDoc(deck);
+    var deckDoc = doc(db, "decks", DeckID);
+    var deck = await getDoc(deckDoc);
     const reviewType = deck.data().reviewType;
+    const orderType = deck.data().orderType;
+    console.log("OrderType: ", orderType)
 
     if (reviewType == "Daily"){
       console.log("Daily")
-      const orderType = deck.data().orderType;
-      console.log("OrderType: ", orderType)
       await dailyReview(DeckID, orderType);
     }
     else if (reviewType == "Continuous"){
       console.log("Continuous")
-      //yet to be implemented
-      //await continuousReview(DeckID);
-    }
+      const resumeDate = deck.data().resume;
+      var resume = false;
+      console.log("resumeDate: ",  resumeDate)
+      if (resumeDate === nowDate){
+        resume = true;
+        console.log("resuming...")
+      }
+      const numNewCards = deck.data().numNewCards;
+      await continuousReview(DeckID, orderType, numNewCards, resume);
+
+      //only need to update resume for decks with reviewType = Continuous
+      await updateDoc(deckDoc, {
+        resume: nowDate
+      });
+      
+      console.log("updated resume field!")
+      }
     else{
       console.log("ERROR: not a valid review type")
     }
+
     console.log("return to the main!")
+
+    if (pause){
+      //didn't finish review
+      //return to home screen
+      window.location.href = "./homeScreen.html";
+    }
+    else{
+      //finished review
+      sessionStorage.setItem("numCorrect", numCorrect);
+      sessionStorage.setItem("numMissed", numIncorrect);
+      window.location.href = "./finishedReview.html";
+    }
     //   #Users can either 1) Return to Home or 2) Start new Review Session
 
 

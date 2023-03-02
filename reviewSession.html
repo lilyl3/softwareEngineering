@@ -23,19 +23,19 @@
     </head>
 
     <body>
-      <script type="module" src="./reviewSession.js"></script>
-        <section id="loginpage">            
-            <section id = "reviewSession">
-              <h2>Question</h2>
-              <form id = question></form>
-            </br>
-            </section>
-            <section id = "answerHeading"></section>
-            <section id = "reviewAnswerSession"></section>
+      <script type="module" src="./reviewSession.js"></script>            
+        <section id = "reviewSession">
+          <h2 id = "questionHeader">Question</h2>
+          <div style="clear: both; width: 70%; margin: auto;">
+            <h4 id = "progress" style="float: left; margin-top: 1%; color: white;"></h4>
+            <h4 id = "newOldCards" style="float: right; margin-top: 1%; color: white;"></h4s>
+          </div>      
+          <form id = question></form>
           </br>
-            <section id = "correctButtons"></section>
         </section>
+        <h2 id = "answerHeading">Answer</h2>
+        <form id = "reviewAnswerSession"></form>
+        </br>
+        <section id = "correctButtons"></section>
     </body>
 </html>
-
-<!--https://stackoverflow.com/questions/24903148/navigate-between-html-files-->

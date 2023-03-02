@@ -42,7 +42,7 @@
 
     <body>
 
-      <script type="module" src="./login.js"></script>
+      <script type="module" src="./finishedReview.js"></script>
         <section id="loginpage">
               <br />
               <br />
@@ -61,27 +61,25 @@
                 <br />
                 <p>Congratulations on finishing your review!</p>
                 <p>Deck Title:</p>
+                <p id = "deckID"></p>
                 <br />
-                <span text-align="left">Cards reviewed</span>
-                <span>Accuracy</span>
-                <span>Cards Missed</span>
+                <p id="totalReviewed"></p>
+                <p id="numMissed"></p>
+                <p id="numCorrect"></p>
+                <p id="score"></p>
                 <br />
                 <br />
                 <br />
-                <button type="submit" class="returnHomeButton">
+                <button type="button" id = "returnHome" class="returnHomeButton">
                     <span>Return to Home Screen</span>
                 </button>
-                <button type="submit" class="newReviewButton">
+                <button type="button" id = "startNewReview" class="newReviewButton">
                   <span>Start new review</span>
                 </button>
                 <br />
                 <br />
               </form>            
             </section>
-            <!--
-              <i class="material-icons">login</i>
-              <section id="userbook"></section>
-            <section id = "reviewSession"></section>-->
         </section>
     </body>
 </html>

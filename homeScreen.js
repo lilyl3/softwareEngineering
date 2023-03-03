@@ -38,11 +38,12 @@ let db = getFirestore(app);
 //CONSTANTs
 const nullDate = "2023/01/01";
 const defaultOrderType = "Random";
+const user = sessionStorage.getItem('userID');
 
 //Document Elements
-const user = sessionStorage.getItem('userID');
 const deckArea = document.getElementById('deckArea');
 const afterdeck = document.getElementById('afterDeck');
+const logoutButton = document.getElementById('logoutButton');
 
 //Level initialized to 0
 //nextDateAppearance initialize to nullDate
@@ -154,10 +155,29 @@ async function displayDecks()
     deck_i.innerHTML = deck.data().DeckName;
     deckArea.appendChild(deck_i);
     deckArea.appendChild(document.createElement("br"));
-    //deckArea.addEventListener("click", resolve);
+
+    //listen to see if user clicks on a deck
+    //If so, start a review session
+    deck_i.addEventListener("click", async e =>{
+      //save cookie of deck clicked by user
+      sessionStorage.setItem("DeckID", deck.data().DeckName);
+      window.location.href = "./reviewSession.html";
+    });
   });
   //await waitForDeckSelection;
 }
 
+//listen to see if user clicks on the logout button
+//If so, return to login page
+async function listen4Logout(){
+  logoutButton.addEventListener('click', async e => {
+    e.preventDefault();         // Prevent the default form redirect
+    console.log("Logging out")
+    sessionStorage.clear();     // Clear all saved "cookies"
+    window.location.href = "./login.html";
+  });
+}
+
+listen4Logout();
 displayDecks();
 displayAddDecksButton();

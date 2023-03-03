@@ -54,7 +54,7 @@ async function main() {
         //go to home page
         console.log("Correctly entered username and password...")
         sessionStorage.setItem("userID", username.value);
-        window.location.href = "./home.html";
+        window.location.href = "./homeScreen.html";
       }
       else{
         //password entered is incorrect

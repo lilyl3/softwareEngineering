@@ -40,11 +40,9 @@ const nullDate = "2023/01/01";
 const defaultOrderType = "Random";
 
 //Document Elements
+const user = sessionStorage.getItem('userID');
 const deckArea = document.getElementById('deckArea');
-const afterdeck = document.getElementById('afterdeck');
-
-const decks = query(collection(db, "Decks"));
-var flashcardSnapshot = await getDocs(flashcards);
+const afterdeck = document.getElementById('afterDeck');
 
 //Level initialized to 0
 //nextDateAppearance initialize to nullDate
@@ -111,13 +109,26 @@ function DeleteDeck(DocID) //it is expected that the id of the deck being delete
     });
 }
 
+//retrieve the total number of decks a user has
+async function getNumDecks(){
+  const decks = query(collection(db, "decks"), where("userID", "==", user));
+  const decksSnapshot = await getDocs(decks);
+  var numDecks = 0;
+  decksSnapshot.forEach((deck) => {
+    ++numDecks;
+  });
+  return numDecks;
+}
+
 //displays add deck button for less than 5 decks
 async function displayAddDecksButton()
 {
-  console.log(decks[0]);
-  if (decks.length < 5)
+  const numDecks = await getNumDecks();
+  console.log(numDecks)
+  if (numDecks < 5)
   {
     var addDecks = document.createElement("button")
+    addDecks.innerHTML = "+";
     addDecks.style.height = "25px";
     addDecks.style.width = "25px";
     addDecks.style.borderRadius = "15%";
@@ -125,21 +136,28 @@ async function displayAddDecksButton()
     addDecks.style.backgroundColor = "white";
     afterdeck.appendChild(addDecks);
   }
+  else
+  {
+    console.log("ERROR: More than 5 decks created")
+  }
 }
 
 // displays the user's decks on the home screen
 async function displayDecks()
 {
-  const decks = doc(db, "Decks");
-  for (let index = 0; index < decks.length; index++)
-  {
+  const decks = query(collection(db, "decks"), where("userID", "==", user));
+  const decksSnapshot = await getDocs(decks);
+  var index = 0;
+  decksSnapshot.forEach((deck) => {
     var deck_i = document.createElement("button");
     deck_i.id = "deck" + index.toString();
-    deck_i.innerHTML = decks[index].DeckID;
+    deck_i.innerHTML = deck.data().DeckName;
     deckArea.appendChild(deck_i);
-    deckArea.addEventListener("click", resolve);
-  }
-  await waitForDeckSelection;
+    deckArea.appendChild(document.createElement("br"));
+    //deckArea.addEventListener("click", resolve);
+  });
+  //await waitForDeckSelection;
 }
 
+displayDecks();
 displayAddDecksButton();

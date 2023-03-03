@@ -59,6 +59,7 @@ var pause;
 //of flashcards reviewed,...
 var numCorrect = 0;       //number of flashcards correctly answered
 var numIncorrect = 0;     //number of flashcards incorrectly answered
+var finishedReviewingAll = false;       //only applicable for continuous Review
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -490,7 +491,8 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   //if user has finished reviewing ALL flashcards for the day, inform them!
   if (reviewCardID.length === 0){
     //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
-    alert("No flashcards to be reviewed today!");
+    alert("No flashcards to be reviewed today! Returning to Home.");
+    finishedReviewingAll = true;
     return;
   }
 
@@ -540,8 +542,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
 
 async function main() {  
     
-    const DeckID = "math";                        //this will vary depending on which deck the user selected
-    sessionStorage.setItem("deckID", DeckID);     //should be set in home
+    const DeckID =  sessionStorage.getItem('DeckID');       //this will vary depending on which deck the user selected
 
     var deckDoc = doc(db, "decks", DeckID);
     var deck = await getDoc(deckDoc);
@@ -578,9 +579,10 @@ async function main() {
 
     console.log("return to the main!")
 
-    if (pause){
+    if (pause || finishedReviewingAll){
       //didn't finish review
       //return to home screen
+      sessionStorage.removeItem('DeckID');
       window.location.href = "./homeScreen.html";
     }
     else{

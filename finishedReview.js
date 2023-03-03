@@ -6,7 +6,7 @@ const numMissed = document.getElementById('numMissed');
 const score = document.getElementById('score');
 
 //display results from review session
-deckID.innerHTML = sessionStorage.getItem("deckID");
+deckID.innerHTML = sessionStorage.getItem("DeckID");
 const correct = sessionStorage.getItem("numCorrect");
 const incorrect = sessionStorage.getItem("numMissed");
 const total = parseInt(correct) + parseInt(incorrect);
@@ -25,6 +25,7 @@ async function main(){
     
     returnHomeButton.addEventListener("click", async e =>{
         e.preventDefault();
+        sessionStorage.removeItem('DeckID');                //remove saved cookie of DeckID
         window.location.href = "./homeScreen.html";
         return false;
     })
@@ -33,7 +34,7 @@ async function main(){
         e.preventDefault();
         console.log("Starting new review...");
         //Still need to link back to reviewSession.html
-        //window.location.href = "./reviewSession.html";
+        window.location.href = "./reviewSession.html";
         return false;
     })
 }

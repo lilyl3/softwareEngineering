@@ -116,15 +116,35 @@ function DeleteCard(DocID) //it is expected that the id of the card being delete
     });
 }
 
-function DeleteDeck(DocID) //it is expected that the id of the deck being deleted will be provided to this function
+async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
 {
   //*NOTE* secondary functionallity needed: if deck is empty, then delete the deck
   //                                        if deck is not empty, then confirm that the user wants to delete the deck
-  const DeckRef = doc(db, "decks", DocID);
-  deleteDoc(CardRef).then(() => {
+  const DeckRef = doc(db, "decks", DeckID);
+  const deckSearch = await db.collection('Flashcard').where('DeckID', '==', DeckID);
+  if (deckSearch.exists)//if cards are found in the deck delete the cards first, then the deck
+  {
+    deckSearch.get()
+    .then(function(querySnapshot) {
+        // Batch is created
+        var batch = db.batch();
+
+        querySnapshot.forEach(function(doc) {
+            // For each doc, add a delete operation to the batch
+            batch.delete(doc.ref);
+        });
+
+        // Commit the batch
+        batch.commit();
+    });
+  } else {//if cards are not found, delete the deck
+    deleteDoc(DeckRef).then(() => {
     console.log("Entire Document has been deleted successfully.")
     }).catch(error => {
     console.log(error);
     });
+  }
 }
+
+
 main();

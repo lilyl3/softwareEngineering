@@ -39,7 +39,7 @@ async function main() {
     // Prevent the default form redirect
     e.preventDefault();
 
-    const docRef = doc(db, "users", username.value);
+    const docRef = doc(db, "users", username.value.toLowerCase());
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -54,8 +54,8 @@ async function main() {
     else {
       // username is unique 
       // add user to database
-      await setDoc(doc(db, "users", username.value), {
-        username: username.value,
+      await setDoc(doc(db, "users", username.value.toLowerCase()), {
+        username: username.value.toLowerCase(),
         password: password.value
       });
 

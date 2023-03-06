@@ -137,6 +137,12 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
         // Commit the batch
         batch.commit();
     });
+
+    deleteDoc(DeckRef).then(() => {
+      console.log("Entire Document has been deleted successfully.")
+      }).catch(error => {
+      console.log(error);
+      });
   } else {//if cards are not found, delete the deck
     deleteDoc(DeckRef).then(() => {
     console.log("Entire Document has been deleted successfully.")

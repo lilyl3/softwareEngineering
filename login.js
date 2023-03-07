@@ -21,17 +21,10 @@ const app = initializeApp(firebaseConfig);
 // collection: "table" of users, decks, flashcards, etc.
 import {
     getFirestore,
-    addDoc,
-    collection,
-    query,
-    where,
     doc,
     updateDoc,
     getDoc,
-    deleteDoc, 
-    orderBy,
-    onSnapshot,
-    getDocs
+    deleteDoc
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
 let db = getFirestore(app);
@@ -39,118 +32,59 @@ let db = getFirestore(app);
 const form = document.getElementById('loginpage');
 const username = document.getElementById('username');
 const password = document.getElementById('password');
-const userbook = document.getElementById('userbook');
+var errorMessageOn = false;
 
-async function main() {  
-    // Listen to the form submission
-    form.addEventListener('submit', async e => {
-      // Prevent the default form redirect
-      e.preventDefault();
-      // Write a new message to the database collection "guestbook"
-      addDoc(collection(db, 'users'), {
-        username: username.value,
-        password: password.value
-      });
-      // clear message input fields
-      username.value = '';
-      password.value = '';
-      // Return false to avoid redirect
-      return false;
-    });
+async function main() {
+  // Listen to the form submission
+  form.addEventListener('submit', async e => {
+    // Prevent the default form redirect
+    e.preventDefault();
 
-    const querySnapshot = await getDocs(collection(db, "users"));
-    userbook.innerHTML = '';
-    querySnapshot.forEach((doc) => {
-        //console.log(`${doc.id} => ${doc.data().username}, ${doc.data().password}`);
-        const entry = document.createElement('p');
-        entry.textContent = doc.data().username + ': ' + doc.data().password;
-        userbook.appendChild(entry);
-    });
-}
+    //check to see if user entered valid username and password
+    //ASSUME: doc id = username
+    const docRef = doc(db, "users", username.value.toLowerCase());
+    const docSnap = await getDoc(docRef);
 
-function CardCreate(AnswerD, DeckIDD, LevelD, QuestionD, nextDateAppearanceD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
-{
-  //the 'D' was added to the variables to distinguish them as the data
-  //document ID for these will end up being randomized
-  db.collection("Flashcard").add({
-    Answer: AnswerD,
-    DeckID: DeckIDD,
-    Question: QuestionD,
-    nextDateAppearance: nextDateAppearanceD
+    if (docSnap.exists()) {
+      //username exists
+      //check if password is correct
+      const savedPassword = docSnap.data().password;
+      if (savedPassword === password.value){
+        //entered correct password & username
+        //go to home page
+        console.log("Correctly entered username and password...")
+        sessionStorage.setItem("userID", username.value.toLowerCase());
+        window.location.href = "./homeScreen.html";
+      }
+      else{
+        //password entered is incorrect
+        console.log("Incorrect password")
+        if (!errorMessageOn){
+          var error = document.getElementById('warningMessage');
+          error.innerHTML = "Incorrect username or password. Please try again.";
+          error.style.color = "red";
+          errorMessageOn = true;
+        }
+      }
+    }
+    else{
+      console.log("Not a valid username")
+      //user does NOT exist
+      //display error message -> username incorrect
+      if (!errorMessageOn){
+        var error = document.getElementById('warningMessage');
+        error.innerHTML = "Incorrect username or password. Please try again.";
+        error.style.color = "red";
+        errorMessageOn = true;
+      }
+    }
+
+    // clear message input fields
+    username.value = '';
+    password.value = '';
+    // Return false to avoid redirect
+    return false;
   });
 }
-
-function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
-{
-  //this variation allows us to specify the document ID rather than letting it randomize
-  db.collection("decks").doc(DeckNameD).set({
-    DeckName: DeckNameD,
-    reviewType: reviewTypeD,
-    userID: userIDD
-  });
-}
-
-function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
-{
-  //create reference variables for the document and the data that will be updated
-  const CardRef = doc(db, "Flashcard", DocID);
-  const data = {
-    Question: Question,
-    Answer: Answer
-  };
-  //function that updates the document; adds info to the console if successful or not
-  updateDoc(CardRef, data).then(docRef => {
-    console.log("Updates have been made to the card");
-  }).catch(error => {
-    console.log(error);
-    })
-}
-
-function DeleteCard(DocID) //it is expected that the id of the card being deleted will be provided to this function
-{
-  const CardRef = doc(db, "Flashcard", DocID);
-  deleteDoc(CardRef).then(() => {
-    console.log("Entire Document has been deleted successfully.")
-    }).catch(error => {
-    console.log(error);
-    });
-}
-
-async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
-{
-  //*NOTE* secondary functionallity needed: if deck is empty, then delete the deck
-  //                                        if deck is not empty, then confirm that the user wants to delete the deck
-  const DeckRef = doc(db, "decks", DeckID);
-  const deckSearch = await db.collection('Flashcard').where('DeckID', '==', DeckID);
-  if (deckSearch.exists)//if cards are found in the deck delete the cards first, then the deck
-  {
-    deckSearch.get()
-    .then(function(querySnapshot) {
-        // Batch is created
-        var batch = db.batch();
-
-        querySnapshot.forEach(function(doc) {
-            // For each doc, add a delete operation to the batch
-            batch.delete(doc.ref);
-        });
-
-        // Commit the batch
-        batch.commit();
-    });
-
-    deleteDoc(DeckRef).then(() => {
-      console.log("Entire Document has been deleted successfully.")
-      }).catch(error => {
-      console.log(error);
-      });
-  } else {//if cards are not found, delete the deck
-    deleteDoc(DeckRef).then(() => {
-    console.log("Entire Document has been deleted successfully.")
-    }).catch(error => {
-    console.log(error);
-    });
-  }
-}
-
 
 main();

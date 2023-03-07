@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Login page</title>
+        <title>Finished Review</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet"/>
         <style src = "./style.css">
@@ -15,21 +15,26 @@
             margin: 0 auto;
             color: black;
             text-align: auto;
-            max-width: 275px;
-            max-height: 450px;
+            max-width: 500px;
+            max-height: 500px;
             background-color: white;
             border-radius: 10px;            
           }
-          .loginButton {
-            width: 175px;
+          .newReviewButton {
+            width: 200px;
             background-color:#0041CA;
             color: white;
             border-radius: 12px;
             border: #0041CA;
             padding: 8px;
           }
-          .createAccount {
-            padding: 15px;  
+          .returnHomeButton {
+            width: 200px;
+            background-color:#d61212;
+            color: white;
+            border-radius: 12px;
+            border: #d61212;
+            padding: 8px;
           }
 
         </style>
@@ -37,7 +42,7 @@
 
     <body>
 
-      <script type="module" src="./login.js"></script>
+      <script type="module" src="./finishedReview.js"></script>
         <section id="loginpage">
               <br />
               <br />
@@ -46,37 +51,34 @@
               <br />
               <br />
               <br />
-            <h2>Sign into your account</h2>
               <br />
               <br />
               <br />
               <br />
-            <section class="loginBox">
+            <section>
               <form id="login">
                 <br />
-                <p id="warningMessage"></p>
-                <label class="label">Username</label>
                 <br />
-                <input type="text" id="username">
+                <p>Congratulations on finishing your review!</p>
+                <p>Deck Title:</p>
+                <p id = "deckID"></p>
                 <br />
-                <br/>
-                <label class="label">Password</label>
+                <p id="totalReviewed"></p>
+                <p id="numMissed"></p>
+                <p id="numCorrect"></p>
+                <p id="score"></p>
                 <br />
-                <input type="password" id="password">
-                <br/>
                 <br />
-                <button type="submit" class="loginButton">
-                  <span>Login</span>
+                <br />
+                <button type="button" id = "returnHome" class="returnHomeButton">
+                    <span>Return to Home Screen</span>
+                </button>
+                <button type="button" id = "startNewReview" class="newReviewButton">
+                  <span>Start new review</span>
                 </button>
                 <br />
                 <br />
-              </form>
-              <br />
-              <form id="createAccount">
-                <span>No account?</span>
-                <a href = "./createAccount.html">Create an account</a>
-              </form>
-            
+              </form>            
             </section>
         </section>
     </body>

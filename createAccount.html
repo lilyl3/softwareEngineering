@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Login page</title>
+        <title>Create Account</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet"/>
         <style src = "./style.css">
@@ -32,12 +32,16 @@
             padding: 15px;  
           }
 
+          span {
+            font-size: 10px;
+          }
+
         </style>
     </head>
 
     <body>
 
-      <script type="module" src="./login.js"></script>
+      <script type="module" src="./createAccount.js"></script>
         <section id="loginpage">
               <br />
               <br />
@@ -46,38 +50,44 @@
               <br />
               <br />
               <br />
-            <h2>Sign into your account</h2>
-              <br />
-              <br />
+            <h2>Create an account</h2>
               <br />
               <br />
             <section class="loginBox">
               <form id="login">
                 <br />
-                <p id="warningMessage"></p>
+                <br />
                 <label class="label">Username</label>
                 <br />
                 <input type="text" id="username">
-                <br />
                 <br/>
+                <p id = "warningMessage"></p>
+                <br/>
+                <span>It is recommended that a strong
+                    <br />password has the following:
+                    <br />- at least 8 characters
+                    <br />- at least one uppercase letter
+                    <br />- at least one lowercase letter
+                    <br />- at least one special character
+                </span>
+                <br />
+                <br />
                 <label class="label">Password</label>
                 <br />
                 <input type="password" id="password">
                 <br/>
                 <br />
-                <button type="submit" class="loginButton">
-                  <span>Login</span>
+                <button type="submit" id = "submitButton" class="loginButton">
+                  <span>Create</span>
                 </button>
                 <br />
                 <br />
-              </form>
-              <br />
-              <form id="createAccount">
-                <span>No account?</span>
-                <a href = "./createAccount.html">Create an account</a>
-              </form>
-            
+              </form>            
             </section>
+            <!--
+              <i class="material-icons">login</i>
+              <section id="userbook"></section>
+            <section id = "reviewSession"></section>-->
         </section>
     </body>
 </html>

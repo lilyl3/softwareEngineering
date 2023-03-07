@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Home Screen</title>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"/>
+        <style src = "./style.css">
+          body {
+            background-color: #0041CA;
+            color: white;
+            text-align: center;
+          }
+          form {
+            margin: 0 auto;
+            color: black;
+            text-align: auto;
+            max-width: 275px;
+            max-height: 450px;
+            background-color: white;
+            border-radius: 10px;            
+          }
+          .logoutButton {
+            width: 75px;
+            background-color:#0041CA;
+            color: white;
+            border-radius: 12px;
+            border: #0041CA;
+            padding: 8px;
+          }
+          .createAccount {
+            padding: 15px;  
+          }
+
+          span {
+            font-size: 28px;
+            color: #0041CA;
+          }
+
+          div {
+            background-color: white;
+            padding: 8px;
+            color: black;
+            font-size: 28px;
+          }
+
+        </style>
+    </head>
+
+    <body>
+      <div>
+        <span style="text-align:center;">Flashcard App Name</span>
+        <button style="float: right;" class="logoutButton" type = "button" id ="logoutButton">Logout</button>
+      </div>
+      <script type="module" src="./homeScreen.js"></script>
+        <section id="deckArea"></section>
+        <section id="afterDeck"></section>
+    </body>
+</html>

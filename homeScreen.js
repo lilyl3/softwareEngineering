@@ -27,66 +27,49 @@ import {
     where,
     doc,
     updateDoc,
-    getDoc,
-    deleteDoc, 
+    getDoc, 
     orderBy,
+    deleteDoc,
     onSnapshot,
     getDocs
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
 let db = getFirestore(app);
 
-const form = document.getElementById('loginpage');
-const username = document.getElementById('username');
-const password = document.getElementById('password');
-const userbook = document.getElementById('userbook');
+//CONSTANTs
+const nullDate = "2023/01/01";
+const defaultOrderType = "Random";
+const user = sessionStorage.getItem('userID');
 
-async function main() {  
-    // Listen to the form submission
-    form.addEventListener('submit', async e => {
-      // Prevent the default form redirect
-      e.preventDefault();
-      // Write a new message to the database collection "guestbook"
-      addDoc(collection(db, 'users'), {
-        username: username.value,
-        password: password.value
-      });
-      // clear message input fields
-      username.value = '';
-      password.value = '';
-      // Return false to avoid redirect
-      return false;
-    });
+//Document Elements
+const deckArea = document.getElementById('deckArea');
+const afterdeck = document.getElementById('afterDeck');
+const logoutButton = document.getElementById('logoutButton');
 
-    const querySnapshot = await getDocs(collection(db, "users"));
-    userbook.innerHTML = '';
-    querySnapshot.forEach((doc) => {
-        //console.log(`${doc.id} => ${doc.data().username}, ${doc.data().password}`);
-        const entry = document.createElement('p');
-        entry.textContent = doc.data().username + ': ' + doc.data().password;
-        userbook.appendChild(entry);
-    });
-}
-
-function CardCreate(AnswerD, DeckIDD, LevelD, QuestionD, nextDateAppearanceD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
+//Level initialized to 0
+//nextDateAppearance initialize to nullDate
+function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
 {
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
   db.collection("Flashcard").add({
     Answer: AnswerD,
+    Level: 0,
     DeckID: DeckIDD,
     Question: QuestionD,
-    nextDateAppearance: nextDateAppearanceD
+    nextDateAppearance: nullDate
   });
 }
 
+//OrderType by default = "Random"
 function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
 {
   //this variation allows us to specify the document ID rather than letting it randomize
   db.collection("decks").doc(DeckNameD).set({
     DeckName: DeckNameD,
     reviewType: reviewTypeD,
-    userID: userIDD
+    userID: userIDD,
+    orderType: defaultOrderType
   });
 }
 
@@ -152,5 +135,74 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
   }
 }
 
+//retrieve the total number of decks a user has
+async function getNumDecks(){
+  const decks = query(collection(db, "decks"), where("userID", "==", user));
+  const decksSnapshot = await getDocs(decks);
+  var numDecks = 0;
+  decksSnapshot.forEach((deck) => {
+    ++numDecks;
+  });
+  return numDecks;
+}
 
-main();
+//displays add deck button for less than 5 decks
+async function displayAddDecksButton()
+{
+  const numDecks = await getNumDecks();
+  console.log(numDecks)
+  if (numDecks < 5)
+  {
+    var addDecks = document.createElement("button")
+    addDecks.innerHTML = "+";
+    addDecks.style.height = "25px";
+    addDecks.style.width = "25px";
+    addDecks.style.borderRadius = "15%";
+    addDecks.style.color = "black";
+    addDecks.style.backgroundColor = "white";
+    afterdeck.appendChild(addDecks);
+  }
+  else
+  {
+    console.log("ERROR: More than 5 decks created")
+  }
+}
+
+// displays the user's decks on the home screen
+async function displayDecks()
+{
+  const decks = query(collection(db, "decks"), where("userID", "==", user));
+  const decksSnapshot = await getDocs(decks);
+  var index = 0;
+  decksSnapshot.forEach((deck) => {
+    var deck_i = document.createElement("button");
+    deck_i.id = "deck" + index.toString();
+    deck_i.innerHTML = deck.data().DeckName;
+    deckArea.appendChild(deck_i);
+    deckArea.appendChild(document.createElement("br"));
+
+    //listen to see if user clicks on a deck
+    //If so, start a review session
+    deck_i.addEventListener("click", async e =>{
+      //save cookie of deck clicked by user
+      sessionStorage.setItem("DeckID", deck.data().DeckName);
+      window.location.href = "./reviewSession.html";
+    });
+  });
+  //await waitForDeckSelection;
+}
+
+//listen to see if user clicks on the logout button
+//If so, return to login page
+async function listen4Logout(){
+  logoutButton.addEventListener('click', async e => {
+    e.preventDefault();         // Prevent the default form redirect
+    console.log("Logging out")
+    sessionStorage.clear();     // Clear all saved "cookies"
+    window.location.href = "./login.html";
+  });
+}
+
+listen4Logout();
+displayDecks();
+displayAddDecksButton();

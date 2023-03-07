@@ -180,6 +180,7 @@ async function displayDecks()
     deck_i.innerHTML = deck.data().DeckName;
     deckArea.appendChild(deck_i);
     deckArea.appendChild(document.createElement("br"));
+    deckArea.appendChild(document.createElement("br"));
 
     //listen to see if user clicks on a deck
     //If so, start a review session

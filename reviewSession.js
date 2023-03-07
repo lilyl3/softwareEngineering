@@ -462,9 +462,9 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     }
   });
 
-  var newCards2Review = newCardID.length;     //total number of new cards to be reviewed 
-  var oldCards2Review = total - newCards2Review;
-  //var oldCards2Review = reviewCardID.length;  //total number of OLD cards to be reviewed
+  var newCards2Review = 0;     //total number of new cards to be reviewed 
+  //var oldCards2Review = total - newCards2Review;
+  var oldCards2Review = reviewCardID.length;  //total number of OLD cards to be reviewed
 
   console.log("Review cards: ", reviewCardID);
   if (!resume && newCardID.length > 0){
@@ -478,10 +478,11 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     //check if number of new cards left > fixed numberNewCards
     if (newCardID.length >= numberNewCards){
       reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
-      //newCards2Review = numberNewCards;
+      newCards2Review = numberNewCards;
     }
     else{
       reviewCardID = reviewCardID.concat(newCardID);
+      newCards2Review = newCardID.length;
     }
     //append level = 0 of new cards
     reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
@@ -528,11 +529,11 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   }
   console.log("After reorder LowHigh: ", reviewCardID);
 
-  if (newCards2Review > 0){
-    //set heading indicating the number of NEW and OLD cards being reviewed
-    var newOldCards = document.getElementById('newOldCards');
-    newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
-  }
+  //if (newCards2Review > 0){
+  //set heading indicating the number of NEW and OLD cards being reviewed
+  var newOldCards = document.getElementById('newOldCards');
+  newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
+  //}
 
   //Start reviewing Flashcards
   await reviewingFlashcards(reviewCardID, "Continuous");

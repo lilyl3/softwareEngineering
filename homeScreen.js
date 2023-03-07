@@ -22,15 +22,14 @@ const app = initializeApp(firebaseConfig);
 import {
     getFirestore,
     addDoc,
+    setDoc,
     collection,
     query,
     where,
     doc,
     updateDoc,
     getDoc, 
-    orderBy,
     deleteDoc,
-    onSnapshot,
     getDocs
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
@@ -48,27 +47,38 @@ const logoutButton = document.getElementById('logoutButton');
 
 //Level initialized to 0
 //nextDateAppearance initialize to nullDate
-function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
+async function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
 {
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
-  db.collection("Flashcard").add({
-    Answer: AnswerD,
-    Level: 0,
+
+  const flashcards = query(collection(db, "Flashcard"));
+  const flashcardsSnap = await getDocs(flashcards);
+  var numFlashcards = 0;        //this will be the ID of the flashcard
+
+  flashcardsSnap.forEach((flashcard) => {
+    ++numFlashcards;
+  });
+
+  ++numFlashcards;            //add 1 since we are adding a new flashcard in
+
+  await setDoc(doc(db, "Flashcard", numFlashcards.toString()), {
     DeckID: DeckIDD,
     Question: QuestionD,
+    Answer: AnswerD,
+    Level: 0,
     nextDateAppearance: nullDate
   });
 }
 
 //OrderType by default = "Random"
-function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
+async function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
 {
   //this variation allows us to specify the document ID rather than letting it randomize
-  db.collection("decks").doc(DeckNameD).set({
+  await setDoc(doc(db, "decks", DeckNameD), {
+    userID: userIDD,
     DeckName: DeckNameD,
     reviewType: reviewTypeD,
-    userID: userIDD,
     orderType: defaultOrderType
   });
 }
@@ -103,36 +113,30 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
 {
   //*NOTE* secondary functionallity needed: if deck is empty, then delete the deck
   //                                        if deck is not empty, then confirm that the user wants to delete the deck
-  const DeckRef = doc(db, "decks", DeckID);
-  const deckSearch = await db.collection('Flashcard').where('DeckID', '==', DeckID);
-  if (deckSearch.exists)//if cards are found in the deck delete the cards first, then the deck
+  const deckSearch = query(collection(db, "Flashcard"), where('DeckID', '==', DeckID));
+
+  if (!deckSearch.empty)//if cards are found in the deck delete the cards first, then the deck
   {
-    deckSearch.get()
-    .then(function(querySnapshot) {
-        // Batch is created
-        var batch = db.batch();
+    const deckSnapshot = await getDocs(deckSearch); //get the flashcards in the deck
+    var flashcardIDs = [];
+    var index = 0;
 
-        querySnapshot.forEach(function(doc) {
-            // For each doc, add a delete operation to the batch
-            batch.delete(doc.ref);
-        });
-
-        // Commit the batch
-        batch.commit();
+    deckSnapshot.forEach((flashcard) =>{
+      flashcardIDs[index] = flashcard.id;
+      ++index;
     });
 
-    deleteDoc(DeckRef).then(() => {
-      console.log("Entire Document has been deleted successfully.")
-      }).catch(error => {
-      console.log(error);
-      });
-  } else {//if cards are not found, delete the deck
-    deleteDoc(DeckRef).then(() => {
+    for (let index = 0; index < flashcardIDs.length; index++){
+      DeleteCard(flashcardIDs[index]);
+    }
+  }
+
+  //once flashcards deleted or no flashcards, delete deck
+  await deleteDoc(doc(db, "decks", DeckID)).then(() => {
     console.log("Entire Document has been deleted successfully.")
     }).catch(error => {
     console.log(error);
     });
-  }
 }
 
 //retrieve the total number of decks a user has
@@ -203,6 +207,20 @@ async function listen4Logout(){
     window.location.href = "./login.html";
   });
 }
+
+//await CardCreate("5", "division", "45/9");
+// await CardCreate("8", "division", "56/7");
+// await CardCreate("5", "division", "27/3");      //incorrect card; ID = 11
+// await DeckCreate("subtraction", "Daily", user);
+// await CardCreate("3", "subtraction", "12-9");
+// await CardCreate("-4", "subtraction", "5-9");
+//await CardCreate("5", "subtraction", "5-0");    //ID = 14
+
+//UpdateCard ("11", "27/3", "9");
+//DeleteCard("14");
+
+//DeleteDeck("subtraction")
+//DeleteDeck("division");
 
 listen4Logout();
 displayDecks();

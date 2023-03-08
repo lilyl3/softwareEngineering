@@ -23,6 +23,9 @@ import {
     getFirestore,
     doc,
     getDoc,
+    query,
+    getDocs,
+    collection,
     setDoc
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
@@ -42,7 +45,22 @@ async function main() {
     const docRef = doc(db, "users", username.value.toLowerCase());
     const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
+    const users = query(collection(db,"users"));
+    const userList = await getDocs(users);
+
+    var count = 0;
+    userList.forEach(() => {
+      ++count;
+    });
+
+    if (count >= 10)
+    {
+      var warning = document.getElementById('warningMessage');
+      warning.innerHTML = "Unable to create user profile. Maximum number of profiles reached";
+      warning.style.color = "red";
+      warningOn = true;
+    }
+    else if (docSnap.exists()) {
       //write warning message if not already on
       if (!warningOn){
         var warning = document.getElementById('warningMessage');
@@ -51,6 +69,13 @@ async function main() {
         warningOn = true;
       }
     } 
+    else if (password.value.length < 6)
+    {
+      var warning = document.getElementById('warningMessage');
+      warning.innerHTML = "Password must be at least 6 characters long";
+      warning.style.color = "red";
+      warningOn = true;
+    }
     else {
       // username is unique 
       // add user to database

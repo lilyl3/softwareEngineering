@@ -42,7 +42,7 @@ async function main() {
 
     //check to see if user entered valid username and password
     //ASSUME: doc id = username
-    const docRef = doc(db, "users", username.value);
+    const docRef = doc(db, "users", username.value.toLowerCase());
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -53,7 +53,7 @@ async function main() {
         //entered correct password & username
         //go to home page
         console.log("Correctly entered username and password...")
-        sessionStorage.setItem("userID", username.value);
+        sessionStorage.setItem("userID", username.value.toLowerCase());
         window.location.href = "./homeScreen.html";
       }
       else{

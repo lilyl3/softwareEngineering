@@ -52,14 +52,24 @@ console.log(nowDate);
 const reviewSession = document.getElementById('reviewSession');
 const reviewAnswerSession = document.getElementById('reviewAnswerSession');
 const correctButtons = document.getElementById('correctButtons');
+const pauseButton = document.getElementById('pauseButton');
 
 
 var correctlyAnswered; //boolean; true if user correctly answered question; else, false
-var pause;
+var pause = false;
 //of flashcards reviewed,...
-var numCorrect = 0;       //number of flashcards correctly answered
-var numIncorrect = 0;     //number of flashcards incorrectly answered
+var numCorrect = 0;                     //number of flashcards correctly answered
+var numIncorrect = 0;                   //number of flashcards incorrectly answered
 var finishedReviewingAll = false;       //only applicable for continuous Review
+                                        //true if user finished reviewing all flashcards
+
+//check to see if user pressed the pause button
+async function listen2PauseReview(){
+  pauseButton.addEventListener("click", async e =>{
+    e.preventDefault();
+    pause = true;                       //set pause to true
+  })
+}
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -101,24 +111,31 @@ function waitForRevealAnswer() {
     revealButton.style.border = "white";
     reviewSession.appendChild(revealButton);
 
-    var pauseReview = document.createElement('button');
-    pauseReview.id = "pauseReview";
-    pauseReview.innerHTML = "Pause Review";
-    pauseReview.style.padding = "15px";
-    pauseReview.style.width = "25%";
-    pauseReview.style.fontSize = "18px";
-    reviewSession.appendChild(pauseReview);
-
     revealButton.addEventListener("click", handler => {
       console.log('pressed reveal');
       pause = false;
       resolve(handler);
     }, { once: true });
-    pauseReview.addEventListener("click", handler => {
-      console.log('pressed pause review');
-      pause = true;
-      resolve(handler);
+
+    pauseButton.addEventListener("click", handler => {
+        console.log('pressed pause review');
+        pause = true;
+        resolve(handler);
     }, { once: true });
+
+    // var pauseReview = document.createElement('button');
+    // pauseReview.id = "pauseReview";
+    // pauseReview.innerHTML = "Pause Review";
+    // pauseReview.style.padding = "15px";
+    // pauseReview.style.width = "25%";
+    // pauseReview.style.fontSize = "18px";
+    // reviewSession.appendChild(pauseReview);
+
+    // pauseReview.addEventListener("click", handler => {
+    //   console.log('pressed pause review');
+    //   pause = true;
+    //   resolve(handler);
+    // }, { once: true });
   })
 }
 
@@ -149,14 +166,6 @@ function waitForCorrectIncorrectResponse() {
     incorrect.style.border = "none";
     correctButtons.appendChild(incorrect);
     //reviewAnswerSession.appendChild(incorrect);
-
-    var pauseReview = document.createElement('button');
-    pauseReview.id = "pauseReview";
-    pauseReview.innerHTML = "Pause Review";
-    pauseReview.style.padding = "15px";
-    pauseReview.style.width = "25%";
-    pauseReview.style.fontSize = "18px";
-    correctButtons.appendChild(pauseReview);
     
     correct.addEventListener("click", handler => {
       correctlyAnswered = true;
@@ -173,19 +182,34 @@ function waitForCorrectIncorrectResponse() {
       pause = false;
       resolve(handler);
     }, { once: true });
-    pauseReview.addEventListener("click", handler => {
-      console.log('pressed pause');
+    pauseButton.addEventListener("click", handler => {
+      console.log('pressed pause review');
       pause = true;
       resolve(handler);
     }, { once: true });
-})}
+
+    // var pauseReview = document.createElement('button');
+    // pauseReview.id = "pauseReview";
+    // pauseReview.innerHTML = "Pause Review";
+    // pauseReview.style.padding = "15px";
+    // pauseReview.style.width = "25%";
+    // pauseReview.style.fontSize = "18px";
+    // correctButtons.appendChild(pauseReview);
+
+    // pauseReview.addEventListener("click", handler => {
+    //   console.log('pressed pause');
+    //   pause = true;
+    //   resolve(handler);
+    // }, { once: true });
+  })
+}
 
 //recursive call = ensures that user does want to pause the session
 async function handlePauseRevealAnswer(){
   await waitForRevealAnswer();
-  //remove the reveal button once the user has pressed it
+  //remove the reveal button once the user has pressed some button
   reviewSession.removeChild(document.getElementById('revealButton'));
-  reviewSession.removeChild(document.getElementById('pauseReview'));
+  //reviewSession.removeChild(document.getElementById('pauseReview'));
 
   if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
     pause = false;
@@ -217,7 +241,7 @@ async function handlePauseCorrectIncorrectResponse(answer){
   reviewAnswerSession.removeChild(document.getElementById('flashcardAnswer'));
   correctButtons.removeChild(document.getElementById('correct'));
   correctButtons.removeChild(document.getElementById('incorrect'));
-  correctButtons.removeChild(document.getElementById('pauseReview'));
+  //correctButtons.removeChild(document.getElementById('pauseReview'));
 
   if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
     pause = false;
@@ -262,14 +286,31 @@ async function reviewingFlashcards(reviewOrder, reviewType){
     var answer = flashcardDoc.data().Answer;  
     //to add style in dynamically: https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
 
-    await handlePauseRevealAnswer();
+    //check if user has paused review
+    if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === true){
+      break;
+    }
+    else{
+      //Case 1: pause === false
+      //Case 2: pause === true BUT user decides not to pause
+      pause = false;
+      await handlePauseRevealAnswer();
+    }
+
     if (pause){
       console.log("User has paused review session")
       break;
     }
 
-    //***** Reveal answer to question  &% wait for user to respond *************
-    await handlePauseCorrectIncorrectResponse(answer);
+    //***** Reveal answer to question & wait for user to respond *************
+    //check if user has paused review
+    if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === true){
+      break;
+    }
+    else{
+      pause = false;
+      await handlePauseCorrectIncorrectResponse(answer);
+    }
     if (pause){
       console.log("User has paused review session")
       break;
@@ -462,9 +503,9 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     }
   });
 
-  var newCards2Review = newCardID.length;     //total number of new cards to be reviewed 
-  var oldCards2Review = total - newCards2Review;
-  //var oldCards2Review = reviewCardID.length;  //total number of OLD cards to be reviewed
+  var newCards2Review = 0;     //total number of new cards to be reviewed 
+  //var oldCards2Review = total - newCards2Review;
+  var oldCards2Review = reviewCardID.length;  //total number of OLD cards to be reviewed
 
   console.log("Review cards: ", reviewCardID);
   if (!resume && newCardID.length > 0){
@@ -478,10 +519,11 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     //check if number of new cards left > fixed numberNewCards
     if (newCardID.length >= numberNewCards){
       reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
-      //newCards2Review = numberNewCards;
+      newCards2Review = numberNewCards;
     }
     else{
       reviewCardID = reviewCardID.concat(newCardID);
+      newCards2Review = newCardID.length;
     }
     //append level = 0 of new cards
     reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
@@ -528,11 +570,11 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   }
   console.log("After reorder LowHigh: ", reviewCardID);
 
-  if (newCards2Review > 0){
-    //set heading indicating the number of NEW and OLD cards being reviewed
-    var newOldCards = document.getElementById('newOldCards');
-    newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
-  }
+  //if (newCards2Review > 0){
+  //set heading indicating the number of NEW and OLD cards being reviewed
+  var newOldCards = document.getElementById('newOldCards');
+  newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
+  //}
 
   //Start reviewing Flashcards
   await reviewingFlashcards(reviewCardID, "Continuous");
@@ -596,4 +638,5 @@ async function main() {
 
 }
 
+listen2PauseReview();
 main();

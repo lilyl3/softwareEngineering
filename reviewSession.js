@@ -96,9 +96,6 @@ function reorderByLowHigh(arrLevel, arrID, maxLevel){
   return tempReviewID;
 }
 
-function remove(){
-  console.log("remove event listener")
-}
 //waits for user to indicate that they want to see answer to flashcard question
 function waitForRevealAnswer() {
   return new Promise((resolve) => {
@@ -110,32 +107,36 @@ function waitForRevealAnswer() {
     revealButton.style.padding = "15px";
     revealButton.style.width = "25%";
     revealButton.style.fontSize = "18px";
-    //revealButton.style.selfAlign = "center";      //Anthony used to align center, but with pause button
     revealButton.style.border = "white";
     reviewSession.appendChild(revealButton);
+
+    //only resolve key press if user pressed enter
+    const enterPressed = (e) => {
+      //keyCode 13 = enter or return key
+      if (e.keyCode === 13) {
+        console.log("Enter pressed")
+        pause = false;
+        document.removeEventListener('keydown', enterPressed);  //remove EventListener if clicked on button
+        resolve(e);
+      }
+    }
 
     revealButton.addEventListener("click", handler => {
       console.log('pressed reveal');
       pause = false;
+      document.removeEventListener('keydown', enterPressed);
       resolve(handler);
     }, { once: true });
 
     pauseButton.addEventListener("click", handler => {
         console.log('pressed pause review');
         pause = true;
+        document.removeEventListener('keydown', enterPressed);  //remove EventListener if users clicked on button
         resolve(handler);
     }, { once: true });
 
-    //enter = reveal
-    document.addEventListener('keydown', e => {
-      e.preventDefault();
-      if (e.key.toLowerCase() === 'enter') {
-          console.log("enter pressed")
-          pause = false;
-          document.removeEventListener('keydown', e, true);
-          resolve(e);
-      }
-    }, true);
+    //listen to see if user pressed enter = reveal answer
+    document.addEventListener('keydown', enterPressed);
   })
 }
 
@@ -165,13 +166,37 @@ function waitForCorrectIncorrectResponse() {
     incorrect.style.color = "white";
     incorrect.style.border = "none";
     correctButtons.appendChild(incorrect);
-    //reviewAnswerSession.appendChild(incorrect);
+    
+    //resolve key press only if user pressed 0 or 1
+    const pressed01 = (e) => {
+      //user presssed 0 = incorrect = keyCode 96
+      if(e.keyCode === 96){
+        console.log("0 pressed")
+        pause = false;
+        correctlyAnswered = false;
+        document.removeEventListener('keydown', pressed01);
+        resolve(e);
+      }
+      
+      //user pressed 1 = correct = keyCode 97
+      if (e.keyCode === 97){
+        console.log("1 pressed")
+        pause = false;
+        correctlyAnswered = true;
+        document.removeEventListener('keydown', pressed01);
+        resolve(e);
+      }
+    }
+
+    //listen for any key press
+    document.addEventListener('keydown', pressed01);
     
     correct.addEventListener("click", handler => {
       correctlyAnswered = true;
       pause = false;
       // ++numCorrect;
       // console.log("numCorrect: ", numCorrect)
+      document.removeEventListener('keydown', pressed01);
       resolve(handler);
     }, { once: true });
 
@@ -180,6 +205,7 @@ function waitForCorrectIncorrectResponse() {
       correctlyAnswered = false;
       // ++numIncorrect;
       // console.log("numInCorrect: ", numIncorrect)
+      document.removeEventListener('keydown', pressed01);
       pause = false;
       resolve(handler);
     }, { once: true });
@@ -187,28 +213,9 @@ function waitForCorrectIncorrectResponse() {
     pauseButton.addEventListener("click", handler => {
       console.log('pressed pause review');
       pause = true;
+      document.removeEventListener('keydown', pressed01);
       resolve(handler);
     }, { once: true });
-
-    //hot keys
-    //0 for incorrect
-    document.addEventListener('keydown', e => {
-      e.preventDefault();
-      if (e.key.toLowerCase() === '0') {
-          console.log("0 pressed")
-          pause = false;
-          correctlyAnswered = false;
-          document.removeEventListener('keydown', e, true);
-          resolve(e);
-      }
-      if (e.key.toLowerCase() === '1') {
-        console.log("1 pressed")
-        pause = false;
-        correctlyAnswered = true;
-        document.removeEventListener('keydown', e, true);
-        resolve(e);
-      }
-    }, true);
   })
 }
 
@@ -217,8 +224,6 @@ async function handlePauseRevealAnswer(){
   await waitForRevealAnswer();
   //remove the reveal button once the user has pressed some button
   reviewSession.removeChild(document.getElementById('revealButton'));
-  document.removeEventListener('keydown', remove());
-  //reviewSession.removeChild(document.getElementById('pauseReview'));
 
   if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
     pause = false;
@@ -245,7 +250,6 @@ async function handlePauseCorrectIncorrectResponse(answer){
   reviewAnswerSession.appendChild(flashcardAnswer);
 
   await waitForCorrectIncorrectResponse();
-  document.removeEventListener('keydown', remove());
   //remove all dynamically added children
   //answerHeading.innerHTML = "";
   reviewAnswerSession.removeChild(document.getElementById('flashcardAnswer'));

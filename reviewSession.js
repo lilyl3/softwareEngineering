@@ -132,10 +132,10 @@ function waitForRevealAnswer() {
       if (e.key.toLowerCase() === 'enter') {
           console.log("enter pressed")
           pause = false;
-          document.removeEventListener('keydown', remove());
+          document.removeEventListener('keydown', e, true);
           resolve(e);
       }
-    });
+    }, true);
   })
 }
 
@@ -198,17 +198,17 @@ function waitForCorrectIncorrectResponse() {
           console.log("0 pressed")
           pause = false;
           correctlyAnswered = false;
-          document.removeEventListener('keydown', remove());
+          document.removeEventListener('keydown', e, true);
           resolve(e);
       }
       if (e.key.toLowerCase() === '1') {
         console.log("1 pressed")
         pause = false;
         correctlyAnswered = true;
-        document.removeEventListener('keydown', remove());
+        document.removeEventListener('keydown', e, true);
         resolve(e);
       }
-    });
+    }, true);
   })
 }
 
@@ -217,6 +217,7 @@ async function handlePauseRevealAnswer(){
   await waitForRevealAnswer();
   //remove the reveal button once the user has pressed some button
   reviewSession.removeChild(document.getElementById('revealButton'));
+  document.removeEventListener('keydown', remove());
   //reviewSession.removeChild(document.getElementById('pauseReview'));
 
   if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
@@ -244,6 +245,7 @@ async function handlePauseCorrectIncorrectResponse(answer){
   reviewAnswerSession.appendChild(flashcardAnswer);
 
   await waitForCorrectIncorrectResponse();
+  document.removeEventListener('keydown', remove());
   //remove all dynamically added children
   //answerHeading.innerHTML = "";
   reviewAnswerSession.removeChild(document.getElementById('flashcardAnswer'));

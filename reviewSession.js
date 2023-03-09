@@ -96,6 +96,9 @@ function reorderByLowHigh(arrLevel, arrID, maxLevel){
   return tempReviewID;
 }
 
+function remove(){
+  console.log("remove event listener")
+}
 //waits for user to indicate that they want to see answer to flashcard question
 function waitForRevealAnswer() {
   return new Promise((resolve) => {
@@ -123,19 +126,16 @@ function waitForRevealAnswer() {
         resolve(handler);
     }, { once: true });
 
-    // var pauseReview = document.createElement('button');
-    // pauseReview.id = "pauseReview";
-    // pauseReview.innerHTML = "Pause Review";
-    // pauseReview.style.padding = "15px";
-    // pauseReview.style.width = "25%";
-    // pauseReview.style.fontSize = "18px";
-    // reviewSession.appendChild(pauseReview);
-
-    // pauseReview.addEventListener("click", handler => {
-    //   console.log('pressed pause review');
-    //   pause = true;
-    //   resolve(handler);
-    // }, { once: true });
+    //enter = reveal
+    document.addEventListener('keydown', e => {
+      e.preventDefault();
+      if (e.key.toLowerCase() === 'enter') {
+          console.log("enter pressed")
+          pause = false;
+          document.removeEventListener('keydown', remove());
+          resolve(e);
+      }
+    });
   })
 }
 
@@ -170,37 +170,45 @@ function waitForCorrectIncorrectResponse() {
     correct.addEventListener("click", handler => {
       correctlyAnswered = true;
       pause = false;
-      ++numCorrect;
-      console.log("numCorrect: ", numCorrect)
+      // ++numCorrect;
+      // console.log("numCorrect: ", numCorrect)
       resolve(handler);
     }, { once: true });
+
     incorrect.addEventListener("click", handler => {
       console.log('incorrect click');
       correctlyAnswered = false;
-      ++numIncorrect;
-      console.log("numInCorrect: ", numIncorrect)
+      // ++numIncorrect;
+      // console.log("numInCorrect: ", numIncorrect)
       pause = false;
       resolve(handler);
     }, { once: true });
+
     pauseButton.addEventListener("click", handler => {
       console.log('pressed pause review');
       pause = true;
       resolve(handler);
     }, { once: true });
 
-    // var pauseReview = document.createElement('button');
-    // pauseReview.id = "pauseReview";
-    // pauseReview.innerHTML = "Pause Review";
-    // pauseReview.style.padding = "15px";
-    // pauseReview.style.width = "25%";
-    // pauseReview.style.fontSize = "18px";
-    // correctButtons.appendChild(pauseReview);
-
-    // pauseReview.addEventListener("click", handler => {
-    //   console.log('pressed pause');
-    //   pause = true;
-    //   resolve(handler);
-    // }, { once: true });
+    //hot keys
+    //0 for incorrect
+    document.addEventListener('keydown', e => {
+      e.preventDefault();
+      if (e.key.toLowerCase() === '0') {
+          console.log("0 pressed")
+          pause = false;
+          correctlyAnswered = false;
+          document.removeEventListener('keydown', remove());
+          resolve(e);
+      }
+      if (e.key.toLowerCase() === '1') {
+        console.log("1 pressed")
+        pause = false;
+        correctlyAnswered = true;
+        document.removeEventListener('keydown', remove());
+        resolve(e);
+      }
+    });
   })
 }
 
@@ -246,6 +254,15 @@ async function handlePauseCorrectIncorrectResponse(answer){
   if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
     pause = false;
     await handlePauseCorrectIncorrectResponse(answer);
+  }
+
+  if (correctlyAnswered){
+    ++numCorrect;
+    console.log("Correct: ", numCorrect)
+  }
+  else{
+    ++numIncorrect;
+    console.log("Incorrect: ", numIncorrect)
   }
 
   //if pause = false, then user indicated whether they correctly/incorrectly answered the question
@@ -583,59 +600,55 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
 }
 
 async function main() {  
+  const DeckID =  sessionStorage.getItem('DeckID');       //this will vary depending on which deck the user selected
+
+  var deckDoc = doc(db, "decks", DeckID);
+  var deck = await getDoc(deckDoc);
+  const reviewType = deck.data().reviewType;
+  const orderType = deck.data().orderType;
+  console.log("OrderType: ", orderType)
+
+  if (reviewType == "Daily"){
+    console.log("Daily")
+    await dailyReview(DeckID, orderType);
+  }
+  else if (reviewType == "Continuous"){
+    console.log("Continuous")
+    const resumeDate = deck.data().resume;
+    var resume = false;
+    console.log("resumeDate: ",  resumeDate)
+    if (resumeDate === nowDate){
+      resume = true;
+      console.log("resuming...")
+    }
+    const numNewCards = deck.data().numNewCards;
+    await continuousReview(DeckID, orderType, numNewCards, resume);
+
+    //only need to update resume for decks with reviewType = Continuous
+    await updateDoc(deckDoc, {
+      resume: nowDate
+    });
     
-    const DeckID =  sessionStorage.getItem('DeckID');       //this will vary depending on which deck the user selected
-
-    var deckDoc = doc(db, "decks", DeckID);
-    var deck = await getDoc(deckDoc);
-    const reviewType = deck.data().reviewType;
-    const orderType = deck.data().orderType;
-    console.log("OrderType: ", orderType)
-
-    if (reviewType == "Daily"){
-      console.log("Daily")
-      await dailyReview(DeckID, orderType);
+    console.log("updated resume field!")
     }
-    else if (reviewType == "Continuous"){
-      console.log("Continuous")
-      const resumeDate = deck.data().resume;
-      var resume = false;
-      console.log("resumeDate: ",  resumeDate)
-      if (resumeDate === nowDate){
-        resume = true;
-        console.log("resuming...")
-      }
-      const numNewCards = deck.data().numNewCards;
-      await continuousReview(DeckID, orderType, numNewCards, resume);
+  else{
+    console.log("ERROR: not a valid review type")
+  }
 
-      //only need to update resume for decks with reviewType = Continuous
-      await updateDoc(deckDoc, {
-        resume: nowDate
-      });
-      
-      console.log("updated resume field!")
-      }
-    else{
-      console.log("ERROR: not a valid review type")
-    }
+  console.log("return to the main!")
 
-    console.log("return to the main!")
-
-    if (pause || finishedReviewingAll){
-      //didn't finish review
-      //return to home screen
-      sessionStorage.removeItem('DeckID');
-      window.location.href = "./homeScreen.html";
-    }
-    else{
-      //finished review
-      sessionStorage.setItem("numCorrect", numCorrect);
-      sessionStorage.setItem("numMissed", numIncorrect);
-      window.location.href = "./finishedReview.html";
-    }
-    //   #Users can either 1) Return to Home or 2) Start new Review Session
-
-
+  if (pause || finishedReviewingAll){
+    //didn't finish review
+    //return to home screen
+    sessionStorage.removeItem('DeckID');
+    window.location.href = "./homeScreen.html";
+  }
+  else{
+    //finished review
+    sessionStorage.setItem("numCorrect", numCorrect);
+    sessionStorage.setItem("numMissed", numIncorrect);
+    window.location.href = "./finishedReview.html";
+  }
 }
 
 listen2PauseReview();

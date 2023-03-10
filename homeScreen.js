@@ -51,20 +51,23 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
 {
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
-  db.collection("Flashcard").add({
-    DeckID: DeckIDD,
-    Question: QuestionD,
-    Answer: AnswerD,
-    Level: 0,
-    nextDateAppearance: nullDate
+  setDoc(doc(db, "Flashcard"),     
+  {
+  DeckID: DeckIDD,
+  Question: QuestionD,
+  Answer: AnswerD,
+  Level: 0,
+  nextDateAppearance: nullDate
   });
+
 }
 
 //OrderType by default = "Random"
 async function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
 {
   //this variation allows us to specify the document ID rather than letting it randomize
-  db.collection("decks").doc(DeckNameD).set({
+  setDoc(doc(db, "decks", DeckNameD),
+  {
     userID: userIDD,
     DeckName: DeckNameD,
     reviewType: reviewTypeD,
@@ -104,7 +107,8 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
   //*NOTE* secondary functionallity needed: if deck is empty, then delete the deck
   //                                        if deck is not empty, then confirm that the user wants to delete the deck
   const DeckRef = doc(db, "decks", DeckID);
-  const deckSearch = await db.collection('Flashcard').where('DeckID', '==', DeckID);
+  
+  const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
   if (deckSearch.exists)//if cards are found in the deck delete the cards first, then the deck
   {
     deckSearch.get()
@@ -213,7 +217,7 @@ Uncaught TypeError: db.collection is not a function
     at homeScreen.js:207:1
 */
 
-//DeckCreate("subtraction", "Daily", user);
+//DeckCreate("subtraction", "Daily", "hello");
 /*
 homeScreen.js:67 Uncaught (in promise) TypeError: db.collection is not a function
     at DeckCreate (homeScreen.js:67:6)

@@ -51,7 +51,7 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
 {
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
-  setDoc(doc(db, "Flashcard"),     
+  setDoc(collection(db, "Flashcard"),     
     {
       DeckID: DeckIDD,
       Question: QuestionD,
@@ -105,39 +105,24 @@ function DeleteCard(DocID) //it is expected that the id of the card being delete
 //DeleteDeck to be fixed...
 async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
 {
-  //*NOTE* secondary functionallity needed: if deck is empty, then delete the deck
-  //                                        if deck is not empty, then confirm that the user wants to delete the deck
+  
   const DeckRef = doc(db, "decks", DeckID);
   
   const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
-  if (deckSearch.exists)//if cards are found in the deck delete the cards first, then the deck
-  {
-    deckSearch.get()
-    .then(function(querySnapshot) {
-        // Batch is created
-        var batch = db.batch();
+  const batch = writeBatch(db);//create batch
 
-        querySnapshot.forEach(function(doc) {
-            // For each doc, add a delete operation to the batch
-            batch.delete(doc.ref);
-        });
+  const deckSearchQuerySnapshot = await getDocs(deckSearch);//get documents related to the query
 
-        // Commit the batch
-        batch.commit();
-    });
+  deckSearchQuerySnapshot.forEach(doc => batch.delete(doc.ref));//delete all the documents related to the query
 
-    deleteDoc(DeckRef).then(() => {
-      console.log("Entire Document has been deleted successfully.")
-      }).catch(error => {
-      console.log(error);
-      });
-  } else {//if cards are not found, delete the deck
-    deleteDoc(DeckRef).then(() => {
+  batch.commit();
+
+  deleteDoc(DeckRef).then(() => {
     console.log("Entire Document has been deleted successfully.")
     }).catch(error => {
     console.log(error);
     });
-  }
+  
 }
 
 //retrieve the total number of decks a user has
@@ -233,6 +218,9 @@ async function listen4Logout(){
 //only deletes the deck BUT NOT the flashcards associated with the deck
 //DeleteDeck("subtraction");
 
+
+//@lilyl3
+//
 listen4Logout();
 displayDecks();
 displayAddDecksButton();

@@ -52,13 +52,14 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
   setDoc(doc(db, "Flashcard"),     
-  {
-  DeckID: DeckIDD,
-  Question: QuestionD,
-  Answer: AnswerD,
-  Level: 0,
-  nextDateAppearance: nullDate
-  });
+    {
+      DeckID: DeckIDD,
+      Question: QuestionD,
+      Answer: AnswerD,
+      Level: 0,
+      nextDateAppearance: nullDate
+    }
+  );
 
 }
 
@@ -210,19 +211,15 @@ async function listen4Logout(){
 
 //@skyler
 //Below are what I used to test your functions. I've also included the error.
-//CardCreate("5", "math", "3+2");
-/*
-Uncaught TypeError: db.collection is not a function
-    at CardCreate (homeScreen.js:54:6)
-    at homeScreen.js:207:1
-*/
 
+//works!
 //DeckCreate("subtraction", "Daily", "hello");
-/*
-homeScreen.js:67 Uncaught (in promise) TypeError: db.collection is not a function
-    at DeckCreate (homeScreen.js:67:6)
-    at homeScreen.js:212:1
-*/
+
+//Problem: with setDoc, you must give the document a name
+//CardCreate("5", "subtraction", "10-5");
+//CardCreate("2", "subtraction", "9-7");
+//CardCreate("0", "subtraction", "1-1");
+
 
 //Works!!!! :)
 //UpdateCard ("1", "2+1", "3");
@@ -232,12 +229,9 @@ homeScreen.js:67 Uncaught (in promise) TypeError: db.collection is not a functio
 //if you run the following line AGAIN: it will probably given an error
 //DeleteCard("9");
 
-//DeleteDeck("testing");
-/*
-homeScreen.js:107 Uncaught (in promise) TypeError: db.collection is not a function
-    at DeleteDeck (homeScreen.js:107:31)
-    at homeScreen.js:230:1
-*/
+
+//only deletes the deck BUT NOT the flashcards associated with the deck
+//DeleteDeck("subtraction");
 
 listen4Logout();
 displayDecks();

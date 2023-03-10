@@ -30,6 +30,7 @@ import {
     updateDoc,
     getDoc, 
     deleteDoc,
+    writeBatch,
     getDocs
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
@@ -215,7 +216,8 @@ async function listen4Logout(){
 //DeleteCard("9");
 
 
-//only deletes the deck BUT NOT the flashcards associated with the deck
+//DeleteDeck works!
+//DeleteDeck("testing");
 //DeleteDeck("subtraction");
 
 

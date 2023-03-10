@@ -52,7 +52,7 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
 {
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
-  setDoc(collection(db, "Flashcard"),     
+  addDoc(collection(db, "Flashcard"),     
     {
       DeckID: DeckIDD,
       Question: QuestionD,

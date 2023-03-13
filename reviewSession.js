@@ -63,13 +63,20 @@ var numIncorrect = 0;                   //number of flashcards incorrectly answe
 var finishedReviewingAll = false;       //only applicable for continuous Review
                                         //true if user finished reviewing all flashcards
 
-//check to see if user pressed the pause button
-async function listen2PauseReview(){
-  pauseButton.addEventListener("click", async e =>{
-    e.preventDefault();
-    pause = true;                       //set pause to true
-  })
+const pausePressedOutside = (e) =>{
+  e.preventDefault();
+  console.log('pressed pause review OUTSIDE');
+  pause = true;
 }
+
+//check to see if user pressed the pause button
+// function listen2PauseReview(){
+//   pauseButton.addEventListener("click", async e =>{
+//     console.log("outside pause review listener")
+//     e.preventDefault();
+//     pause = true;                       //set pause to true
+//   })
+// }
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -110,30 +117,47 @@ function waitForRevealAnswer() {
     revealButton.style.border = "white";
     reviewSession.appendChild(revealButton);
 
+    function removeListeners(){
+      document.removeEventListener('keydown', enterPressed);  //remove EventListener if clicked on button
+      pauseButton.removeEventListener("click", pausePressed);
+    }
+
     //only resolve key press if user pressed enter
     const enterPressed = (e) => {
+      e.preventDefault();
       //keyCode 13 = enter or return key
       if (e.keyCode === 13) {
         console.log("Enter pressed")
         pause = false;
-        document.removeEventListener('keydown', enterPressed);  //remove EventListener if clicked on button
+        removeListeners();
         resolve(e);
       }
+    }
+
+    const pausePressed = (e) =>{
+      e.preventDefault();
+      console.log('pressed pause review in REVEAL');
+      pause = true;
+      removeListeners();
+      pauseButton.blur();
+      resolve(e);
     }
 
     revealButton.addEventListener("click", handler => {
       console.log('pressed reveal');
       pause = false;
-      document.removeEventListener('keydown', enterPressed);
+      removeListeners();
       resolve(handler);
     }, { once: true });
 
-    pauseButton.addEventListener("click", handler => {
-        console.log('pressed pause review');
-        pause = true;
-        document.removeEventListener('keydown', enterPressed);  //remove EventListener if users clicked on button
-        resolve(handler);
-    }, { once: true });
+    pauseButton.addEventListener("click", pausePressed);
+
+    // pauseButton.addEventListener("click", handler => {
+    //   console.log('pressed pause review');
+    //   pause = true;
+    //   document.removeEventListener('keydown', enterPressed);  //remove EventListener if users clicked on button
+    //   resolve(handler);
+    // }, { once: true });
 
     //listen to see if user pressed enter = reveal answer
     document.addEventListener('keydown', enterPressed);
@@ -144,6 +168,7 @@ function waitForRevealAnswer() {
 function waitForCorrectIncorrectResponse() {
   return new Promise((resolve) => {
     //create correct & incorrect buttons
+    console.log("Back in CorrectIncorrectResponse")
     const correct = document.createElement('button');
     correct.innerHTML = "Correct";
     correct.id = "correct";
@@ -154,7 +179,6 @@ function waitForCorrectIncorrectResponse() {
     correct.style.color = "white";
     correct.style.border = "none";
     correctButtons.appendChild(correct);
-    //reviewAnswerSession.appendChild(correct);             //Lily used to put it in reviewAnswerSession
 
     const incorrect = document.createElement('button');
     incorrect.innerHTML = "Incorrect";
@@ -166,6 +190,11 @@ function waitForCorrectIncorrectResponse() {
     incorrect.style.color = "white";
     incorrect.style.border = "none";
     correctButtons.appendChild(incorrect);
+
+    function removeListeners(){
+      document.removeEventListener('keydown', pressed01);
+      pauseButton.removeEventListener("click", pausePressed);
+    }
     
     //resolve key press only if user pressed 0 or 1
     const pressed01 = (e) => {
@@ -174,7 +203,7 @@ function waitForCorrectIncorrectResponse() {
         console.log("0 pressed")
         pause = false;
         correctlyAnswered = false;
-        document.removeEventListener('keydown', pressed01);
+        removeListeners();
         resolve(e);
       }
       
@@ -183,10 +212,21 @@ function waitForCorrectIncorrectResponse() {
         console.log("1 pressed")
         pause = false;
         correctlyAnswered = true;
-        document.removeEventListener('keydown', pressed01);
+        removeListeners();
         resolve(e);
       }
     }
+
+    const pausePressed = (e) =>{
+      e.preventDefault();
+      console.log('pressed pause review in ANSWER');
+      pause = true;
+      removeListeners();
+      pauseButton.blur();
+      resolve(e);
+    }
+
+    pauseButton.addEventListener("click", pausePressed);
 
     //listen for any key press
     document.addEventListener('keydown', pressed01);
@@ -196,7 +236,7 @@ function waitForCorrectIncorrectResponse() {
       pause = false;
       // ++numCorrect;
       // console.log("numCorrect: ", numCorrect)
-      document.removeEventListener('keydown', pressed01);
+      removeListeners();
       resolve(handler);
     }, { once: true });
 
@@ -205,17 +245,17 @@ function waitForCorrectIncorrectResponse() {
       correctlyAnswered = false;
       // ++numIncorrect;
       // console.log("numInCorrect: ", numIncorrect)
-      document.removeEventListener('keydown', pressed01);
+      removeListeners();
       pause = false;
       resolve(handler);
     }, { once: true });
 
-    pauseButton.addEventListener("click", handler => {
-      console.log('pressed pause review');
-      pause = true;
-      document.removeEventListener('keydown', pressed01);
-      resolve(handler);
-    }, { once: true });
+    // pauseButton.addEventListener("click", handler => {
+    //   console.log('pressed pause review');
+    //   pause = true;
+    //   document.removeEventListener('keydown', pressed01);
+    //   resolve(handler);
+    // }, { once: true });
   })
 }
 
@@ -260,15 +300,6 @@ async function handlePauseCorrectIncorrectResponse(answer){
   if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
     pause = false;
     await handlePauseCorrectIncorrectResponse(answer);
-  }
-
-  if (correctlyAnswered){
-    ++numCorrect;
-    console.log("Correct: ", numCorrect)
-  }
-  else{
-    ++numIncorrect;
-    console.log("Incorrect: ", numIncorrect)
   }
 
   //if pause = false, then user indicated whether they correctly/incorrectly answered the question
@@ -317,6 +348,10 @@ async function reviewingFlashcards(reviewOrder, reviewType){
       //Case 1: pause === false
       //Case 2: pause === true BUT user decides not to pause
       pause = false;
+      if (index === 0){
+        pauseButton.removeEventListener("click", pausePressedOutside);
+        pauseButton.blur();
+      }
       await handlePauseRevealAnswer();
     }
 
@@ -333,6 +368,14 @@ async function reviewingFlashcards(reviewOrder, reviewType){
     else{
       pause = false;
       await handlePauseCorrectIncorrectResponse(answer);
+      if (correctlyAnswered){
+        ++numCorrect;
+        console.log("Correct: ", numCorrect)
+      }
+      else{
+        ++numIncorrect;
+        console.log("Incorrect: ", numIncorrect)
+      }
     }
     if (pause){
       console.log("User has paused review session")
@@ -657,5 +700,6 @@ async function main() {
   }
 }
 
-listen2PauseReview();
+pauseButton.addEventListener("click", pausePressedOutside);
+//listen2PauseReview();
 main();

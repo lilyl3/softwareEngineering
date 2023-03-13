@@ -63,13 +63,20 @@ var numIncorrect = 0;                   //number of flashcards incorrectly answe
 var finishedReviewingAll = false;       //only applicable for continuous Review
                                         //true if user finished reviewing all flashcards
 
-//check to see if user pressed the pause button
-async function listen2PauseReview(){
-  pauseButton.addEventListener("click", async e =>{
-    e.preventDefault();
-    pause = true;                       //set pause to true
-  })
+const pausePressedOutside = (e) =>{
+  e.preventDefault();
+  console.log('pressed pause review OUTSIDE');
+  pause = true;
 }
+
+//check to see if user pressed the pause button
+// function listen2PauseReview(){
+//   pauseButton.addEventListener("click", async e =>{
+//     console.log("outside pause review listener")
+//     e.preventDefault();
+//     pause = true;                       //set pause to true
+//   })
+// }
 
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -107,35 +114,53 @@ function waitForRevealAnswer() {
     revealButton.style.padding = "15px";
     revealButton.style.width = "25%";
     revealButton.style.fontSize = "18px";
-    //revealButton.style.selfAlign = "center";      //Anthony used to align center, but with pause button
     revealButton.style.border = "white";
     reviewSession.appendChild(revealButton);
+
+    function removeListeners(){
+      document.removeEventListener('keydown', enterPressed);  //remove EventListener if clicked on button
+      pauseButton.removeEventListener("click", pausePressed);
+    }
+
+    //only resolve key press if user pressed enter
+    const enterPressed = (e) => {
+      e.preventDefault();
+      //keyCode 13 = enter or return key
+      if (e.keyCode === 13) {
+        console.log("Enter pressed")
+        pause = false;
+        removeListeners();
+        resolve(e);
+      }
+    }
+
+    const pausePressed = (e) =>{
+      e.preventDefault();
+      console.log('pressed pause review in REVEAL');
+      pause = true;
+      removeListeners();
+      pauseButton.blur();
+      resolve(e);
+    }
 
     revealButton.addEventListener("click", handler => {
       console.log('pressed reveal');
       pause = false;
+      removeListeners();
       resolve(handler);
     }, { once: true });
 
-    pauseButton.addEventListener("click", handler => {
-        console.log('pressed pause review');
-        pause = true;
-        resolve(handler);
-    }, { once: true });
+    pauseButton.addEventListener("click", pausePressed);
 
-    // var pauseReview = document.createElement('button');
-    // pauseReview.id = "pauseReview";
-    // pauseReview.innerHTML = "Pause Review";
-    // pauseReview.style.padding = "15px";
-    // pauseReview.style.width = "25%";
-    // pauseReview.style.fontSize = "18px";
-    // reviewSession.appendChild(pauseReview);
-
-    // pauseReview.addEventListener("click", handler => {
+    // pauseButton.addEventListener("click", handler => {
     //   console.log('pressed pause review');
     //   pause = true;
+    //   document.removeEventListener('keydown', enterPressed);  //remove EventListener if users clicked on button
     //   resolve(handler);
     // }, { once: true });
+
+    //listen to see if user pressed enter = reveal answer
+    document.addEventListener('keydown', enterPressed);
   })
 }
 
@@ -143,6 +168,7 @@ function waitForRevealAnswer() {
 function waitForCorrectIncorrectResponse() {
   return new Promise((resolve) => {
     //create correct & incorrect buttons
+    console.log("Back in CorrectIncorrectResponse")
     const correct = document.createElement('button');
     correct.innerHTML = "Correct";
     correct.id = "correct";
@@ -153,7 +179,6 @@ function waitForCorrectIncorrectResponse() {
     correct.style.color = "white";
     correct.style.border = "none";
     correctButtons.appendChild(correct);
-    //reviewAnswerSession.appendChild(correct);             //Lily used to put it in reviewAnswerSession
 
     const incorrect = document.createElement('button');
     incorrect.innerHTML = "Incorrect";
@@ -165,40 +190,70 @@ function waitForCorrectIncorrectResponse() {
     incorrect.style.color = "white";
     incorrect.style.border = "none";
     correctButtons.appendChild(incorrect);
-    //reviewAnswerSession.appendChild(incorrect);
+
+    function removeListeners(){
+      document.removeEventListener('keydown', pressed01);
+      pauseButton.removeEventListener("click", pausePressed);
+    }
+    
+    //resolve key press only if user pressed 0 or 1
+    const pressed01 = (e) => {
+      //user presssed 0 = incorrect = keyCode 96
+      if(e.keyCode === 96){
+        console.log("0 pressed")
+        pause = false;
+        correctlyAnswered = false;
+        removeListeners();
+        resolve(e);
+      }
+      
+      //user pressed 1 = correct = keyCode 97
+      if (e.keyCode === 97){
+        console.log("1 pressed")
+        pause = false;
+        correctlyAnswered = true;
+        removeListeners();
+        resolve(e);
+      }
+    }
+
+    const pausePressed = (e) =>{
+      e.preventDefault();
+      console.log('pressed pause review in ANSWER');
+      pause = true;
+      removeListeners();
+      pauseButton.blur();
+      resolve(e);
+    }
+
+    pauseButton.addEventListener("click", pausePressed);
+
+    //listen for any key press
+    document.addEventListener('keydown', pressed01);
     
     correct.addEventListener("click", handler => {
       correctlyAnswered = true;
       pause = false;
-      ++numCorrect;
-      console.log("numCorrect: ", numCorrect)
+      // ++numCorrect;
+      // console.log("numCorrect: ", numCorrect)
+      removeListeners();
       resolve(handler);
     }, { once: true });
+
     incorrect.addEventListener("click", handler => {
       console.log('incorrect click');
       correctlyAnswered = false;
-      ++numIncorrect;
-      console.log("numInCorrect: ", numIncorrect)
+      // ++numIncorrect;
+      // console.log("numInCorrect: ", numIncorrect)
+      removeListeners();
       pause = false;
       resolve(handler);
     }, { once: true });
-    pauseButton.addEventListener("click", handler => {
-      console.log('pressed pause review');
-      pause = true;
-      resolve(handler);
-    }, { once: true });
 
-    // var pauseReview = document.createElement('button');
-    // pauseReview.id = "pauseReview";
-    // pauseReview.innerHTML = "Pause Review";
-    // pauseReview.style.padding = "15px";
-    // pauseReview.style.width = "25%";
-    // pauseReview.style.fontSize = "18px";
-    // correctButtons.appendChild(pauseReview);
-
-    // pauseReview.addEventListener("click", handler => {
-    //   console.log('pressed pause');
+    // pauseButton.addEventListener("click", handler => {
+    //   console.log('pressed pause review');
     //   pause = true;
+    //   document.removeEventListener('keydown', pressed01);
     //   resolve(handler);
     // }, { once: true });
   })
@@ -209,7 +264,6 @@ async function handlePauseRevealAnswer(){
   await waitForRevealAnswer();
   //remove the reveal button once the user has pressed some button
   reviewSession.removeChild(document.getElementById('revealButton'));
-  //reviewSession.removeChild(document.getElementById('pauseReview'));
 
   if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
     pause = false;
@@ -294,6 +348,10 @@ async function reviewingFlashcards(reviewOrder, reviewType){
       //Case 1: pause === false
       //Case 2: pause === true BUT user decides not to pause
       pause = false;
+      if (index === 0){
+        pauseButton.removeEventListener("click", pausePressedOutside);
+        pauseButton.blur();
+      }
       await handlePauseRevealAnswer();
     }
 
@@ -310,6 +368,14 @@ async function reviewingFlashcards(reviewOrder, reviewType){
     else{
       pause = false;
       await handlePauseCorrectIncorrectResponse(answer);
+      if (correctlyAnswered){
+        ++numCorrect;
+        console.log("Correct: ", numCorrect)
+      }
+      else{
+        ++numIncorrect;
+        console.log("Incorrect: ", numIncorrect)
+      }
     }
     if (pause){
       console.log("User has paused review session")
@@ -583,60 +649,57 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
 }
 
 async function main() {  
+  const DeckID =  sessionStorage.getItem('DeckID');       //this will vary depending on which deck the user selected
+
+  var deckDoc = doc(db, "decks", DeckID);
+  var deck = await getDoc(deckDoc);
+  const reviewType = deck.data().reviewType;
+  const orderType = deck.data().orderType;
+  console.log("OrderType: ", orderType)
+
+  if (reviewType == "Daily"){
+    console.log("Daily")
+    await dailyReview(DeckID, orderType);
+  }
+  else if (reviewType == "Continuous"){
+    console.log("Continuous")
+    const resumeDate = deck.data().resume;
+    var resume = false;
+    console.log("resumeDate: ",  resumeDate)
+    if (resumeDate === nowDate){
+      resume = true;
+      console.log("resuming...")
+    }
+    const numNewCards = deck.data().numNewCards;
+    await continuousReview(DeckID, orderType, numNewCards, resume);
+
+    //only need to update resume for decks with reviewType = Continuous
+    await updateDoc(deckDoc, {
+      resume: nowDate
+    });
     
-    const DeckID =  sessionStorage.getItem('DeckID');       //this will vary depending on which deck the user selected
-
-    var deckDoc = doc(db, "decks", DeckID);
-    var deck = await getDoc(deckDoc);
-    const reviewType = deck.data().reviewType;
-    const orderType = deck.data().orderType;
-    console.log("OrderType: ", orderType)
-
-    if (reviewType == "Daily"){
-      console.log("Daily")
-      await dailyReview(DeckID, orderType);
+    console.log("updated resume field!")
     }
-    else if (reviewType == "Continuous"){
-      console.log("Continuous")
-      const resumeDate = deck.data().resume;
-      var resume = false;
-      console.log("resumeDate: ",  resumeDate)
-      if (resumeDate === nowDate){
-        resume = true;
-        console.log("resuming...")
-      }
-      const numNewCards = deck.data().numNewCards;
-      await continuousReview(DeckID, orderType, numNewCards, resume);
+  else{
+    console.log("ERROR: not a valid review type")
+  }
 
-      //only need to update resume for decks with reviewType = Continuous
-      await updateDoc(deckDoc, {
-        resume: nowDate
-      });
-      
-      console.log("updated resume field!")
-      }
-    else{
-      console.log("ERROR: not a valid review type")
-    }
+  console.log("return to the main!")
 
-    console.log("return to the main!")
-
-    if (pause || finishedReviewingAll){
-      //didn't finish review
-      //return to home screen
-      sessionStorage.removeItem('DeckID');
-      window.location.href = "./homeScreen.html";
-    }
-    else{
-      //finished review
-      sessionStorage.setItem("numCorrect", numCorrect);
-      sessionStorage.setItem("numMissed", numIncorrect);
-      window.location.href = "./finishedReview.html";
-    }
-    //   #Users can either 1) Return to Home or 2) Start new Review Session
-
-
+  if (pause || finishedReviewingAll){
+    //didn't finish review
+    //return to home screen
+    sessionStorage.removeItem('DeckID');
+    window.location.href = "./homeScreen.html";
+  }
+  else{
+    //finished review
+    sessionStorage.setItem("numCorrect", numCorrect);
+    sessionStorage.setItem("numMissed", numIncorrect);
+    window.location.href = "./finishedReview.html";
+  }
 }
 
-listen2PauseReview();
+pauseButton.addEventListener("click", pausePressedOutside);
+//listen2PauseReview();
 main();

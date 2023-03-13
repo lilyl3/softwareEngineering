@@ -30,6 +30,7 @@ import {
     updateDoc,
     getDoc, 
     deleteDoc,
+    writeBatch,
     getDocs
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
@@ -51,20 +52,24 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
 {
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
-  db.collection("Flashcard").add({
-    DeckID: DeckIDD,
-    Question: QuestionD,
-    Answer: AnswerD,
-    Level: 0,
-    nextDateAppearance: nullDate
-  });
+  addDoc(collection(db, "Flashcard"),     
+    {
+      DeckID: DeckIDD,
+      Question: QuestionD,
+      Answer: AnswerD,
+      Level: 0,
+      nextDateAppearance: nullDate
+    }
+  );
+
 }
 
 //OrderType by default = "Random"
 async function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
 {
   //this variation allows us to specify the document ID rather than letting it randomize
-  db.collection("decks").doc(DeckNameD).set({
+  setDoc(doc(db, "decks", DeckNameD),
+  {
     userID: userIDD,
     DeckName: DeckNameD,
     reviewType: reviewTypeD,
@@ -101,38 +106,24 @@ function DeleteCard(DocID) //it is expected that the id of the card being delete
 //DeleteDeck to be fixed...
 async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
 {
-  //*NOTE* secondary functionallity needed: if deck is empty, then delete the deck
-  //                                        if deck is not empty, then confirm that the user wants to delete the deck
+  
   const DeckRef = doc(db, "decks", DeckID);
-  const deckSearch = await db.collection('Flashcard').where('DeckID', '==', DeckID);
-  if (deckSearch.exists)//if cards are found in the deck delete the cards first, then the deck
-  {
-    deckSearch.get()
-    .then(function(querySnapshot) {
-        // Batch is created
-        var batch = db.batch();
+  
+  const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
+  const batch = writeBatch(db);//create batch
 
-        querySnapshot.forEach(function(doc) {
-            // For each doc, add a delete operation to the batch
-            batch.delete(doc.ref);
-        });
+  const deckSearchQuerySnapshot = await getDocs(deckSearch);//get documents related to the query
 
-        // Commit the batch
-        batch.commit();
-    });
+  deckSearchQuerySnapshot.forEach(doc => batch.delete(doc.ref));//delete all the documents related to the query
 
-    deleteDoc(DeckRef).then(() => {
-      console.log("Entire Document has been deleted successfully.")
-      }).catch(error => {
-      console.log(error);
-      });
-  } else {//if cards are not found, delete the deck
-    deleteDoc(DeckRef).then(() => {
+  batch.commit();
+
+  deleteDoc(DeckRef).then(() => {
     console.log("Entire Document has been deleted successfully.")
     }).catch(error => {
     console.log(error);
     });
-  }
+  
 }
 
 //retrieve the total number of decks a user has
@@ -206,19 +197,15 @@ async function listen4Logout(){
 
 //@skyler
 //Below are what I used to test your functions. I've also included the error.
-//CardCreate("5", "math", "3+2");
-/*
-Uncaught TypeError: db.collection is not a function
-    at CardCreate (homeScreen.js:54:6)
-    at homeScreen.js:207:1
-*/
 
-//DeckCreate("subtraction", "Daily", user);
-/*
-homeScreen.js:67 Uncaught (in promise) TypeError: db.collection is not a function
-    at DeckCreate (homeScreen.js:67:6)
-    at homeScreen.js:212:1
-*/
+//works!
+//DeckCreate("subtraction", "Daily", "hello");
+
+//Problem: with setDoc, you must give the document a name
+//CardCreate("5", "subtraction", "10-5");
+//CardCreate("2", "subtraction", "9-7");
+//CardCreate("0", "subtraction", "1-1");
+
 
 //Works!!!! :)
 //UpdateCard ("1", "2+1", "3");
@@ -228,13 +215,14 @@ homeScreen.js:67 Uncaught (in promise) TypeError: db.collection is not a functio
 //if you run the following line AGAIN: it will probably given an error
 //DeleteCard("9");
 
-//DeleteDeck("testing");
-/*
-homeScreen.js:107 Uncaught (in promise) TypeError: db.collection is not a function
-    at DeleteDeck (homeScreen.js:107:31)
-    at homeScreen.js:230:1
-*/
 
+//DeleteDeck works!
+//DeleteDeck("testing");
+//DeleteDeck("subtraction");
+
+
+//@lilyl3
+//
 listen4Logout();
 displayDecks();
 displayAddDecksButton();

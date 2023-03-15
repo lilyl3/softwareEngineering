@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Deck Details</title>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"/>
+        <style src = "./style.css">
+          body {
+            background-color: white;
+            color: #0041CA;
+            text-align: left;
+          }
+          form {
+            margin: 0 auto;
+            color: black;
+            text-align: auto;
+            max-width: 275px;
+            max-height: 450px;
+            background-color: #0041CA;
+            border-radius: 10px;         
+          }
+          .logoutButton {
+            width: 75px;
+            background-color:white;
+            color: #0041CA;
+            border-radius: 12px;
+            border: white;
+            padding: 8px;
+          }
+          .createAccount {
+            padding: 15px;  
+          }
+
+          span {
+            font-size: 28px;
+            color: white;
+          }
+
+          div {
+            background-color: #0041CA;
+            padding: 8px;
+            color: black;
+            font-size: 28px;
+          }
+          section {
+            text-align: center;
+          }
+
+        </style>
+    </head>
+
+    <body>
+      <div>
+        <span style="text-align:left;">Kinda Like Quizlet</span>
+        <button style="float: right;" class="logoutButton" type = "button" id ="logoutButton">Logout</button>
+      </div>
+      <script type="module" src="./deckDetails.js"></script>
+        <br />
+        <section id="deckTitle"></section>
+        <section id="deckArea"></section>
+        <section id="afterDeck"></section>
+    </body>
+</html>

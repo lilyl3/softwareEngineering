@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Create Deck</title>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"/>
+        <style src = "./style.css">
+          body {
+            background-color: #0041CA;
+            color: white;
+            text-align: center;
+          }
+          form {
+            margin: 0 auto;
+            color: black;
+            text-align: auto;
+            max-width: 275px;
+            max-height: 450px;
+            background-color: white;
+            border-radius: 10px;            
+          }
+          .loginButton {
+            width: 175px;
+            background-color:#0041CA;
+            color: white;
+            border-radius: 12px;
+            border: #0041CA;
+            padding: 8px;
+          }
+          .createAccount {
+            padding: 15px;  
+          }
+
+        </style>
+    </head>
+
+    <body>
+
+      <script type="module" src="./createDeck.js"></script>
+        <section id="loginpage">
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
+            <h2>Create a Deck</h2>
+              <br />
+              <br />
+              <br />
+              <br />
+            <section class="loginBox">
+              <form id="login">
+                <br />
+                <p id="warningMessage"></p>
+                <label class="label">Deck Name</label>
+                <br />
+                <input type="text" id="deckname">
+                <br />
+                <br />
+                <button type="submit" class="loginButton">
+                  <span>Create Deck</span>
+                </button>
+                <br />
+                <br />
+              </form>
+              <br />            
+            </section>
+        </section>
+    </body>
+</html>

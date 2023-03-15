@@ -163,9 +163,9 @@ async function displayAddFlashcardsButton()
 async function displayDeleteFlashcardsButton()
 {
     var addDecks = document.createElement("button")
-    addDecks.innerHTML = "Delete";
+    addDecks.innerHTML = "Delete Flashcards";
     addDecks.style.height = "30px";
-    addDecks.style.width = "70px";
+    addDecks.style.width = "150";
     addDecks.style.borderRadius = "15%";
     addDecks.style.color = "black";
     addDecks.style.backgroundColor = "red";

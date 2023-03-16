@@ -20,13 +20,16 @@
             background-color: white;
             border-radius: 10px;            
           }
-          .loginButton {
-            width: 175px;
+          .createDeckButton {
+            width: 35%;
             background-color:#0041CA;
             color: white;
             border-radius: 12px;
             border: #0041CA;
             padding: 8px;
+          }
+          .cancelButton{
+            width: 35%
           }
           .createAccount {
             padding: 15px;  
@@ -51,18 +54,21 @@
               <br />
               <br />
               <br />
-            <section class="loginBox">
+            <section class="loginBox" id = "createDeckSection">
               <form id="login">
                 <br />
-                <p id="warningMessage"></p>
+                <p id="warningMessage" class="warning_message"></p>
                 <label class="label">Deck Name</label>
                 <br />
-                <input type="text" id="deckname">
+                <input type="text" id="DeckName">
                 <br />
                 <br />
-                <button type="submit" class="loginButton">
+                <div style="display: inline;">
+                <button type="submit" id = "CreateDeck" class="createDeckButton">
                   <span>Create Deck</span>
                 </button>
+                <button type = "button" id = "Cancel" class="cancelButton">Cancel</button>
+               </div>
                 <br />
                 <br />
               </form>

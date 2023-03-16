@@ -45,6 +45,9 @@ const user = sessionStorage.getItem('userID');
 const deckArea = document.getElementById('deckArea');
 const afterdeck = document.getElementById('afterDeck');
 const logoutButton = document.getElementById('logoutButton');
+const deleteArea = document.getElementById('deleteArea');
+const selectAllDecks = document.getElementById('selectAll');
+const visibilityOfCheckBoxLabel = document.getElementById('visibilityOfLabel');;
 
 //Level initialized to 0
 //nextDateAppearance initialize to nullDate
@@ -62,7 +65,6 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
     }
   );
 }
-
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
@@ -113,6 +115,42 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
   
 }
 
+async function listen4DeleteDeck(){
+  const numDecks = await getNumDecks();
+  if (numDecks > 0){
+    //display delete button
+    var deleteButton = document.createElement("button");
+    deleteButton.id = "deleteDeck";
+    deleteButton.innerHTML = "Delete";
+    deleteButton.style.float = "right";
+    deleteArea.appendChild(deleteButton);
+
+    deleteButton.addEventListener("click", async e =>{
+      visibilityOfCheckBoxLabel.style.display = "initial";
+      const checkBoxNames = await getCheckboxNames();
+      //set checkboxes to visible
+      for (let index = 0; index < checkBoxNames.length; index++){
+        document.getElementById(checkBoxNames[index]).style.visibility = "visible";
+      }
+
+      selectAllDecks.addEventListener("click", async e=>{
+        if (selectAllDecks.checked){
+          //check all boxes
+          for (let index = 0; index < checkBoxNames.length; index++){
+            document.getElementById(checkBoxNames[index]).checked = true;
+          }
+        }else{
+          //UNcheck all boxes
+          for (let index = 0; index < checkBoxNames.length; index++){
+            document.getElementById(checkBoxNames[index]).checked = false;
+          }
+        }
+      })
+    })
+
+  }
+}
+
 //retrieve the total number of decks a user has
 async function getNumDecks(){
   const decks = query(collection(db, "decks"), where("userID", "==", user));
@@ -122,6 +160,21 @@ async function getNumDecks(){
     ++numDecks;
   });
   return numDecks;
+}
+
+//retrieve the total number of decks a user has
+async function getCheckboxNames(){
+  const decks = query(collection(db, "decks"), where("userID", "==", user));
+  const decksSnapshot = await getDocs(decks);
+  var existingDeckNames = [];
+  var counter = 0;
+
+  //get existing deck names
+  decksSnapshot.forEach((deck) => {
+      existingDeckNames[counter] = "check" + deck.data().DeckName;
+      ++counter;
+  });
+  return existingDeckNames;
 }
 
 //displays add deck button for less than 5 decks
@@ -157,19 +210,39 @@ async function displayDecks()
   const decksSnapshot = await getDocs(decks);
   var index = 0;
   decksSnapshot.forEach((deck) => {
+
+    var deckLine = document.createElement("div");
+    deckLine.style.display = "inline-block";
+    deckLine.style.width = "20%"
+    //deckLine.style.backgroundColor = "#0041CA";
+
+    var checkbox4Delete = document.createElement("input");
+    checkbox4Delete.type = "checkbox";
+    checkbox4Delete.id = "check" + deck.data().DeckName;
+    checkbox4Delete.style.float = "left";
+    checkbox4Delete.style.visibility = "hidden";
+
     var deck_i = document.createElement("button");
-    deck_i.id = "deck" + index.toString();
+    deck_i.id = deck.data().DeckName;
     deck_i.innerHTML = deck.data().DeckName;
-    deckArea.appendChild(deck_i);
-    deckArea.appendChild(document.createElement("br"));
+    //deck_i.style.width = "30%";
+
+    var startReviewButton = document.createElement("button");
+    startReviewButton.innerHTML = "&#8594";
+
+    deckLine.appendChild(checkbox4Delete);
+    deckLine.appendChild(deck_i);
+    deckLine.appendChild(startReviewButton);
+
+    deckArea.appendChild(deckLine);
     deckArea.appendChild(document.createElement("br"));
 
     //listen to see if user clicks on a deck
     //If so, start a review session
     deck_i.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", deck.data().DeckName);
-      window.location.href = "./reviewSession.html";
+      sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
+      window.location.href = "./deckDetails.html";
     });
   });
 }
@@ -185,6 +258,7 @@ async function listen4Logout(){
   });
 }
 
+listen4DeleteDeck();
 listen4Logout();
 displayDecks();
 displayAddDecksButton();

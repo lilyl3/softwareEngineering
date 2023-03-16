@@ -37,7 +37,7 @@
             color: #0041CA;
           }
 
-          div {
+          .appName {
             background-color: white;
             padding: 8px;
             color: black;
@@ -46,17 +46,25 @@
           section {
             text-align: center;
           }
-
         </style>
     </head>
 
     <body>
-      <div>
+      <div class="appName">
         <span style="text-align:left;">Kinda Like Quizlet</span>
         <button style="float: right;" class="logoutButton" type = "button" id ="logoutButton">Logout</button>
       </div>
       <script type="module" src="./homeScreen.js"></script>
         <br />
+        <!--I set deleteArea's width to 20% to match up with the width of the decks!-->
+        <section>
+          <div id = "deleteArea" style="display: inline-block; width: 20%;">
+            <div id = "visibilityOfLabel" style="display: none; float:left">
+              <input type="checkbox" id="selectAll" name="selectAll" style="visibility: visible;">
+              <label for="selectAll">Select All</label>
+            </div>
+          </div>
+        </section>
         <section id="deckArea"></section>
         <section id="afterDeck"></section>
     </body>

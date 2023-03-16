@@ -61,21 +61,8 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
       nextDateAppearance: nullDate
     }
   );
-
 }
 
-//OrderType by default = "Random"
-async function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
-{
-  //this variation allows us to specify the document ID rather than letting it randomize
-  setDoc(doc(db, "decks", DeckNameD),
-  {
-    userID: userIDD,
-    DeckName: DeckNameD,
-    reviewType: reviewTypeD,
-    orderType: defaultOrderType
-  });
-}
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
@@ -152,6 +139,10 @@ async function displayAddDecksButton()
     addDecks.style.color = "black";
     addDecks.style.backgroundColor = "white";
     afterdeck.appendChild(addDecks);
+    addDecks.addEventListener("click", async e =>{
+      //if user presses add deck button, go to createDeck.html
+      window.location.href = "./createDeck.html";
+    })
   }
   else
   {
@@ -181,7 +172,6 @@ async function displayDecks()
       window.location.href = "./reviewSession.html";
     });
   });
-  //await waitForDeckSelection;
 }
 
 //listen to see if user clicks on the logout button
@@ -195,34 +185,6 @@ async function listen4Logout(){
   });
 }
 
-//@skyler
-//Below are what I used to test your functions. I've also included the error.
-
-//works!
-//DeckCreate("subtraction", "Daily", "hello");
-
-//Problem: with setDoc, you must give the document a name
-//CardCreate("5", "subtraction", "10-5");
-//CardCreate("2", "subtraction", "9-7");
-//CardCreate("0", "subtraction", "1-1");
-
-
-//Works!!!! :)
-//UpdateCard ("1", "2+1", "3");
-
-//WORKS!!! :)
-//Note: I created a flashcard manually with id 9, so ...
-//if you run the following line AGAIN: it will probably given an error
-//DeleteCard("9");
-
-
-//DeleteDeck works!
-//DeleteDeck("testing");
-//DeleteDeck("subtraction");
-
-
-//@lilyl3
-//
 listen4Logout();
 displayDecks();
 displayAddDecksButton();

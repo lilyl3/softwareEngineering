@@ -31,12 +31,6 @@
           .createAccount {
             padding: 15px;  
           }
-
-          span {
-            font-size: 28px;
-            color: #0041CA;
-          }
-
           .appName {
             background-color: white;
             padding: 8px;
@@ -51,22 +45,25 @@
 
     <body>
       <div class="appName">
-        <span style="text-align:left;">Kinda Like Quizlet</span>
+        <span style="text-align:left; color:#0041CA; font-size: 28px;">Kinda Like Quizlet</span>
         <button style="float: right;" class="logoutButton" type = "button" id ="logoutButton">Logout</button>
       </div>
       <script type="module" src="./homeScreen.js"></script>
         <br />
-        <!--I set deleteArea's width to 20% to match with the width of the deck lines!
-            deck lines include a checkbox, deckname button, & -> button to start review -->
+        <!--I set deleteArea's width to 50% to match with the width of the deck lines!
+            deck lines include a checkbox, deckname button, & -> button to start review 
+            BUT I can't get the ul = DeckList to be centered-->
         <section>
-          <div id = "deleteArea" style="display: inline-block; width: 30%;">
+          <div id = "deleteArea" style="display: inline-block; width: 50%;">
             <div id = "checkboxVisibility" style="display: none; float:left">
               <input type="checkbox" id="selectAll" name="selectAll">
               <label for="selectAll">Select All</label>
             </div>
           </div>
         </section>
-        <section id="deckArea"></section>
+        <section id="deckArea">
+          <ul id = "DeckList" style="list-style-type: none; text-align: center; "></ul>
+        </section>
         <section id="afterDeck"></section>
     </body>
 </html>

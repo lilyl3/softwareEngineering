@@ -32,28 +32,55 @@ const newDeckName = document.getElementById('DeckName');
 const warningMessage = document.getElementById('warningMessage');
 const user = sessionStorage.getItem('userID');
 const cancelButton = document.getElementById('Cancel');
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 const defaultOrderType = "Random";
 const defaultReviewType = "Daily";
 
 async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate function in terms of variables
 {
-  //this variation allows us to specify the document ID rather than letting it randomize
-  setDoc(doc(db, "decks", DeckNameD),
-  {
-    userID: userIDD,
-    DeckName: DeckNameD,
-    reviewType: defaultReviewType,
-    orderType: defaultOrderType
-  });
+    return new Promise((resolve) =>{
+        //this variation allows us to specify the document ID rather than letting it randomize
+        setDoc(doc(db, "decks", DeckNameD),
+        {
+            userID: userIDD,
+            DeckName: DeckNameD,
+            reviewType: defaultReviewType,
+            orderType: defaultOrderType
+        }).then(() => {
+                console.log("Entire Document has been deleted successfully.")
+                resolve();
+            }).catch(error => {
+                console.log(error);
+            });
+    })
 }
+
+//retrieve the total number of decks a user has
+async function getNumDecks(){
+    const decks = query(collection(db, "decks"), where("userID", "==", user));
+    const decksSnapshot = await getDocs(decks);
+    var numDecks = 0;
+    decksSnapshot.forEach((deck) => {
+      ++numDecks;
+    });
+    return numDecks;
+  }
 
 async function listen2CreateDeck(){
 
     createDeckSection.addEventListener("submit", async e =>{
         e.preventDefault();
+        var numDecks = await getNumDecks();
+        //check that the number of decks is < 5
+        if (numDecks >= 5){
+            warningMessage.innerHTML = "Maximum of 5 decks already created. Returning to home in 5 seconds."
+            warningMessage.style.color = "red";
+            await delay(5000);
+            window.location.href = "./homeScreen.html";
+        }
         //check that inputted deck name is not empty
-        if (newDeckName.value.length === 0){
+        else if (newDeckName.value.length === 0){
             warningMessage.innerHTML = "Deck name can not be empty.";
             warningMessage.style.color = "red";
         }
@@ -82,6 +109,9 @@ async function listen2CreateDeck(){
                 //inputted deck name is unique
                 //add deck
                 await DeckCreate(newDeckName.value, user);
+                sessionStorage.setItem("DeckID", newDeckName);
+                //console.log("Go to Deck Details now")
+                window.location.href = "./deckDetails.html";
             }
         }
     })

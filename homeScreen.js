@@ -102,22 +102,22 @@ function DeleteCard(DocID) //it is expected that the id of the card being delete
 //DeleteDeck to be fixed...
 async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
 {
-  
-  const DeckRef = doc(db, "decks", DeckID);
-  const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
-  const batch = writeBatch(db);//create batch
+  return new Promise(async (resolve) => {
+    const DeckRef = doc(db, "decks", DeckID);
+    const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
+    const batch = writeBatch(db);//create batch
 
-  const deckSearchQuerySnapshot = await getDocs(deckSearch);//get documents related to the query
-  deckSearchQuerySnapshot.forEach(doc => batch.delete(doc.ref));//delete all the documents related to the query
+    const deckSearchQuerySnapshot = await getDocs(deckSearch);//get documents related to the query
+    deckSearchQuerySnapshot.forEach(doc => batch.delete(doc.ref));//delete all the documents related to the query
 
-  batch.commit();
+    batch.commit();
 
-  deleteDoc(DeckRef).then(() => {
-    console.log("Entire Document has been deleted successfully.")
-    }).catch(error => {
-    console.log(error);
-    });
-  
+    deleteDoc(DeckRef).then(() => {
+      resolve("Completed Delete. Should return to main.");
+      }).catch(error => {
+        console.log(error);
+      });
+  });
 }
 
 async function listen4DeleteDeck(){
@@ -140,14 +140,12 @@ async function listen4DeleteDeck(){
       if (pressedDeleteButton){
         //second time pressed delete button
         //then delete decks that have been CHECKED
-        console.log("Came into deleting deck!!!")
         const checkboxIDS = await getCheckBoxIDs();
         for (let index = 0; index < checkboxIDS.length; index++){
           const checkboxName = checkboxIDS[index];
           if (document.getElementById(checkboxName).checked){
             console.log("Deck being deleted: " + checkboxName.substring(5, checkboxName.length))
             await DeleteDeck(checkboxName.substring(5, checkboxName.length));
-            //not waiting for DeleteDeck()
           }
         }
         window.location.href = "./homeScreen.html";   //reload the webpage after delete

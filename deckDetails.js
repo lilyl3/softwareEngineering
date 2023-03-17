@@ -39,14 +39,14 @@ let db = getFirestore(app);
 //CONSTANTs
 const nullDate = "2023/01/01";
 const defaultOrderType = "Random";
-const deck = "math";//sessionStorage.getItem('DeckID');
+const deck = sessionStorage.getItem('DeckID');
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
 const deckArea = document.getElementById('deckArea');
 const afterdeck = document.getElementById('afterDeck');
-const logoutButton = document.getElementById('logoutButton');
 
+deckTitle.innerHTML = deck;
 //Level initialized to 0
 //nextDateAppearance initialize to nullDate
 function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
@@ -63,19 +63,6 @@ function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names 
     }
   );
 
-}
-
-//OrderType by default = "Random"
-async function DeckCreate(DeckNameD, reviewTypeD, userIDD)//same situation for CardCreate function in terms of variables
-{
-  //this variation allows us to specify the document ID rather than letting it randomize
-  setDoc(doc(db, "decks", DeckNameD),
-  {
-    userID: userIDD,
-    DeckName: DeckNameD,
-    reviewType: reviewTypeD,
-    orderType: defaultOrderType
-  });
 }
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
@@ -138,7 +125,6 @@ async function getNumFlashcards(){
   return numFlash;
 }
 
-//displays add deck button for less than 5 decks
 async function displayAddFlashcardsButton()
 {
   const numFlash = await getNumFlashcards();
@@ -192,18 +178,6 @@ async function displayFlashcards()
   });
 }
 
-//listen to see if user clicks on the logout button
-//If so, return to login page
-async function listen4Logout(){
-  logoutButton.addEventListener('click', async e => {
-    e.preventDefault();         // Prevent the default form redirect
-    console.log("Logging out")
-    sessionStorage.clear();     // Clear all saved "cookies"
-    window.location.href = "./login.html";
-  });
-}
-
-listen4Logout();
 displayFlashcards();
 displayAddFlashcardsButton();
 displayDeleteFlashcardsButton();

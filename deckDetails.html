@@ -44,29 +44,71 @@
             font-size: 28px;
             color: white;
           }
-
           div {
-            background-color: #0041CA;
             padding: 8px;
-            color: black;
-            font-size: 28px;
+          }
+          .appName{
+            background-color: #0041CA;
+            color: white;
+            font-size: 20px;
+          }
+          .sideButton{
+            background-color: white;
+            color: #0041CA;
+            font-size: 20px;
+            border-color: #0041CA;
+            padding: 1%;
+            border-radius: 30% 30% 30% 30%;
+          }
+          .deckTitle{
+            background-color: white;
+            color:#0041CA;
+            font-size: 30px;
           }
           section {
             text-align: center;
           }
-
+          .sidebar {
+            margin: 0;
+            padding: 0;
+            width: 200px;
+            background-color: #f1f1f1;
+            position: fixed;
+            overflow: auto;
+          }
+          .sidebar a {
+            display: block;
+            color: black;
+            padding: 16px;
+            text-decoration: none;
+          } 
+          .sidebar a:hover:not(.active) {
+            background-color: #555;
+            color: white;
+          }
+          .startReviewButton {
+            background-color: #0041CA;
+            color: white;
+          }
         </style>
     </head>
 
     <body>
-      <div>
+      <script type="module" src="./deckDetails.js"></script>
+      <div class = "appName">
         <span style="text-align:left;">Kinda Like Quizlet</span>
         <button style="float: right;" class="deleteButton" type = "button" id ="deleteButton">Delete Deck</button>
       </div>
-      <script type="module" src="./deckDetails.js"></script>
-        <br />
-        <section id="deckTitle"></section>
-        <section id="deckArea"></section>
-        <section id="afterDeck"></section>
+      <div id="deckTitle" class = "deckTitle"></div>
+      <div>
+        <button class ="sideButton" type = "button" id = "startReview">Start Review</button>
+      </div>
+      <div class="sidebar">
+        <a href="#progress">Progress</a>
+        <a href="#flashcards">Flashcards</a>
+        <a href="#settings">Settings</a>
+      </div>
+      <section id="deckArea"></section>
+      <section id="afterDeck"></section>
     </body>
 </html>

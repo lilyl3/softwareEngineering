@@ -58,12 +58,14 @@
             font-size: 20px;
             border-color: #0041CA;
             padding: 1%;
+            width: 100%;
             border-radius: 30% 30% 30% 30%;
           }
           .deckTitle{
             background-color: white;
             color:#0041CA;
             font-size: 30px;
+            text-align: left;
           }
           section {
             text-align: center;
@@ -71,7 +73,8 @@
           .sidebar {
             margin: 0;
             padding: 0;
-            width: 200px;
+            width: 20%;
+            height: 100%;
             background-color: #f1f1f1;
             position: fixed;
             overflow: auto;
@@ -86,9 +89,13 @@
             background-color: #555;
             color: white;
           }
-          .startReviewButton {
-            background-color: #0041CA;
-            color: white;
+          .sideButton:hover {
+            background-color:#bbc4dd;
+          }
+          .contentAreaStyle{
+            float: right;
+            margin-left:2%;
+            width: 78%;
           }
         </style>
     </head>
@@ -99,16 +106,18 @@
         <span style="text-align:left;">Kinda Like Quizlet</span>
         <button style="float: right;" class="deleteButton" type = "button" id ="deleteButton">Delete Deck</button>
       </div>
-      <div id="deckTitle" class = "deckTitle"></div>
-      <div>
-        <button class ="sideButton" type = "button" id = "startReview">Start Review</button>
-      </div>
       <div class="sidebar">
+        <div>
+          <button class ="sideButton" type = "button" id = "startReview">Start Review</button>
+        </div>
         <a href="#progress">Progress</a>
         <a href="#flashcards">Flashcards</a>
         <a href="#settings">Settings</a>
       </div>
-      <section id="deckArea"></section>
-      <section id="afterDeck"></section>
+      <section class = "contentAreaStyle">
+        <div id="deckTitle" class = "deckTitle"></div>
+        <section id="contentArea"></section>
+        <section id="afterDeck"></section>
+      </section>
     </body>
 </html>

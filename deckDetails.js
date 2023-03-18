@@ -43,7 +43,7 @@ const deck = sessionStorage.getItem('DeckID');
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
-const deckArea = document.getElementById('deckArea');
+const deckArea = document.getElementById('contentArea');
 const afterdeck = document.getElementById('afterDeck');
 
 deckTitle.innerHTML = deck;

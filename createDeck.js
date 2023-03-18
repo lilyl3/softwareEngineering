@@ -109,8 +109,7 @@ async function listen2CreateDeck(){
                 //inputted deck name is unique
                 //add deck
                 await DeckCreate(newDeckName.value, user);
-                sessionStorage.setItem("DeckID", newDeckName);
-                //console.log("Go to Deck Details now")
+                sessionStorage.setItem("DeckID", newDeckName.value);
                 window.location.href = "./deckDetails.html";
             }
         }

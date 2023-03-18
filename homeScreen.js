@@ -42,63 +42,43 @@ const defaultOrderType = "Random";
 const user = sessionStorage.getItem('userID');
 
 //Document Elements
-const deckArea = document.getElementById('deckArea');
-const afterdeck = document.getElementById('afterDeck');
 const logoutButton = document.getElementById('logoutButton');
-const deleteArea = document.getElementById('deleteArea');
+const afterdeck = document.getElementById('afterDeck');
 const selectAllDecks = document.getElementById('selectAll');
-const checkboxVisibility = document.getElementById('checkboxVisibility');
-
+const deleteButton = document.getElementById('deleteDeck');
 const deckList = document.getElementById('DeckList');
+
 var pressedDeleteButton = false;
+var numCheckboxesClicked = 0;
 
-const checkBoxListener = (e) => {
-  if (selectAllDecks.checked){
-    selectAllDecks.checked = false;
-  }
-}
-
-//Level initialized to 0
-//nextDateAppearance initialize to nullDate
-function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
-{
-  //the 'D' was added to the variables to distinguish them as the data
-  //document ID for these will end up being randomized
-  addDoc(collection(db, "Flashcard"),     
-    {
-      DeckID: DeckIDD,
-      Question: QuestionD,
-      Answer: AnswerD,
-      Level: 0,
-      nextDateAppearance: nullDate
+async function listen2SelectAll(){
+  selectAllDecks.addEventListener("click", async e=>{
+    const deckNames = await getDeckNames();
+    if (selectAllDecks.checked){
+      //check all boxes
+      for (let index = 0; index < deckNames.length; index++){
+        document.getElementById("check" + deckNames[index]).checked = true;
+        document.getElementById("check" + deckNames[index]).style.visibility = "visible";
+        document.getElementById("line" + deckNames[index]).style.backgroundColor = "#def1fd";
+        numCheckboxesClicked = deckNames.length;
+      }
+    }else{
+      //UNcheck all boxes
+      for (let index = 0; index < deckNames.length; index++){
+        document.getElementById("check" + deckNames[index]).checked = false;
+        document.getElementById("check" + deckNames[index]).style.visibility = "hidden";
+        document.getElementById("line" + deckNames[index]).style.backgroundColor = "white";
+        deleteButton.style.visibility = "hidden";
+        numCheckboxesClicked = 0;
+      }
     }
-  );
-}
-
-function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
-{
-  //create reference variables for the document and the data that will be updated
-  const CardRef = doc(db, "Flashcard", DocID);
-  const data = {
-    Question: Question,
-    Answer: Answer
-  };
-  //function that updates the document; adds info to the console if successful or not
-  updateDoc(CardRef, data).then(docRef => {
-    console.log("Updates have been made to the card");
-  }).catch(error => {
-    console.log(error);
-    })
-}
-
-function DeleteCard(DocID) //it is expected that the id of the card being deleted will be provided to this function
-{
-  const CardRef = doc(db, "Flashcard", DocID);
-  deleteDoc(CardRef).then(() => {
-    console.log("Entire Document has been deleted successfully.")
-    }).catch(error => {
-    console.log(error);
-    });
+    if(numCheckboxesClicked > 0){
+      deleteButton.style.visibility = "visible";    //@Justin Do NOT remove the following line. Not for styling purposes
+    }
+    else{
+      deleteButton.style.visibility = "hidden";     //@Justin Do not delete this line
+    }
+  })
 }
 
 //DeleteDeck to be fixed...
@@ -122,78 +102,20 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
   });
 }
 
-async function listen4DeleteDeck(){
-  const numDecks = await getNumDecks();
-  if (numDecks > 0){
-    //display delete button
-    var deleteButton = document.createElement("button");
-    deleteButton.id = "deleteDeck";
-    deleteButton.innerHTML = "&#128465 " + "Delete";
-    deleteButton.style.color = "black";
-    deleteArea.appendChild(deleteButton);
-
-    var cancelButton = document.createElement('button');
-    cancelButton.id = "cancelDeleteButton";
-    cancelButton.innerHTML = "Cancel";
-    cancelButton.style.visibility = "hidden";
-    deleteArea.appendChild(cancelButton);
-
-    deleteButton.addEventListener("click", async e =>{
-      if (pressedDeleteButton){
-        //second time pressed delete button
-        //then delete decks that have been CHECKED
-        const checkboxIDS = await getCheckBoxIDs();
-        for (let index = 0; index < checkboxIDS.length; index++){
-          const checkboxName = checkboxIDS[index];
-          if (document.getElementById(checkboxName).checked){
-            console.log("Deck being deleted: " + checkboxName.substring(5, checkboxName.length))
-            await DeleteDeck(checkboxName.substring(5, checkboxName.length));
-          }
-          document.getElementById(checkboxName).removeEventListener("click", checkBoxListener);
-        }
-        window.location.href = "./homeScreen.html";   //reload the webpage after delete
+async function listen2DeleteButton(){
+  deleteButton.addEventListener("click", async e =>{
+    const deckNames = await getDeckNames();
+    for (let index = 0; index < deckNames.length; index++){
+      const deckName = deckNames[index];
+      if (document.getElementById("check" + deckName).checked){
+        console.log("Deck being deleted: " + deckName)
+        await DeleteDeck(deckName);
+        deckList.removeChild(document.getElementById("line" + deckName));
       }
-      else{
-        pressedDeleteButton = true;
-        checkboxVisibility.style.display = "initial"; //@Justin Do NOT remove the following line. Not for styling purposes
-        cancelButton.style.visibility = "visible";    //@Justin Do NOT remove the following line. Not for styling purposes
-        const checkboxIDS = await getCheckBoxIDs();
-        //set checkboxes to visible
-        for (let index = 0; index < checkboxIDS.length; index++){
-          document.getElementById(checkboxIDS[index]).style.visibility = "visible";  //@Justin Do NOT remove the following line. Not for styling purposes
-        }
-
-        selectAllDecks.addEventListener("click", async e=>{
-          if (selectAllDecks.checked){
-            //check all boxes
-            for (let index = 0; index < checkboxIDS.length; index++){
-              document.getElementById(checkboxIDS[index]).checked = true;
-            }
-          }else{
-            //UNcheck all boxes
-            for (let index = 0; index < checkboxIDS.length; index++){
-              document.getElementById(checkboxIDS[index]).checked = false;
-            }
-          }
-        })
-      }
-    })
-
-    cancelButton.addEventListener("click", async e=>{
-      //turn visibility of buttons off
-      checkboxVisibility.style.display = "none";    //@Justin Do NOT remove the following line. Not for styling purposes
-      const checkboxIDS = await getCheckBoxIDs();
-      selectAllDecks.checked = false;
-      //set checkboxes to NONvisible
-      for (let index = 0; index < checkboxIDS.length; index++){
-        const checkBox = document.getElementById(checkboxIDS[index]);
-        checkBox.style.visibility = "hidden";     //@Justin Do NOT remove the following line. Not for styling purposes
-        checkBox.checked = false;
-      }
-      cancelButton.style.visibility = "hidden";   //@Justin Do NOT remove the following line. Not for styling purposes
-      pressedDeleteButton = false;
-    })
-  }
+    }
+    deleteButton.style.visibility = "hidden";
+    //window.location.href = "./homeScreen.html";   //reload the webpage after delete
+  });
 }
 
 //retrieve the total number of decks a user has
@@ -208,18 +130,18 @@ async function getNumDecks(){
 }
 
 //retrieve the total number of decks a user has
-async function getCheckBoxIDs(){
+async function getDeckNames(){
   const decks = query(collection(db, "decks"), where("userID", "==", user));
   const decksSnapshot = await getDocs(decks);
-  var checkboxIDs = [];
+  var deckNames = [];
   var counter = 0;
 
   //get existing deck names
   decksSnapshot.forEach((deck) => {
-    checkboxIDs[counter] = "check" + deck.data().DeckName;
-      ++counter;
+    deckNames[counter] = deck.data().DeckName;
+    ++counter;
   });
-  return checkboxIDs;
+  return deckNames;
 }
 
 //displays add deck button for less than 5 decks
@@ -253,32 +175,33 @@ async function displayDecks()
 {
   const decks = query(collection(db, "decks"), where("userID", "==", user));
   const decksSnapshot = await getDocs(decks);
-  var index = 0;
   decksSnapshot.forEach((deck) => {
 
     var deckLine = document.createElement('li');
-    deckLine.setAttribute('id', "Line" + deck.data().DeckName);
-    deckLine.style.width = "50%";
+    deckLine.setAttribute('id', "line" + deck.data().DeckName);
     deckLine.style.backgroundColor = "white";
     deckLine.style.color = "#0041CA";
     deckLine.style.fontSize = "18px";
+    deckLine.style.borderWidth = "1px";
     
     var checkbox4Delete = document.createElement("input");
     checkbox4Delete.type = "checkbox";
     checkbox4Delete.id = "check" + deck.data().DeckName;
     checkbox4Delete.style.visibility = "hidden"; //@Justin Do NOT remove the following line. Not for styling purposes
     checkbox4Delete.style.float = "left";
+    //checkbox4Delete.style.width = "10%";
 
     //var deck_i = document.createElement("button");
     var deck_i = document.createElement("span");
     deck_i.id = deck.data().DeckName;
     deck_i.innerHTML = deck.data().DeckName;
+    //deck_i.style.width = "30%";
 
     //var startReviewButton = document.createElement("button");
     var startReviewButton = document.createElement("span");
     startReviewButton.innerHTML = "&#8594";
     startReviewButton.style.float = "right";
-    startReviewButton.style.width = "10%";
+
 
     deckLine.appendChild(checkbox4Delete);
     deckLine.appendChild(deck_i);
@@ -289,7 +212,27 @@ async function displayDecks()
 
     //listen to see if user clicks on checkbox4Delete
     //if true, then unselect SelectAll checkbox if currently checked
-    checkbox4Delete.addEventListener("click", checkBoxListener);
+    checkbox4Delete.addEventListener("click", e =>{
+      if (selectAllDecks.checked){
+        selectAllDecks.checked = false;
+      }
+    
+      if (checkbox4Delete.checked){
+        numCheckboxesClicked++;
+        checkbox4Delete.style.visibility = "visible";
+        deckLine.style.backgroundColor = "#def1fd";
+      }else{
+        numCheckboxesClicked--;
+        deckLine.style.backgroundColor = "white";
+      }
+    
+      if(numCheckboxesClicked > 0){
+        deleteButton.style.visibility = "visible";   //@Justin Do NOT remove the following line. Not for styling purposes
+      }
+      else{
+        deleteButton.style.visibility = "hidden";;     //@Justin Do not delete this line
+      }
+    });
 
     //listen to see if user clicks on a deck
     //If so, start a review session
@@ -304,7 +247,24 @@ async function displayDecks()
       sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
       window.location.href = "./reviewSession.html";
     });
+
+    deckLine.addEventListener("mouseover", e =>{
+      deckLine.style.borderStyle = "outset";
+      if (!selectAllDecks.checked){
+        checkbox4Delete.style.visibility = "visible";   //@Justin Do NOT delete this line
+      }
+    })
+
+    deckLine.addEventListener("mouseout", e =>{
+      deckLine.style.borderStyle = "none";
+      if (!checkbox4Delete.checked){
+        checkbox4Delete.style.visibility = "hidden";     //@Justin Do NOT delete this line
+      }
+    })
   });
+
+  listen2SelectAll();
+  listen2DeleteButton();
 }
 
 //listen to see if user clicks on the logout button
@@ -318,7 +278,7 @@ async function listen4Logout(){
   });
 }
 
-listen4DeleteDeck();
+//listen4DeleteDeck();
 listen4Logout();
 displayDecks();
 displayAddDecksButton();

@@ -38,6 +38,7 @@
           .appName{
             background-color: #0041CA;
             color: white;
+            height: 5%;
             font-size: 20px;
           }
           .sideButton{
@@ -47,6 +48,7 @@
             border-color: #0041CA;
             padding: 1%;
             width: 100%;
+            height: 7%;
             border-radius: 30% 30% 30% 30%;
           }
           .deckTitle{
@@ -68,6 +70,7 @@
             overflow: auto;
           }
           .sidebar a {
+            height: 2.5%;
             display: block;
             color: black;
             padding: 16px;
@@ -90,6 +93,29 @@
             padding: 0%;
             background-color: rgb(155, 173, 233);
           }
+          .tooltiptext {
+            width: 20%;
+            background-color: rgb(85, 85, 85);
+            color: hsl(0, 0%, 100%);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            left: 21%;
+            top: 18.5%;
+            font-size: 18px;
+          }
+          .tooltiptext::after {
+            content: " ";
+            position: absolute;
+            top: 50%;
+            right: 100%; /* To the left of the tooltip */
+            margin-top: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent #555 transparent transparent;
+          }
         </style>
     </head>
 
@@ -102,22 +128,40 @@
         <div>
           <button class ="sideButton" type = "button" id = "startReview">Start Review</button>
         </div>
-        <a href="#progress">Progress</a>
-        <a href="#flashcards">Flashcards</a>
-        <a href="#settings">Settings</a>
+        <a href="#summary" id = "SummaryTab">Summary</a>
+        <a href="#flashcards" id = "FlashcardsTab">Flashcards</a>
+        <a href="#settings" id = "SettingsTab">Settings</a>
+      </div>
+      <div>
+        <span class="tooltiptext" id="tipNoFlashcards" style="visibility: hidden;">
+          <button type ="button" id = "closeTipNoFlashcard">X</button>
+          <br/>
+          No flashcards. Click here to add flashcards.
+        </span>
       </div>
       <section class = "contentAreaStyle">
         <div id="deckTitle" class = "deckTitle"></div>
-        <div id = "deleteArea" class="container">
-          <input type="checkbox" style="float: left;" id="selectAll" name="selectAll">
-          <label for="selectAll" style="float: left;">Select All</label>
-          <button type="button" id = "deleteFlashcard" 
-          style="visibility: hidden; width: 150; color:black; background-color: red;">
-            Delete
-          </button>
-        </div>
-        <div class="container" id = "FlashcardList"></div>
-        <section id="afterContent"></section>
+        <!-- Display content for Summary tab -->
+        <section id = "summaryContent">
+          <p>In Summary! Just a temporary placeholder</p>
+        </section>
+        <!-- Display content for Flashcards tab -->
+        <section id="flashcardContent" style = "display: none;">
+          <div id = "deleteArea" class="container">
+            <input type="checkbox" style="float: left;" id="selectAll" name="selectAll">
+            <label for="selectAll" style="float: left;">Select All</label>
+            <button type="button" id = "deleteFlashcard" 
+            style="visibility: hidden; width: 150; color:black; background-color: red;">
+              Delete
+            </button>
+          </div>
+          <div class="container" id = "FlashcardList"></div>
+          <section id="afterContent"></section>
+      </section>
+      <!-- Display content for Settings tab -->
+      <section id = "settingsContent" style="display: none;">
+        <p>In Settings! Just a temporary placeholder</p>
+      </section>
       </section>
     </body>
 </html>

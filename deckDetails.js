@@ -39,6 +39,7 @@ let db = getFirestore(app);
 //CONSTANTs
 const nullDate = "2023/01/01";
 const deck = sessionStorage.getItem('DeckID');
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
@@ -49,6 +50,16 @@ const afterContent = document.getElementById('afterContent');
 const deleteButton = document.getElementById('deleteFlashcard');
 const selectAll = document.getElementById('selectAll');
 const startReviewButton = document.getElementById('startReview');
+
+//Side bar tabs
+const flashcardTab = document.getElementById('FlashcardsTab');
+const SummaryTab = document.getElementById('SummaryTab');
+const SettingsTab = document.getElementById('SettingsTab');
+//Content for each side bar tab
+const flashcardContent = document.getElementById('flashcardContent');
+const summaryContent = document.getElementById('summaryContent');
+const settingsContent = document.getElementById('settingsContent');
+
 var numCheckboxesClicked = 0;
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
@@ -168,7 +179,7 @@ async function listen2SelectAll(){
       for (let index = 0; index < flashcardIDs.length; index++){
         document.getElementById("check" + flashcardIDs[index]).checked = false;
         document.getElementById("check" + flashcardIDs[index]).style.visibility = "hidden";
-        document.getElementById("line" + flashcardIDs[index]).style.backgroundColor = "white";
+        document.getElementById("line" + flashcardIDs[index]).style.backgroundColor = "#ededed";
         deleteButton.style.visibility = "hidden";
         numCheckboxesClicked = 0;
       }
@@ -251,7 +262,7 @@ async function displayFlashcards()
         flashcardLine.style.backgroundColor = "#def1fd";
       }else{
         numCheckboxesClicked--;
-        flashcardLine.style.backgroundColor = "white";
+        flashcardLine.style.backgroundColor = "#ededed";
       }
     
       if(numCheckboxesClicked > 0){
@@ -360,6 +371,53 @@ async function listen2StartReview(){
   })
 }
 
+//only runs if user has no flashcards in deck
+//give a tip to user!
+async function listen2RemoveTip(){
+  if (await getNumFlashcards() === 0){
+    console.log("came here!")
+    const tipNoFlashcards = document.getElementById('tipNoFlashcards');
+    const closeTip = document.getElementById('closeTipNoFlashcard');
+    tipNoFlashcards.style.visibility = "visible";
+  
+    const removeTip = async (e) =>{
+      tipNoFlashcards.style.visibility = "hidden";
+      closeTip.removeEventListener("click", removeTip);
+    }
+  
+    closeTip.addEventListener("click", removeTip);
+    console.log("ended came here!")
+  }
+}
+
+async function listen2FlashcardTab(){
+  displayFlashcards();
+  displayAddFlashcardsButton();
+  flashcardTab.addEventListener("click", async (e) =>{
+    flashcardContent.style.display = "initial";
+    summaryContent.style.display = "none";
+    settingsContent.style.display = "none";
+  })
+}
+
+async function listen2SummaryTab(){
+  SummaryTab.addEventListener("click", async (e) =>{
+    summaryContent.style.display = "initial";
+    flashcardContent.style.display = "none";
+    settingsContent.style.display = "none";
+  })
+}
+
+async function listen2SettingsTab(){
+  SettingsTab.addEventListener("click", async (e) =>{
+    settingsContent.style.display = "initial";
+    summaryContent.style.display = "none";
+    flashcardContent.style.display = "none";
+  })
+}
+
+listen2RemoveTip();
 listen2StartReview();
-displayFlashcards();
-displayAddFlashcardsButton();
+listen2SummaryTab();
+listen2FlashcardTab();
+listen2SettingsTab();

@@ -38,32 +38,17 @@ let db = getFirestore(app);
 
 //CONSTANTs
 const nullDate = "2023/01/01";
-const defaultOrderType = "Random";
 const deck = sessionStorage.getItem('DeckID');
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
-const deckArea = document.getElementById('contentArea');
-const afterdeck = document.getElementById('afterDeck');
-
 deckTitle.innerHTML = deck;
-//Level initialized to 0
-//nextDateAppearance initialize to nullDate
-function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
-{
-  //the 'D' was added to the variables to distinguish them as the data
-  //document ID for these will end up being randomized
-  addDoc(collection(db, "Flashcard"),     
-    {
-      DeckID: DeckIDD,
-      Question: QuestionD,
-      Answer: AnswerD,
-      Level: 0,
-      nextDateAppearance: nullDate
-    }
-  );
 
-}
+const flashcardList = document.getElementById('FlashcardList');
+const afterContent = document.getElementById('afterContent');
+const deleteButton = document.getElementById('deleteFlashcard');
+const selectAll = document.getElementById('selectAll');
+var numCheckboxesClicked = 0;
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
@@ -94,9 +79,7 @@ function DeleteCard(DocID) //it is expected that the id of the card being delete
 //DeleteDeck to be fixed...
 async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
 {
-  
   const DeckRef = doc(db, "decks", DeckID);
-  
   const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
   const batch = writeBatch(db);//create batch
 
@@ -112,6 +95,21 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
     console.log(error);
     });
   
+}
+
+//retrieve the total number of decks a user has
+async function getFlashcardIDs(){
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcardSnapshot = await getDocs(flashcards);
+  var flashcardIDs = [];
+  var counter = 0;
+
+  //get existing deck names
+  flashcardSnapshot.forEach((flashcard) => {
+    flashcardIDs[counter] = flashcard.id;
+    ++counter;
+  });
+  return flashcardIDs;
 }
 
 //retrieve the total number of decks a user has
@@ -131,14 +129,18 @@ async function displayAddFlashcardsButton()
   console.log(numFlash)
   if (numFlash < 15)
   {
-    var addDecks = document.createElement("button")
-    addDecks.innerHTML = "+";
-    addDecks.style.height = "25px";
-    addDecks.style.width = "25px";
-    addDecks.style.borderRadius = "15%";
-    addDecks.style.color = "black";
-    addDecks.style.backgroundColor = "white";
-    afterdeck.appendChild(addDecks);
+    var addFlashcard = document.createElement("button")
+    addFlashcard.innerHTML = "+";
+    addFlashcard.style.height = "25px";
+    addFlashcard.style.width = "25px";
+    addFlashcard.style.borderRadius = "15%";
+    addFlashcard.style.color = "black";
+    addFlashcard.style.backgroundColor = "white";
+    afterContent.appendChild(addFlashcard);
+    addFlashcard.addEventListener("click", e => {
+      //go to newCard.html to add new flashcard
+      window.location.href = "./newCard.html";
+    })
   }
   else
   {
@@ -146,17 +148,51 @@ async function displayAddFlashcardsButton()
   }
 }
 
-async function displayDeleteFlashcardsButton()
-{
-    var addDecks = document.createElement("button")
-    addDecks.innerHTML = "Delete Flashcards";
-    addDecks.style.height = "30px";
-    addDecks.style.width = "150";
-    addDecks.style.borderRadius = "15%";
-    addDecks.style.color = "black";
-    addDecks.style.backgroundColor = "red";
-    afterdeck.appendChild(addDecks);
+//check if user selected all decks
+async function listen2SelectAll(){
+  selectAll.addEventListener("click", async e=>{
+    const flashcardIDs = await getFlashcardIDs();
+    if (selectAll.checked){
+      //check all boxes
+      for (let index = 0; index < flashcardIDs.length; index++){
+        document.getElementById("check" + flashcardIDs[index]).checked = true;
+        document.getElementById("check" + flashcardIDs[index]).style.visibility = "visible";
+        document.getElementById("line" + flashcardIDs[index]).style.backgroundColor = "#def1fd";
+        numCheckboxesClicked = flashcardIDs.length;
+      }
+    }else{
+      //UNcheck all boxes
+      for (let index = 0; index < flashcardIDs.length; index++){
+        document.getElementById("check" + flashcardIDs[index]).checked = false;
+        document.getElementById("check" + flashcardIDs[index]).style.visibility = "hidden";
+        document.getElementById("line" + flashcardIDs[index]).style.backgroundColor = "white";
+        deleteButton.style.visibility = "hidden";
+        numCheckboxesClicked = 0;
+      }
+    }
+    if(numCheckboxesClicked > 0){
+      deleteButton.style.visibility = "visible";    //@Justin Do NOT remove the following line. Not for styling purposes
+    }
+    else{
+      deleteButton.style.visibility = "hidden";     //@Justin Do not delete this line
+    }
+  })
+}
 
+async function listen2DeleteButton(){
+  deleteButton.addEventListener("click", async e =>{
+    const flashcardIDs = await getFlashcardIDs();
+    for (let index = 0; index < flashcardIDs.length; index++){
+      const flashcardID = flashcardIDs[index];
+      if (document.getElementById("check" + flashcardID).checked){
+        console.log("Flashcard being deleted: " + flashcardID)
+        await DeleteCard(flashcardID);
+        flashcardList.removeChild(document.getElementById("line" + flashcardID));
+      }
+    }
+    deleteButton.style.visibility = "hidden";
+    //window.location.href = "./homeScreen.html";   //reload the webpage after delete
+  });
 }
 
 // displays the user's flashcards on the home screen
@@ -164,20 +200,96 @@ async function displayFlashcards()
 {
   const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
   const flashcardsSnapshot = await getDocs(flashcards);
-  var index = 0;
   flashcardsSnapshot.forEach((flashcard) => {
-    var FC_i = document.createElement("form");
-    FC_i.id = "deck" + index.toString();
-    FC_i.innerHTML = flashcard.data().Question;
-    var check = document.createElement("input");
-    check.type = "checkbox";
-    deckArea.appendChild(FC_i);
-    deckArea.appendChild(check);
-    deckArea.appendChild(document.createElement("br"));
-    deckArea.appendChild(document.createElement("br"));
+
+    var flashcardLine = document.createElement('li');
+    flashcardLine.setAttribute('id', "line" + flashcard.id);
+    flashcardLine.style.backgroundColor = "#ededed";
+    flashcardLine.style.color = "#0041CA";
+    flashcardLine.style.fontSize = "18px";
+    flashcardLine.style.listStyleType = "none";
+    flashcardLine.style.borderWidth = "1px";
+    
+    var checkbox4Delete = document.createElement("input");
+    checkbox4Delete.type = "checkbox";
+    checkbox4Delete.id = "check" + flashcard.id;
+    checkbox4Delete.style.visibility = "hidden"; //@Justin Do NOT remove the following line. Not for styling purposes
+    checkbox4Delete.style.float = "left";
+
+    //display flashcard question
+    var flashcardQuestion = document.createElement("span");
+    flashcardQuestion.id = flashcard.id;
+    flashcardQuestion.innerHTML = flashcard.data().Question;
+    flashcardQuestion.style.color = "#0041CA";
+
+    //add icon to edit flashcard
+    var editFlashcard = document.createElement("span");
+    editFlashcard.innerHTML = "Edit";     
+    editFlashcard.style.float = "right";
+    editFlashcard.style.color = "#0041CA";
+
+    flashcardLine.appendChild(checkbox4Delete);
+    flashcardLine.appendChild(flashcardQuestion);
+    flashcardLine.appendChild(editFlashcard);
+
+    flashcardList.appendChild(flashcardLine);
+
+    //listen to see if user clicks on checkbox4Delete
+    //if true, then unselect SelectAll checkbox if currently checked
+    checkbox4Delete.addEventListener("click", e =>{
+      if (selectAll.checked){
+        selectAll.checked = false;
+      }
+    
+      if (checkbox4Delete.checked){
+        numCheckboxesClicked++;
+        checkbox4Delete.style.visibility = "visible";
+        flashcardLine.style.backgroundColor = "#def1fd";
+      }else{
+        numCheckboxesClicked--;
+        flashcardLine.style.backgroundColor = "white";
+      }
+    
+      if(numCheckboxesClicked > 0){
+        deleteButton.style.visibility = "visible";   //@Justin Do NOT remove the following line. Not for styling purposes
+      }
+      else{
+        deleteButton.style.visibility = "hidden";;     //@Justin Do not delete this line
+      }
+    });
+
+    //listen to see if user clicks on a deck
+    //If so, start a review session
+    flashcardQuestion.addEventListener("click", async e =>{
+      //save cookie of deck clicked by user
+      sessionStorage.setItem("DeckID", flashcardQuestion.getAttribute("id"));
+      window.location.href = "./deckDetails.html";
+    });
+
+    editFlashcard.addEventListener("click", async e =>{
+      //save cookie of deck clicked by user
+      sessionStorage.setItem("DeckID", flashcardQuestion.getAttribute("id"));
+      window.location.href = "./reviewSession.html";
+    });
+
+    flashcardLine.addEventListener("mouseover", e =>{
+      flashcardLine.style.borderStyle = "outset";
+      if (!selectAll.checked){
+        checkbox4Delete.style.visibility = "visible";   //@Justin Do NOT delete this line
+      }
+    })
+
+    flashcardLine.addEventListener("mouseout", e =>{
+      flashcardLine.style.borderStyle = "none";
+      if (!checkbox4Delete.checked){
+        checkbox4Delete.style.visibility = "hidden";     //@Justin Do NOT delete this line
+      }
+    })
   });
+
+  listen2SelectAll();
+  listen2DeleteButton();
 }
 
 displayFlashcards();
 displayAddFlashcardsButton();
-displayDeleteFlashcardsButton();

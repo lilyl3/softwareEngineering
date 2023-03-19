@@ -20,14 +20,6 @@
             background-color: #0041CA;
             border-radius: 10px;         
           }
-          .logoutButton {
-            width: 75px;
-            background-color:white;
-            color: #0041CA;
-            border-radius: 12px;
-            border: white;
-            padding: 8px;
-          }
           .deleteButton {
             width: 100px;
             background-color:red;
@@ -36,10 +28,6 @@
             border: black;
             padding: 8px;
           }
-          .createAccount {
-            padding: 15px;  
-          }
-
           span {
             font-size: 28px;
             color: white;
@@ -95,7 +83,12 @@
           .contentAreaStyle{
             float: right;
             margin-left:2%;
-            width: 78%;
+            width:78%;
+          }
+          .container {
+            text-align: center;
+            padding: 0%;
+            background-color: rgb(155, 173, 233);
           }
         </style>
     </head>
@@ -104,7 +97,6 @@
       <script type="module" src="./deckDetails.js"></script>
       <div class = "appName">
         <span style="text-align:left;">Kinda Like Quizlet</span>
-        <button style="float: right;" class="deleteButton" type = "button" id ="deleteButton">Delete Deck</button>
       </div>
       <div class="sidebar">
         <div>
@@ -116,8 +108,16 @@
       </div>
       <section class = "contentAreaStyle">
         <div id="deckTitle" class = "deckTitle"></div>
-        <section id="contentArea"></section>
-        <section id="afterDeck"></section>
+        <div id = "deleteArea" class="container">
+          <input type="checkbox" style="float: left;" id="selectAll" name="selectAll">
+          <label for="selectAll" style="float: left;">Select All</label>
+          <button type="button" id = "deleteFlashcard" 
+          style="visibility: hidden; width: 150; color:black; background-color: red;">
+            Delete
+          </button>
+        </div>
+        <div class="container" id = "FlashcardList"></div>
+        <section id="afterContent"></section>
       </section>
     </body>
 </html>

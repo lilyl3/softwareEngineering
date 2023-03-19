@@ -41,13 +41,11 @@
       </div>
       <script type="module" src="./homeScreen.js"></script>
       <div id = "deleteArea" class="container">
-        <input type="checkbox" id="selectAll" name="selectAll">
-        <label for="selectAll">Select All</label>
+        <input type="checkbox" id="selectAll" name="selectAll" style="float: left;">
+        <label for="selectAll" >Select All</label>
         <button type="button" id = "deleteDeck" style="visibility: hidden;">Delete</button>
       </div>
-      <div class="container">
-        <ul id = "DeckList" style="list-style-type: none; text-align: center; display: inline-block;"></ul>
-      </div>
+      <div class="container" id = "DeckList"></div>
       <section id="afterDeck"></section>
     </body>
 </html>

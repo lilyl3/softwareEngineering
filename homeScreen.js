@@ -48,7 +48,6 @@ const selectAllDecks = document.getElementById('selectAll');
 const deleteButton = document.getElementById('deleteDeck');
 const deckList = document.getElementById('DeckList');
 
-var pressedDeleteButton = false;
 var numCheckboxesClicked = 0;
 
 async function listen2SelectAll(){
@@ -183,6 +182,7 @@ async function displayDecks()
     deckLine.style.color = "#0041CA";
     deckLine.style.fontSize = "18px";
     deckLine.style.borderWidth = "1px";
+    deckLine.style.listStyleType = "none";
     
     var checkbox4Delete = document.createElement("input");
     checkbox4Delete.type = "checkbox";

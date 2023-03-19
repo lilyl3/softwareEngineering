@@ -43,7 +43,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
-deckTitle.innerHTML = deck;
+deckTitle.innerHTML = " > " + deck;
 
 const flashcardList = document.getElementById('FlashcardList');
 const afterContent = document.getElementById('afterContent');
@@ -59,6 +59,7 @@ const SettingsTab = document.getElementById('SettingsTab');
 const flashcardContent = document.getElementById('flashcardContent');
 const summaryContent = document.getElementById('summaryContent');
 const settingsContent = document.getElementById('settingsContent');
+const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
 
 var numCheckboxesClicked = 0;
 
@@ -367,6 +368,7 @@ async function displayFlashcards()
 
 async function listen2StartReview(){
   startReviewButton.addEventListener("click", e =>{
+    sessionStorage.setItem("PrevHTMLPg", "deckDetails");
     window.location.href = "./reviewSession.html";
   })
 }
@@ -390,25 +392,22 @@ async function listen2RemoveTip(){
   }
 }
 
-async function listen2FlashcardTab(){
+async function listen2Tabs(){
   displayFlashcards();
   displayAddFlashcardsButton();
+
   flashcardTab.addEventListener("click", async (e) =>{
     flashcardContent.style.display = "initial";
     summaryContent.style.display = "none";
     settingsContent.style.display = "none";
   })
-}
 
-async function listen2SummaryTab(){
   SummaryTab.addEventListener("click", async (e) =>{
     summaryContent.style.display = "initial";
     flashcardContent.style.display = "none";
     settingsContent.style.display = "none";
   })
-}
 
-async function listen2SettingsTab(){
   SettingsTab.addEventListener("click", async (e) =>{
     settingsContent.style.display = "initial";
     summaryContent.style.display = "none";
@@ -416,8 +415,10 @@ async function listen2SettingsTab(){
   })
 }
 
+if (prevHTMLPg === "newCard"){
+  summaryContent.style.display = "none";
+  flashcardContent.style.display = "initial";
+}
 listen2RemoveTip();
 listen2StartReview();
-listen2SummaryTab();
-listen2FlashcardTab();
-listen2SettingsTab();
+listen2Tabs();

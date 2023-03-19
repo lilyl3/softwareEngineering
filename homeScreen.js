@@ -239,12 +239,14 @@ async function displayDecks()
     deck_i.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
       sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
+      sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./deckDetails.html";
     });
 
     startReviewButton.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
       sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
+      sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./reviewSession.html";
     });
 

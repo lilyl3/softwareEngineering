@@ -68,6 +68,7 @@ async function listen2SubmitButton(){
         if (question.value != "" && answer.value != ""){
             await CardCreate(answer.value, deck, question.value);
             //console.log("Returning to main!")
+            sessionStorage.setItem('PrevHTMLPg', "newCard");
             window.location.href = "./deckDetails.html";
         }
     });

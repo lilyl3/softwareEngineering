@@ -25,8 +25,15 @@ async function main(){
     
     returnHomeButton.addEventListener("click", async e =>{
         e.preventDefault();
-        sessionStorage.removeItem('DeckID');                //remove saved cookie of DeckID
-        window.location.href = "./homeScreen.html";
+        const pgStartReviewClicked = sessionStorage.getItem('PrevHTMLPg');
+        if (pgStartReviewClicked === "homeScreen"){
+            sessionStorage.removeItem('DeckID');                //remove saved cookie of DeckID
+            window.location.href = "./homeScreen.html";
+        }
+        else{
+            sessionStorage.setItem('PrevHTMLPg', "finishedReview");
+            window.location.href = "./deckDetails.html";
+        }
         return false;
     })
 

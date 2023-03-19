@@ -1,0 +1,65 @@
+body {
+	background-color: #0041CA;
+	color: white;
+	text-align: center;
+	font-size: 1.2em;
+}
+
+form {
+	margin: 0 auto;
+	padding: 1em;
+	color: black;
+	text-align: auto;
+	max-width: 20em;
+	max-height: 10%;
+	background-color: white;
+	border-radius: 1em;            
+}
+
+.sign-in-message {
+	margin-top: 3.5em;
+	margin-bottom: 2.5em;
+}
+
+.loginButton {
+	width: 10em;
+	font-weight: bold;
+	font-size: 0.9em;
+	background-color:#0041CA;
+	color: white;
+	border-radius: 1em;
+	border: #0041CA;
+	padding: 1em;
+	cursor: pointer;
+	transition: 0.35s;
+}
+
+.loginButton:hover {
+	opacity: 80%;
+}
+
+.loginButton:active {
+	opacity: 50%;
+}
+
+.createAccount {
+	padding: 1em;  
+	margin: 1em;
+}
+
+.username-entry, .password-entry {
+	margin: 1em;
+}
+
+.username-label, .password-label {
+	font-weight: bold;
+}
+
+.username-input, .password-input {
+	border: 0.2em solid black;
+	border-radius: 0.5em;
+	height: 1.5em;
+	font-size: 0.9em;
+	font-style: arial;
+	padding-left: 0.3em;
+}

@@ -5,85 +5,38 @@
         <title>Create Account</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet"/>
-        <style src = "./style.css">
-          body {
-            background-color: #0041CA;
-            color: white;
-            text-align: center;
-          }
-          form {
-            margin: 0 auto;
-            color: black;
-            text-align: auto;
-            max-width: 275px;
-            max-height: 450px;
-            background-color: white;
-            border-radius: 10px;            
-          }
-          .loginButton {
-            width: 175px;
-            background-color:#0041CA;
-            color: white;
-            border-radius: 12px;
-            border: #0041CA;
-            padding: 8px;
-          }
-          .createAccount {
-            padding: 15px;  
-          }
-
-          span {
-            font-size: 10px;
-          }
-
-        </style>
+        <link href="createAccount.css" rel="stylesheet"/>
     </head>
 
     <body>
-
       <script type="module" src="./createAccount.js"></script>
         <section id="loginpage">
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-            <h2>Create an account</h2>
-              <br />
-              <br />
-            <section class="loginBox">
-              <form id="login">
-                <br />
-                <br />
-                <label class="label">Username</label>
-                <br />
-                <input type="text" id="username">
-                <br/>
-                <p id = "warningMessage"></p>
-                <br/>
-                <span>It is recommended that a strong
-                    <br />password has the following:
-                    <br />- at least 8 characters
-                    <br />- at least one uppercase letter
-                    <br />- at least one lowercase letter
-                    <br />- at least one special character
-                </span>
-                <br />
-                <br />
-                <label class="label">Password</label>
-                <br />
-                <input type="password" id="password">
-                <br/>
-                <br />
-                <button type="submit" id = "submitButton" class="loginButton">
-                  <span>Create</span>
-                </button>
-                <br />
-                <br />
-              </form>            
-            </section>
+          <h2 class="create-account-header">Create an account</h2>
+          <section class="loginBox">
+            <form id="login" class="create-account-form">
+              <div class="username-entry">
+                <label class="username-label" class="username-label">Username</label>
+                <input type="text" id="username" class="username-input">
+              </div>
+              <p id = "warningMessage">
+              It is recommended that a strong
+                  <br />password <span class="important">has at least the following:</span>
+                  <br />- at least <span class="important"> 8 characters </span>
+                  <br />- at least <span class="important">one uppercase letter </span>
+                  <br />- at least <span class="important">one lowercase letter </span>
+                  <br />- at least <span class="important">one special character </span>
+              </p>
+              <div class="password-entry">
+                <label class="password-label">Password</label>
+                <input type="password" id="password"
+                  class="password-input">
+              </div>
+              <button type="submit" id = "submitButton" 
+                class="create-button">
+                Create
+              </button>
+            </form>            
+          </section>
             <!--
               <i class="material-icons">login</i>
               <section id="userbook"></section>

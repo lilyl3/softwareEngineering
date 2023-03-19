@@ -5,75 +5,31 @@
         <title>Login page</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet"/>
-        <style src = "./style.css">
-          body {
-            background-color: #0041CA;
-            color: white;
-            text-align: center;
-          }
-          form {
-            margin: 0 auto;
-            color: black;
-            text-align: auto;
-            max-width: 275px;
-            max-height: 450px;
-            background-color: white;
-            border-radius: 10px;            
-          }
-          .loginButton {
-            width: 175px;
-            background-color:#0041CA;
-            color: white;
-            border-radius: 12px;
-            border: #0041CA;
-            padding: 8px;
-          }
-          .createAccount {
-            padding: 15px;  
-          }
-
-        </style>
+        <link rel="stylesheet" href="login.css">
     </head>
 
     <body>
-
       <script type="module" src="./login.js"></script>
         <section id="loginpage">
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-            <h2>Sign into your account</h2>
-              <br />
-              <br />
-              <br />
-              <br />
+            <h2 class="sign-in-message">Sign into your account</h2>
             <section class="loginBox">
               <form id="login">
-                <br />
                 <p id="warningMessage"></p>
-                <label class="label">Username</label>
-                <br />
-                <input type="text" id="username">
-                <br />
-                <br/>
-                <label class="label">Password</label>
-                <br />
-                <input type="password" id="password">
-                <br/>
-                <br />
-                <button type="submit" class="loginButton">
-                  <span>Login</span>
-                </button>
-                <br />
-                <br />
+                <div class="username-entry">
+                  <label class="username-label">Username</label>
+                  <input class="username-input" type="text" id="username">
+                </div>
+                
+                <div class="password-entry">
+                  <label class="password-label">Password</label>
+                  <input class="password-input" type="password" id="password">
+                </div>
+                
+                <button type="submit" class="loginButton">Login</button>
               </form>
               <br />
               <form id="createAccount">
-                <span>No account?</span>
+                No account?
                 <a href = "./createAccount.html">Create an account</a>
               </form>
             

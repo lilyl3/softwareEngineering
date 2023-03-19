@@ -1,0 +1,49 @@
+body {
+	background-color: #0041CA;
+	color: white;
+	text-align: center;
+	font-size: 1.2em;
+}
+
+.session-review {
+	margin: auto;
+	margin-top: 0.5%;
+	color: black;
+	text-align: auto;
+	max-width: 50em;
+	max-height: 50em;
+	background-color: white;
+	border-radius: 10px;            
+	padding: 2em;
+}
+
+.newReviewButton, .returnHomeButton {
+	width: 14em;
+	padding: 0.8em;
+	border-radius: 12px;
+	color: white;
+	border: none;
+	font-size: 1.2rem;
+	margin: 1em;
+	cursor: pointer;
+}
+
+.newReviewButton:hover, .returnHomeButton:hover {
+	opacity: 80%;
+}
+
+.newReviewButton:active, .returnHomeButton:active {
+	opacity: 50%;
+}
+
+.newReviewButton {
+	background-color:#0041CA;
+}
+
+.returnHomeButton {
+	background-color:#d61212;
+}
+
+.deck-title, .total-reviewed, .num-missed, .num-correct, .score {
+	font-weight: bold;
+}

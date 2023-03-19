@@ -10,10 +10,10 @@ deckID.innerHTML = sessionStorage.getItem("DeckID");
 const correct = sessionStorage.getItem("numCorrect");
 const incorrect = sessionStorage.getItem("numMissed");
 const total = parseInt(correct) + parseInt(incorrect);
-totalReviewed.innerHTML = "Total Reviewed: " + total;
-numCorrect.innerHTML = "Correct: " + correct;
-numMissed.innerHTML = "Incorrect: " + incorrect;
-score.innerHTML = "Accuracy Score: " + (Math.round((correct / total) * 100 * 100)) / 100 + "%";
+totalReviewed.innerHTML += total;
+numCorrect.innerHTML += correct;
+numMissed.innerHTML += incorrect;
+score.innerHTML += (Math.round((correct / total) * 100 * 100)) / 100 + "%";
 
 //delete cookie on number of flashcards correct/missed in last review session
 sessionStorage.removeItem("numCorrect");

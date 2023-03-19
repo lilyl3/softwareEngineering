@@ -108,13 +108,8 @@ function waitForRevealAnswer() {
   return new Promise((resolve) => {
     var revealButton = document.createElement("button");
     revealButton.id = "revealButton";
+    revealButton.className = "reveal-button";
     revealButton.innerHTML = "Reveal Answer";
-    revealButton.style.color = "white";
-    revealButton.style.backgroundColor = "#0041CA";
-    revealButton.style.padding = "15px";
-    revealButton.style.width = "25%";
-    revealButton.style.fontSize = "18px";
-    revealButton.style.border = "white";
     reviewSession.appendChild(revealButton);
 
     function removeListeners(){
@@ -148,6 +143,9 @@ function waitForRevealAnswer() {
       pause = false;
       removeListeners();
       resolve(handler);
+      // reveal answer that was invisible previously
+      document.getElementById("answerHeading").style.visibility = "visible";
+      document.getElementById("reviewAnswerSession").style.visibility = "visible";
     }, { once: true });
 
     pauseButton.addEventListener("click", pausePressed);
@@ -172,23 +170,13 @@ function waitForCorrectIncorrectResponse() {
     const correct = document.createElement('button');
     correct.innerHTML = "Correct";
     correct.id = "correct";
-    correct.style.backgroundColor = "#0eaf29";
-    correct.style.padding = "15px";
-    correct.style.width = "25%";
-    correct.style.fontSize = "18px";
-    correct.style.color = "white";
-    correct.style.border = "none";
+    correct.className = "correct-button";
     correctButtons.appendChild(correct);
 
     const incorrect = document.createElement('button');
     incorrect.innerHTML = "Incorrect";
     incorrect.id = "incorrect";
-    incorrect.style.backgroundColor = "#f44336";
-    incorrect.style.padding = "15px";
-    incorrect.style.width = "25%";
-    incorrect.style.fontSize = "18px";
-    incorrect.style.color = "white";
-    incorrect.style.border = "none";
+    incorrect.className = "incorrect-button";
     correctButtons.appendChild(incorrect);
 
     function removeListeners(){
@@ -238,6 +226,9 @@ function waitForCorrectIncorrectResponse() {
       // console.log("numCorrect: ", numCorrect)
       removeListeners();
       resolve(handler);
+      // hide answer that was visible previously
+      document.getElementById("answerHeading").style.visibility = "hidden";
+      document.getElementById("reviewAnswerSession").style.visibility = "hidden";
     }, { once: true });
 
     incorrect.addEventListener("click", handler => {
@@ -248,6 +239,9 @@ function waitForCorrectIncorrectResponse() {
       removeListeners();
       pause = false;
       resolve(handler);
+      // hide answer that was visible previously
+      document.getElementById("answerHeading").style.visibility = "hidden";
+      document.getElementById("reviewAnswerSession").style.visibility = "hidden";
     }, { once: true });
 
     // pauseButton.addEventListener("click", handler => {

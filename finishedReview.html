@@ -1,85 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <title>Finished Review</title>
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-            rel="stylesheet"/>
-        <style src = "./style.css">
-          body {
-            background-color: #0041CA;
-            color: white;
-            text-align: center;
-          }
-          form {
-            margin: 0 auto;
-            color: black;
-            text-align: auto;
-            max-width: 500px;
-            max-height: 500px;
-            background-color: white;
-            border-radius: 10px;            
-          }
-          .newReviewButton {
-            width: 200px;
-            background-color:#0041CA;
-            color: white;
-            border-radius: 12px;
-            border: #0041CA;
-            padding: 8px;
-          }
-          .returnHomeButton {
-            width: 200px;
-            background-color:#d61212;
-            color: white;
-            border-radius: 12px;
-            border: #d61212;
-            padding: 8px;
-          }
+  <head>
+    <meta charset="utf-8" />
+    <title>Finished Review</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet"/>
+    <link rel="stylesheet" href="finishedReview.css">
+  </head>
 
-        </style>
-    </head>
-
-    <body>
-
-      <script type="module" src="./finishedReview.js"></script>
-        <section id="loginpage">
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-              <br />
-            <section>
-              <form id="login">
-                <br />
-                <br />
-                <p>Congratulations on finishing your review!</p>
-                <p>Deck Title:</p>
-                <p id = "deckID"></p>
-                <br />
-                <p id="totalReviewed"></p>
-                <p id="numMissed"></p>
-                <p id="numCorrect"></p>
-                <p id="score"></p>
-                <br />
-                <br />
-                <br />
-                <button type="button" id = "returnHome" class="returnHomeButton">
-                    <span>Return to Home Screen</span>
-                </button>
-                <button type="button" id = "startNewReview" class="newReviewButton">
-                  <span>Start new review</span>
-                </button>
-                <br />
-                <br />
-              </form>            
-            </section>
-        </section>
-    </body>
+  <body>
+    <script type="module" src="./finishedReview.js"></script>
+      <section id="loginpage">
+        <form id="sessionReview" class="session-review">
+          <p>Congratulations on finishing your review!</p>
+          <p class="deck-title" >Deck Title:</p>
+          <p id="deckID"></p>
+          <p class="total-reviewed">Total Reviewed:</p>
+          <p id="totalReviewed"></p>
+          <p class="num-correct">Correct:</p>
+          <p id="numCorrect"></p>
+          <p class="num-missed">Missed:</p>
+          <p id="numMissed"></p>
+          <p class="score">Accuracy Score: </p>
+          <p id="score"></p>
+          <button type="button" id = "returnHome" 
+            class="returnHomeButton">
+              Return to Home Screen
+          </button>
+          <button type="button" id = "startNewReview" 
+            class="newReviewButton">
+            Start new review
+          </button>
+        </form>    
+      </section>
+  </body>
 </html>

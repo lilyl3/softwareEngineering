@@ -1,0 +1,195 @@
+/*@Justin
+Styling in
+A. deckDetails.JS are either
+    1. visibility
+    2. display
+    3. backgroundColor 
+    4. borderStyle = outSet when the mouse hovers over
+
+    I looked at how you changed reviewSession. 
+    Feel free to change 3
+    Hopefully, you won't change 1, 2, 4 but...
+
+B. deckDetails.HTML are
+    1. visibility
+    2. display
+
+    Hopefully, you won't change 1, 2 but...
+*/
+
+body {
+    background-color: white;
+    color: #0041CA;
+    text-align: left;
+  }
+  
+  form {
+    margin: 0 auto;
+    color: black;
+    text-align: auto;
+    max-width: 275px;
+    max-height: 450px;
+    background-color: #0041CA;
+    border-radius: 10px;         
+  }
+
+  .deleteButton {
+    width: 100px;
+    background-color:red;
+    color: black;
+    border-radius: 12px;
+    border: black;
+    padding: 8px;
+  }
+
+  span {
+    font-size: 28px;
+    color: white;
+  }
+
+  div {
+    padding: 8px;
+  }
+
+  .appName{
+    background-color: #0041CA;
+    color: white;
+    height: 5%;
+    font-size: 20px;
+    text-align: left;
+  }
+
+  .sideButton{
+    background-color: white;
+    color: #0041CA;
+    font-size: 20px;
+    border-color: #0041CA;
+    padding: 1%;
+    width: 100%;
+    height: 7%;
+    border-radius: 30% 30% 30% 30%;
+  }
+
+  .deckTitle{
+    background-color: white;
+    color:#0041CA;
+    font-size: 30px;
+    text-align: left;
+  }
+
+/*deckTitle and deck-title-style are DIFFERENT!*/
+  .deck-title-style{
+    color:#0041CA
+  }
+
+  section {
+    text-align: center;
+  }
+
+  .sidebar {
+    margin: 0;
+    padding: 0;
+    width: 15%;
+    height: 100%;
+    background-color: #f1f1f1;
+    position: fixed;
+    overflow: auto;
+  }
+
+  .sidebar a {
+    height: 2.5%;
+    display: block;
+    color: black;
+    padding: 16px;
+    text-decoration: none;
+  } 
+
+  .sidebar a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+  }
+
+  .sideButton:hover {
+    background-color:#bbc4dd;
+  }
+
+  .contentAreaStyle{
+    float: right;
+    margin-left:1%; 
+    width:84%;          /*100% - sidebar:width - (margin-left of contentAreaStyle)*/
+  }
+
+  .container {
+    text-align: center;
+    padding: 0%;
+  }
+
+  .tooltiptext {
+    width: 20%;
+    background-color: rgb(85, 85, 85);
+    color: hsl(0, 0%, 100%);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    left: 16%;          /*1% more than the width of sidebar!*/
+    top: 18.5%;         /*Approx. formula = appName:height + sideButton:height + a:height*2
+                        a:height is multiplied by 2 bc tab for summary AND Flashcard*/
+    font-size: 18px;
+  }
+
+  .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    right: 100%; /* To the left of the tooltip */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #555 transparent transparent;
+  }
+
+  .select-all{
+    float: left;
+  }
+
+  .delete-flashcard{
+    visibility: hidden;
+    width: 150;
+    color: black;
+    background-color: red;
+  }
+
+  .add-flashcard{
+    height: 25px;
+    width: 25px;
+    border-radius: 15%;
+    color: black;
+    background-color: white;
+  }
+
+  .flashcard-line{
+    color:#0041CA;
+    background-color: #ededed;
+    font-size: 18px;
+    border-width: 1px;
+    list-style-type: none;
+  }
+
+  .checkbox-4-delete{
+    float: left;
+  }
+
+  .edit-flashcard{
+    float:right;
+    color: #0041CA;
+  }
+
+  .flashcard-question{
+    color: #0041CA;
+  }
+
+  .edit-style{
+    list-style-type: none;
+  }

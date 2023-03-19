@@ -146,11 +146,7 @@ async function displayAddFlashcardsButton()
   {
     var addFlashcard = document.createElement("button")
     addFlashcard.innerHTML = "+";
-    addFlashcard.style.height = "25px";
-    addFlashcard.style.width = "25px";
-    addFlashcard.style.borderRadius = "15%";
-    addFlashcard.style.color = "black";
-    addFlashcard.style.backgroundColor = "white";
+    addFlashcard.className = "add-flashcard";
     afterContent.appendChild(addFlashcard);
     addFlashcard.addEventListener("click", e => {
       //go to newCard.html to add new flashcard
@@ -220,29 +216,24 @@ async function displayFlashcards()
     ++counter;
     var flashcardLine = document.createElement('li');
     flashcardLine.setAttribute('id', "line" + flashcard.id);
-    flashcardLine.style.backgroundColor = "#ededed";
-    flashcardLine.style.color = "#0041CA";
-    flashcardLine.style.fontSize = "18px";
-    flashcardLine.style.listStyleType = "none";
-    flashcardLine.style.borderWidth = "1px";
+    flashcardLine.className = "flashcard-line";
     
     var checkbox4Delete = document.createElement("input");
     checkbox4Delete.type = "checkbox";
     checkbox4Delete.id = "check" + flashcard.id;
     checkbox4Delete.style.visibility = "hidden"; //@Justin Do NOT remove the following line. Not for styling purposes
-    checkbox4Delete.style.float = "left";
+    checkbox4Delete.className="checkbox-4-delete";
 
     //display flashcard question
     var flashcardQuestion = document.createElement("span");
     flashcardQuestion.id = flashcard.id;
     flashcardQuestion.innerHTML = flashcard.data().Question;
-    flashcardQuestion.style.color = "#0041CA";
+    flashcardQuestion.className = "flashcard-question";
 
     //add icon to edit flashcard
     var editFlashcard = document.createElement("span");
-    editFlashcard.innerHTML = "Edit";     
-    editFlashcard.style.float = "right";
-    editFlashcard.style.color = "#0041CA";
+    editFlashcard.innerHTML = "Edit";  
+    editFlashcard.className = "edit-flashcard";   
 
     flashcardLine.appendChild(checkbox4Delete);
     flashcardLine.appendChild(flashcardQuestion);
@@ -279,7 +270,7 @@ async function displayFlashcards()
       const flashcardSnap = await getDoc(flashcardRef);
 
       const edit = document.createElement("ul");
-      edit.style.listStyleType = "none";
+      edit.className = "edit-style";
 
       //Edit Question field
       const editQuestion = document.createElement("li");

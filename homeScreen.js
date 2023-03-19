@@ -152,11 +152,7 @@ async function displayAddDecksButton()
   {
     var addDecks = document.createElement("button")
     addDecks.innerHTML = "+";
-    addDecks.style.height = "25px";
-    addDecks.style.width = "25px";
-    addDecks.style.borderRadius = "15%";
-    addDecks.style.color = "black";
-    addDecks.style.backgroundColor = "white";
+    addDecks.className = "add-decks";
     afterdeck.appendChild(addDecks);
     addDecks.addEventListener("click", async e =>{
       //if user presses add deck button, go to createDeck.html
@@ -178,37 +174,27 @@ async function displayDecks()
 
     var deckLine = document.createElement('li');
     deckLine.setAttribute('id', "line" + deck.data().DeckName);
-    deckLine.style.backgroundColor = "white";
-    deckLine.style.color = "#0041CA";
-    deckLine.style.fontSize = "18px";
-    deckLine.style.borderWidth = "1px";
-    deckLine.style.listStyleType = "none";
+    deckLine.className = "deck-line";
     
     var checkbox4Delete = document.createElement("input");
     checkbox4Delete.type = "checkbox";
     checkbox4Delete.id = "check" + deck.data().DeckName;
     checkbox4Delete.style.visibility = "hidden"; //@Justin Do NOT remove the following line. Not for styling purposes
-    checkbox4Delete.style.float = "left";
-    //checkbox4Delete.style.width = "10%";
+    checkbox4Delete.className = "checkbox-4-delete";
 
-    //var deck_i = document.createElement("button");
     var deck_i = document.createElement("span");
     deck_i.id = deck.data().DeckName;
     deck_i.innerHTML = deck.data().DeckName;
-    //deck_i.style.width = "30%";
 
-    //var startReviewButton = document.createElement("button");
     var startReviewButton = document.createElement("span");
     startReviewButton.innerHTML = "&#8594";
-    startReviewButton.style.float = "right";
-
+    startReviewButton.className = "start-review-button";
 
     deckLine.appendChild(checkbox4Delete);
     deckLine.appendChild(deck_i);
     deckLine.appendChild(startReviewButton);
 
     deckList.appendChild(deckLine);
-    //console.log("Parent of Line" + deck.data().DeckName + " : " + deckLine.parentNode.id);
 
     //listen to see if user clicks on checkbox4Delete
     //if true, then unselect SelectAll checkbox if currently checked

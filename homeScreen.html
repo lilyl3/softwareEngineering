@@ -5,44 +5,17 @@
         <title>Home Screen</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet"/>
-        <style src = "./style.css">
-          body {
-            background-color: #0041CA;
-            color: white;
-            text-align: left;
-          }
-          .logoutButton {
-            width: 75px;
-            background-color:#0041CA;
-            color: white;
-            border-radius: 12px;
-            border: #0041CA;
-            padding: 8px;
-          }
-          .appName {
-            background-color: white;
-            padding: 8px;
-            color: black;
-            font-size: 28px;
-          }
-          section {
-            text-align: center;
-          }
-          .container {
-            text-align: center;
-          }
-        </style>
+        <link rel="stylesheet" href="homeScreen.css">
     </head>
-
     <body>
       <div class="appName">
-        <span style="text-align:left; color:#0041CA; font-size: 28px;">Kinda Like Quizlet</span>
-        <button style="float: right;" class="logoutButton" type = "button" id ="logoutButton">Logout</button>
+        <span>Kinda Like Quizlet</span>
+        <button class="logoutButton" type = "button" id ="logoutButton">Logout</button>
       </div>
       <script type="module" src="./homeScreen.js"></script>
       <div id = "deleteArea" class="container">
-        <input type="checkbox" id="selectAll" name="selectAll" style="float: left;">
-        <label for="selectAll" style="float: left;">Select All</label>
+        <input type="checkbox" id="selectAll" name="selectAll" class="select-all">
+        <label for="selectAll" class="select-all">Select All</label>
         <button type="button" id = "deleteDeck" style="visibility: hidden;">Delete</button>
       </div>
       <div class="container" id = "DeckList"></div>

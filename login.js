@@ -40,42 +40,54 @@ async function main() {
     // Prevent the default form redirect
     e.preventDefault();
 
-    //check to see if user entered valid username and password
-    //ASSUME: doc id = username
-    const docRef = doc(db, "users", username.value.toLowerCase());
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      //username exists
-      //check if password is correct
-      const savedPassword = docSnap.data().password;
-      if (savedPassword === password.value){
-        //entered correct password & username
-        //go to home page
-        console.log("Correctly entered username and password...")
-        sessionStorage.setItem("userID", username.value.toLowerCase());
-        window.location.href = "./homeScreen.html";
-      }
-      else{
-        //password entered is incorrect
-        console.log("Incorrect password")
+    //check that username is not empty
+    if (username.value === ""){
+      console.log("No username provided.")
         if (!errorMessageOn){
           var error = document.getElementById('warningMessage');
           error.innerHTML = "Incorrect username or password. Please try again.";
           error.style.color = "red";
           errorMessageOn = true;
         }
-      }
     }
     else{
-      console.log("Not a valid username")
-      //user does NOT exist
-      //display error message -> username incorrect
-      if (!errorMessageOn){
-        var error = document.getElementById('warningMessage');
-        error.innerHTML = "Incorrect username or password. Please try again.";
-        error.style.color = "red";
-        errorMessageOn = true;
+      //check to see if user entered valid username and password
+      //ASSUME: doc id = username
+      const docRef = doc(db, "users", username.value.toLowerCase());
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        //username exists
+        //check if password is correct
+        const savedPassword = docSnap.data().password;
+        if (savedPassword === password.value){
+          //entered correct password & username
+          //go to home page
+          console.log("Correctly entered username and password...")
+          sessionStorage.setItem("userID", username.value.toLowerCase());
+          window.location.href = "./homeScreen.html";
+        }
+        else{
+          //password entered is incorrect
+          console.log("Incorrect password")
+          if (!errorMessageOn){
+            var error = document.getElementById('warningMessage');
+            error.innerHTML = "Incorrect username or password. Please try again.";
+            error.style.color = "red";
+            errorMessageOn = true;
+          }
+        }
+      }
+      else{
+        console.log("Not a valid username")
+        //user does NOT exist
+        //display error message -> username incorrect
+        if (!errorMessageOn){
+          var error = document.getElementById('warningMessage');
+          error.innerHTML = "Incorrect username or password. Please try again.";
+          error.style.color = "red";
+          errorMessageOn = true;
+        }
       }
     }
 

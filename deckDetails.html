@@ -20,14 +20,6 @@
             background-color: #0041CA;
             border-radius: 10px;         
           }
-          .logoutButton {
-            width: 75px;
-            background-color:white;
-            color: #0041CA;
-            border-radius: 12px;
-            border: white;
-            padding: 8px;
-          }
           .deleteButton {
             width: 100px;
             background-color:red;
@@ -36,37 +28,143 @@
             border: black;
             padding: 8px;
           }
-          .createAccount {
-            padding: 15px;  
-          }
-
           span {
             font-size: 28px;
             color: white;
           }
-
           div {
-            background-color: #0041CA;
             padding: 8px;
-            color: black;
-            font-size: 28px;
+          }
+          .appName{
+            background-color: #0041CA;
+            color: white;
+            height: 5%;
+            font-size: 20px;
+          }
+          .sideButton{
+            background-color: white;
+            color: #0041CA;
+            font-size: 20px;
+            border-color: #0041CA;
+            padding: 1%;
+            width: 100%;
+            height: 7%;
+            border-radius: 30% 30% 30% 30%;
+          }
+          .deckTitle{
+            background-color: white;
+            color:#0041CA;
+            font-size: 30px;
+            text-align: left;
           }
           section {
             text-align: center;
           }
-
+          .sidebar {
+            margin: 0;
+            padding: 0;
+            width: 20%;
+            height: 100%;
+            background-color: #f1f1f1;
+            position: fixed;
+            overflow: auto;
+          }
+          .sidebar a {
+            height: 2.5%;
+            display: block;
+            color: black;
+            padding: 16px;
+            text-decoration: none;
+          } 
+          .sidebar a:hover:not(.active) {
+            background-color: #555;
+            color: white;
+          }
+          .sideButton:hover {
+            background-color:#bbc4dd;
+          }
+          .contentAreaStyle{
+            float: right;
+            margin-left:2%;
+            width:78%;
+          }
+          .container {
+            text-align: center;
+            padding: 0%;
+            background-color: rgb(155, 173, 233);
+          }
+          .tooltiptext {
+            width: 20%;
+            background-color: rgb(85, 85, 85);
+            color: hsl(0, 0%, 100%);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            left: 21%;
+            top: 18.5%;
+            font-size: 18px;
+          }
+          .tooltiptext::after {
+            content: " ";
+            position: absolute;
+            top: 50%;
+            right: 100%; /* To the left of the tooltip */
+            margin-top: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent #555 transparent transparent;
+          }
         </style>
     </head>
 
     <body>
-      <div>
-        <span style="text-align:left;">Kinda Like Quizlet</span>
-        <button style="float: right;" class="deleteButton" type = "button" id ="deleteButton">Delete Deck</button>
-      </div>
       <script type="module" src="./deckDetails.js"></script>
-        <br />
-        <section id="deckTitle"></section>
-        <section id="deckArea"></section>
-        <section id="afterDeck"></section>
+      <div class = "appName">
+        <span style="text-align:left;">Kinda Like Quizlet</span>
+      </div>
+      <div class="sidebar">
+        <div>
+          <button class ="sideButton" type = "button" id = "startReview">Start Review</button>
+        </div>
+        <a href="#summary" id = "SummaryTab">Summary</a>
+        <a href="#flashcards" id = "FlashcardsTab">Flashcards</a>
+        <a href="#settings" id = "SettingsTab">Settings</a>
+      </div>
+      <div>
+        <span class="tooltiptext" id="tipNoFlashcards" style="visibility: hidden;">
+          <button type ="button" id = "closeTipNoFlashcard">X</button>
+          <br/>
+          No flashcards. Click here to add flashcards.
+        </span>
+      </div>
+      <section class = "contentAreaStyle">
+        <div class = "deckTitle">
+          <a href="./homeScreen.html">Home</a>
+          <span id="deckTitle" style="color: #0041CA;"></span>
+        </div>
+        <!-- Display content for Summary tab -->
+        <section id = "summaryContent">
+          <p>In Summary! Just a temporary placeholder</p>
+        </section>
+        <!-- Display content for Flashcards tab -->
+        <section id="flashcardContent" style = "display: none;">
+          <div id = "deleteArea" class="container">
+            <input type="checkbox" style="float: left;" id="selectAll" name="selectAll">
+            <label for="selectAll" style="float: left;">Select All</label>
+            <button type="button" id = "deleteFlashcard" 
+            style="visibility: hidden; width: 150; color:black; background-color: red;">
+              Delete
+            </button>
+          </div>
+          <div class="container" id = "FlashcardList"></div>
+          <section id="afterContent"></section>
+      </section>
+      <!-- Display content for Settings tab -->
+      <section id = "settingsContent" style="display: none;">
+        <p>In Settings! Just a temporary placeholder</p>
+      </section>
+      </section>
     </body>
 </html>

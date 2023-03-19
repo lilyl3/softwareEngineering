@@ -1,4 +1,12 @@
 //get document elements
+const pgStartReviewClicked = sessionStorage.getItem('PrevHTMLPg');
+const returnButton = document.getElementById('returnHome');
+if (pgStartReviewClicked === "homeScreen"){
+    returnButton.innerHTML = "Return to Home Screen";
+}
+else{
+    returnButton.innerHTML = "Return to Deck Screen";
+}
 const deckID = document.getElementById('deckID');
 const totalReviewed = document.getElementById('totalReviewed');
 const numCorrect = document.getElementById('numCorrect');
@@ -25,8 +33,14 @@ async function main(){
     
     returnHomeButton.addEventListener("click", async e =>{
         e.preventDefault();
-        sessionStorage.removeItem('DeckID');                //remove saved cookie of DeckID
-        window.location.href = "./homeScreen.html";
+        if (pgStartReviewClicked === "homeScreen"){
+            sessionStorage.removeItem('DeckID');                //remove saved cookie of DeckID
+            window.location.href = "./homeScreen.html";
+        }
+        else{
+            sessionStorage.setItem('PrevHTMLPg', "finishedReview");
+            window.location.href = "./deckDetails.html";
+        }
         return false;
     })
 

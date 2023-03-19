@@ -53,7 +53,11 @@ const reviewSession = document.getElementById('reviewSession');
 const reviewAnswerSession = document.getElementById('reviewAnswerSession');
 const correctButtons = document.getElementById('correctButtons');
 const pauseButton = document.getElementById('pauseButton');
-
+const pgStartReviewClicked = sessionStorage.getItem('PrevHTMLPg');
+var returnPg = "Home";
+if (pgStartReviewClicked === "deckDetails"){
+  returnPg = "Deck";
+}
 
 var correctlyAnswered; //boolean; true if user correctly answered question; else, false
 var pause = false;
@@ -190,7 +194,7 @@ function waitForCorrectIncorrectResponse() {
     //resolve key press only if user pressed 0 or 1
     const pressed01 = (e) => {
       //user presssed 0 = incorrect = keyCode 96
-      if(e.keyCode === 96){
+      if(e.keyCode === 96 || e.keyCode === 48){
         console.log("0 pressed")
         pause = false;
         correctlyAnswered = false;
@@ -199,7 +203,7 @@ function waitForCorrectIncorrectResponse() {
       }
       
       //user pressed 1 = correct = keyCode 97
-      if (e.keyCode === 97){
+      if (e.keyCode === 97 || e.keyCode === 49){
         console.log("1 pressed")
         pause = false;
         correctlyAnswered = true;
@@ -262,7 +266,7 @@ async function handlePauseRevealAnswer(){
   //remove the reveal button once the user has pressed some button
   reviewSession.removeChild(document.getElementById('revealButton'));
 
-  if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
+  if (pause === true && confirm("Pressing pause will save your progress, and return to " + returnPg) === false){
     pause = false;
     await handlePauseRevealAnswer();
   }
@@ -294,7 +298,7 @@ async function handlePauseCorrectIncorrectResponse(answer){
   correctButtons.removeChild(document.getElementById('incorrect'));
   //correctButtons.removeChild(document.getElementById('pauseReview'));
 
-  if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === false){
+  if (pause === true && confirm("Pressing pause will save your progress, and return to " + returnPg) === false){
     pause = false;
     await handlePauseCorrectIncorrectResponse(answer);
   }
@@ -338,7 +342,7 @@ async function reviewingFlashcards(reviewOrder, reviewType){
     //to add style in dynamically: https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
 
     //check if user has paused review
-    if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === true){
+    if (pause === true && confirm("Pressing pause will save your progress, and return to " + returnPg) === true){
       break;
     }
     else{
@@ -359,7 +363,7 @@ async function reviewingFlashcards(reviewOrder, reviewType){
 
     //***** Reveal answer to question & wait for user to respond *************
     //check if user has paused review
-    if (pause === true && confirm("Pressing pause will save your progress, and return to Home.") === true){
+    if (pause === true && confirm("Pressing pause will save your progress, and return to " + returnPg) === true){
       break;
     }
     else{
@@ -596,7 +600,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   //if user has finished reviewing ALL flashcards for the day, inform them!
   if (reviewCardID.length === 0){
     //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
-    alert("No flashcards to be reviewed today! Returning to Home.");
+    alert("No flashcards to be reviewed today! Returning to " + returnPg);
     finishedReviewingAll = true;
     return;
   }
@@ -686,8 +690,14 @@ async function main() {
   if (pause || finishedReviewingAll){
     //didn't finish review
     //return to home screen
-    sessionStorage.removeItem('DeckID');
-    window.location.href = "./homeScreen.html";
+    if (pgStartReviewClicked === "homeScreen"){
+        sessionStorage.removeItem('DeckID');                //remove saved cookie of DeckID
+        window.location.href = "./homeScreen.html";
+    }
+    else{
+        sessionStorage.setItem('PrevHTMLPg', "finishedReview");
+        window.location.href = "./deckDetails.html";
+    }
   }
   else{
     //finished review

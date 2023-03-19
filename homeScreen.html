@@ -9,16 +9,7 @@
           body {
             background-color: #0041CA;
             color: white;
-            text-align: center;
-          }
-          form {
-            margin: 0 auto;
-            color: black;
-            text-align: auto;
-            max-width: 275px;
-            max-height: 450px;
-            background-color: white;
-            border-radius: 10px;            
+            text-align: left;
           }
           .logoutButton {
             width: 75px;
@@ -28,32 +19,33 @@
             border: #0041CA;
             padding: 8px;
           }
-          .createAccount {
-            padding: 15px;  
-          }
-
-          span {
-            font-size: 28px;
-            color: #0041CA;
-          }
-
-          div {
+          .appName {
             background-color: white;
             padding: 8px;
             color: black;
             font-size: 28px;
           }
-
+          section {
+            text-align: center;
+          }
+          .container {
+            text-align: center;
+          }
         </style>
     </head>
 
     <body>
-      <div>
-        <span style="text-align:center;">Flashcard App Name</span>
+      <div class="appName">
+        <span style="text-align:left; color:#0041CA; font-size: 28px;">Kinda Like Quizlet</span>
         <button style="float: right;" class="logoutButton" type = "button" id ="logoutButton">Logout</button>
       </div>
       <script type="module" src="./homeScreen.js"></script>
-        <section id="deckArea"></section>
-        <section id="afterDeck"></section>
+      <div id = "deleteArea" class="container">
+        <input type="checkbox" id="selectAll" name="selectAll" style="float: left;">
+        <label for="selectAll" style="float: left;">Select All</label>
+        <button type="button" id = "deleteDeck" style="visibility: hidden;">Delete</button>
+      </div>
+      <div class="container" id = "DeckList"></div>
+      <section id="afterDeck"></section>
     </body>
 </html>

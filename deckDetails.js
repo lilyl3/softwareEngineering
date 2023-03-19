@@ -48,22 +48,25 @@ const flashcardList = document.getElementById('FlashcardList');
 const afterContent = document.getElementById('afterContent');
 const deleteButton = document.getElementById('deleteFlashcard');
 const selectAll = document.getElementById('selectAll');
+const startReviewButton = document.getElementById('startReview');
 var numCheckboxesClicked = 0;
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
-  //create reference variables for the document and the data that will be updated
-  const CardRef = doc(db, "Flashcard", DocID);
-  const data = {
-    Question: Question,
-    Answer: Answer
-  };
-  //function that updates the document; adds info to the console if successful or not
-  updateDoc(CardRef, data).then(docRef => {
-    console.log("Updates have been made to the card");
-  }).catch(error => {
-    console.log(error);
-    })
+  return new Promise((resolve) =>{
+    //create reference variables for the document and the data that will be updated
+    const CardRef = doc(db, "Flashcard", DocID);
+    const data = {
+      Question: Question,
+      Answer: Answer
+    };
+    //function that updates the document; adds info to the console if successful or not
+    updateDoc(CardRef, data).then(() => {
+      resolve(console.log("Updates have been made to the card"));
+    }).catch(error => {
+      console.log(error);
+      })
+  })
 }
 
 function DeleteCard(DocID) //it is expected that the id of the card being deleted will be provided to this function
@@ -200,8 +203,9 @@ async function displayFlashcards()
 {
   const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
   const flashcardsSnapshot = await getDocs(flashcards);
+  var counter = 0;
   flashcardsSnapshot.forEach((flashcard) => {
-
+    ++counter;
     var flashcardLine = document.createElement('li');
     flashcardLine.setAttribute('id', "line" + flashcard.id);
     flashcardLine.style.backgroundColor = "#ededed";
@@ -258,18 +262,77 @@ async function displayFlashcards()
       }
     });
 
-    //listen to see if user clicks on a deck
-    //If so, start a review session
-    flashcardQuestion.addEventListener("click", async e =>{
-      //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", flashcardQuestion.getAttribute("id"));
-      window.location.href = "./deckDetails.html";
-    });
-
     editFlashcard.addEventListener("click", async e =>{
-      //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", flashcardQuestion.getAttribute("id"));
-      window.location.href = "./reviewSession.html";
+      const flashcardRef = doc(db, "Flashcard", flashcard.id);
+      const flashcardSnap = await getDoc(flashcardRef);
+
+      const edit = document.createElement("ul");
+      edit.style.listStyleType = "none";
+
+      //Edit Question field
+      const editQuestion = document.createElement("li");
+      const inputQuestion = document.createElement('input');
+      inputQuestion.type = "text";
+      inputQuestion.value = flashcardSnap.data().Question;
+      inputQuestion.id = "editQuestion";
+      var questionLabel = document.createElement("Label");
+      questionLabel.setAttribute("for",inputQuestion);
+      questionLabel.innerHTML = "Question";
+
+      //add label & input field for question
+      editQuestion.appendChild(questionLabel);
+      editQuestion.appendChild(inputQuestion);
+      edit.appendChild(editQuestion);
+
+      //Edit Answer field
+      const editAnswer = document.createElement("li");
+      const inputAnswer = document.createElement('input');
+      inputAnswer.type = "text";
+      inputAnswer.id = "editAnswer";
+      inputAnswer.value = flashcardSnap.data().Answer;
+      var answerLabel = document.createElement("Label");
+      answerLabel.setAttribute("for",inputAnswer);
+      answerLabel.innerHTML = "Answer";
+
+      editAnswer.appendChild(answerLabel);
+      editAnswer.appendChild(inputAnswer);
+      edit.appendChild(editAnswer);
+
+      //buttons to submit or cancel
+      const buttonsLine = document.createElement("li");
+      const saveChanges = document.createElement('button');
+      saveChanges.innerHTML = "Save";
+      saveChanges.id = "saveChanges";
+
+      const cancelChanges = document.createElement('button');
+      cancelChanges.innerHTML = "Cancel";
+      cancelChanges.id = "cancelChanges";
+
+      buttonsLine.append(saveChanges);
+      buttonsLine.append(cancelChanges);
+
+      flashcardLine.appendChild(edit);
+      flashcardLine.appendChild(buttonsLine);
+
+      const removeEdit = (e) =>{
+        cancelChanges.removeEventListener("click", removeEdit);
+        saveChanges.removeEventListener("click", saveChangesListener);
+        flashcardLine.removeChild(edit);
+        flashcardLine.removeChild(buttonsLine);
+      }
+
+      const saveChangesListener = async (e) =>{
+        await UpdateCard (flashcard.id, inputQuestion.value, inputAnswer.value);
+        flashcardQuestion.innerHTML = inputQuestion.value;
+        cancelChanges.removeEventListener("click", removeEdit);
+        saveChanges.removeEventListener("click", saveChangesListener);
+        flashcardLine.removeChild(edit);
+        flashcardLine.removeChild(buttonsLine);
+      }
+
+      saveChanges.addEventListener("click", saveChangesListener);
+
+      cancelChanges.addEventListener("click", removeEdit);
     });
 
     flashcardLine.addEventListener("mouseover", e =>{
@@ -291,5 +354,12 @@ async function displayFlashcards()
   listen2DeleteButton();
 }
 
+async function listen2StartReview(){
+  startReviewButton.addEventListener("click", e =>{
+    window.location.href = "./reviewSession.html";
+  })
+}
+
+listen2StartReview();
 displayFlashcards();
 displayAddFlashcardsButton();

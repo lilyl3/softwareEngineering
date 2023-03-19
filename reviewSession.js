@@ -124,6 +124,9 @@ function waitForRevealAnswer() {
       if (e.keyCode === 13) {
         console.log("Enter pressed")
         pause = false;
+        // reveal answer that was invisible previously
+        document.getElementById("answerHeading").style.visibility = "visible";
+        document.getElementById("reviewAnswerSession").style.visibility = "visible";
         removeListeners();
         resolve(e);
       }

@@ -46,7 +46,9 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
             userID: userIDD,
             DeckName: DeckNameD,
             reviewType: defaultReviewType,
-            orderType: defaultOrderType
+            orderType: defaultOrderType,
+            numNewCards: 0,
+            resume: null
         }).then(() => {
                 console.log("Entire Document has been deleted successfully.")
                 resolve();

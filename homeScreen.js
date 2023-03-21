@@ -227,14 +227,14 @@ async function displayDecks()
     //If so, start a review session
     deck_i.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", deck.data().DeckName);
+      sessionStorage.setItem("DeckID", deck.id);
       sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./deckDetails.html";
     });
 
     startReviewButton.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", deck.data().DeckName);
+      sessionStorage.setItem("DeckID", deck.id);
       sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./reviewSession.html";
     });

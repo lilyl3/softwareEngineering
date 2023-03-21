@@ -38,12 +38,13 @@ let db = getFirestore(app);
 
 //CONSTANTs
 const nullDate = "2023/01/01";
-const deck = sessionStorage.getItem('DeckID');
+const deckID = sessionStorage.getItem('DeckID');
+const deckName = (await getDoc(doc(db, "decks", deckID))).data().DeckName;
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
-deckTitle.innerHTML = " > " + deck;
+deckTitle.innerHTML = " > " + deckName;
 
 const flashcardList = document.getElementById('FlashcardList');
 const afterContent = document.getElementById('afterContent');
@@ -114,7 +115,7 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
 
 //retrieve the total number of decks a user has
 async function getFlashcardIDs(){
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardSnapshot = await getDocs(flashcards);
   var flashcardIDs = [];
   var counter = 0;
@@ -129,7 +130,7 @@ async function getFlashcardIDs(){
 
 //retrieve the total number of decks a user has
 async function getNumFlashcards(){
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardsSnapshot = await getDocs(flashcards);
   var numFlash = 0;
   flashcardsSnapshot.forEach((FC) => {
@@ -212,7 +213,7 @@ async function listen2DeleteButton(){
 // displays the user's flashcards on the home screen
 async function displayFlashcards()
 {
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardsSnapshot = await getDocs(flashcards);
   var counter = 0;
   flashcardsSnapshot.forEach((flashcard) => {

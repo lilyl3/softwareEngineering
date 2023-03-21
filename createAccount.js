@@ -53,7 +53,7 @@ async function main() {
       ++count;
     });
 
-    if (count >= 10)
+    if (count >= 20)
     {
       var warning = document.getElementById('warningMessage');
       warning.innerHTML = "Unable to create user profile. Maximum number of profiles reached";

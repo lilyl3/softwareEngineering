@@ -104,16 +104,19 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
 async function listen2DeleteButton(){
   deleteButton.addEventListener("click", async e =>{
     const deckNames = await getDeckNames();
-    for (let index = 0; index < deckNames.length; index++){
-      const deckName = deckNames[index];
-      if (document.getElementById("check" + deckName).checked){
-        console.log("Deck being deleted: " + deckName)
-        await DeleteDeck(deckName);
-        deckList.removeChild(document.getElementById("line" + deckName));
+    if (confirm("Are you sure you want to delete the deck(s)?\nIt will also delete all the flashcards inside") == true)
+    {
+      for (let index = 0; index < deckNames.length; index++){
+        const deckName = deckNames[index];
+        if (document.getElementById("check" + deckName).checked){
+          console.log("Deck being deleted: " + deckName)
+          await DeleteDeck(deckName);
+          deckList.removeChild(document.getElementById("line" + deckName));
+        }
       }
+      deleteButton.style.visibility = "hidden";
+      //window.location.href = "./homeScreen.html";   //reload the webpage after delete
     }
-    deleteButton.style.visibility = "hidden";
-    //window.location.href = "./homeScreen.html";   //reload the webpage after delete
   });
 }
 
@@ -148,7 +151,7 @@ async function displayAddDecksButton()
 {
   const numDecks = await getNumDecks();
   console.log(numDecks)
-  if (numDecks < 5)
+  if (numDecks < 20)
   {
     var addDecks = document.createElement("button")
     addDecks.innerHTML = "+";

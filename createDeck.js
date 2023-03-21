@@ -65,16 +65,16 @@ async function getNumDecks(){
       ++numDecks;
     });
     return numDecks;
-  }
+}
 
 async function listen2CreateDeck(){
-
+    
     createDeckSection.addEventListener("submit", async e =>{
         e.preventDefault();
         var numDecks = await getNumDecks();
         //check that the number of decks is < 5
-        if (numDecks >= 5){
-            warningMessage.innerHTML = "Maximum of 5 decks already created. Returning to home in 5 seconds."
+        if (numDecks >= 20){
+            warningMessage.innerHTML = "Maximum of 20 decks already created. Returning to home in 5 seconds."
             warningMessage.style.color = "red";
             await delay(5000);
             window.location.href = "./homeScreen.html";
@@ -87,8 +87,8 @@ async function listen2CreateDeck(){
         else{
             console.log("Inputted Deck Name: " + newDeckName.value)
             console.log("user: " + user)
-            //check that inputted deck name is unique
-            const decks = query(collection(db, "decks"), where("userID", "==", user));
+            //check that inputted deck name is unique (APPLIES TO ALL REGARDLESS OF USER)
+            const decks = query(collection(db, "decks"));
             const decksSnapshot = await getDocs(decks);
             var existingDeckNames = [];
             var counter = 0;
@@ -101,7 +101,7 @@ async function listen2CreateDeck(){
 
             if (existingDeckNames.includes(newDeckName.value)){
                 //inputted deck name already exists
-                warningMessage.innerHTML = "Deck Name already exists. Please try another."
+                warningMessage.innerHTML = "Deck name already exists. Please try another."
                 warningMessage.style.color = "red";
                 newDeckName.value = "";                 //reset value
             }

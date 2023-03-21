@@ -142,7 +142,7 @@ async function displayAddFlashcardsButton()
 {
   const numFlash = await getNumFlashcards();
   console.log(numFlash)
-  if (numFlash < 15)
+  if (numFlash < 50)
   {
     var addFlashcard = document.createElement("button")
     addFlashcard.innerHTML = "+";
@@ -193,16 +193,19 @@ async function listen2SelectAll(){
 async function listen2DeleteButton(){
   deleteButton.addEventListener("click", async e =>{
     const flashcardIDs = await getFlashcardIDs();
-    for (let index = 0; index < flashcardIDs.length; index++){
-      const flashcardID = flashcardIDs[index];
-      if (document.getElementById("check" + flashcardID).checked){
-        console.log("Flashcard being deleted: " + flashcardID)
-        await DeleteCard(flashcardID);
-        flashcardList.removeChild(document.getElementById("line" + flashcardID));
+    if (confirm("Are you sure you want to delete the flashcard(s)?") == true)
+    {
+      for (let index = 0; index < flashcardIDs.length; index++){
+        const flashcardID = flashcardIDs[index];
+        if (document.getElementById("check" + flashcardID).checked){
+          console.log("Flashcard being deleted: " + flashcardID)
+          await DeleteCard(flashcardID);
+          flashcardList.removeChild(document.getElementById("line" + flashcardID));
+        }
       }
+      deleteButton.style.visibility = "hidden";
+      //window.location.href = "./homeScreen.html";   //reload the webpage after delete
     }
-    deleteButton.style.visibility = "hidden";
-    //window.location.href = "./homeScreen.html";   //reload the webpage after delete
   });
 }
 

@@ -22,7 +22,8 @@ import {
     query,
     where,
     doc, 
-    getDocs
+    getDocs,
+    addDoc
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
 let db = getFirestore(app);
@@ -41,7 +42,8 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
 {
     return new Promise((resolve) =>{
         //this variation allows us to specify the document ID rather than letting it randomize
-        setDoc(doc(db, "decks", DeckNameD),
+        console.log("Adding deck... in DeckCreate")
+        addDoc(collection(db, "decks"),
         {
             userID: userIDD,
             DeckName: DeckNameD,
@@ -51,6 +53,7 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
                 console.log("Entire Document has been deleted successfully.")
                 resolve();
             }).catch(error => {
+                console.log("ERROR here!")
                 console.log(error);
             });
     })
@@ -88,10 +91,11 @@ async function listen2CreateDeck(){
             console.log("Inputted Deck Name: " + newDeckName.value)
             console.log("user: " + user)
             //check that inputted deck name is unique (APPLIES TO ALL REGARDLESS OF USER)
-            const decks = query(collection(db, "decks"));
+            const decks = query(collection(db, "decks"), where('userID', '==', user));
             const decksSnapshot = await getDocs(decks);
             var existingDeckNames = [];
             var counter = 0;
+            console.log("Successfully queried")
 
             //get existing deck names
             decksSnapshot.forEach((deck) => {
@@ -108,7 +112,9 @@ async function listen2CreateDeck(){
             else{
                 //inputted deck name is unique
                 //add deck
+                console.log("Creating deck...")
                 await DeckCreate(newDeckName.value, user);
+                console.log("Successfully created!")
                 sessionStorage.setItem("DeckID", newDeckName.value);
                 window.location.href = "./deckDetails.html";
             }

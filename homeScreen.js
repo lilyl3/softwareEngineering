@@ -52,21 +52,21 @@ var numCheckboxesClicked = 0;
 
 async function listen2SelectAll(){
   selectAllDecks.addEventListener("click", async e=>{
-    const deckNames = await getDeckNames();
+    const deckIDs = await getDeckIDs();
     if (selectAllDecks.checked){
       //check all boxes
-      for (let index = 0; index < deckNames.length; index++){
-        document.getElementById("check" + deckNames[index]).checked = true;
-        document.getElementById("check" + deckNames[index]).style.visibility = "visible";
-        document.getElementById("line" + deckNames[index]).style.backgroundColor = "#def1fd";
-        numCheckboxesClicked = deckNames.length;
+      for (let index = 0; index < deckIDs.length; index++){
+        document.getElementById("check" + deckIDs[index]).checked = true;
+        document.getElementById("check" + deckIDs[index]).style.visibility = "visible";
+        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "#def1fd";
+        numCheckboxesClicked = deckIDs.length;
       }
     }else{
       //UNcheck all boxes
-      for (let index = 0; index < deckNames.length; index++){
-        document.getElementById("check" + deckNames[index]).checked = false;
-        document.getElementById("check" + deckNames[index]).style.visibility = "hidden";
-        document.getElementById("line" + deckNames[index]).style.backgroundColor = "white";
+      for (let index = 0; index < deckIDs.length; index++){
+        document.getElementById("check" + deckIDs[index]).checked = false;
+        document.getElementById("check" + deckIDs[index]).style.visibility = "hidden";
+        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "white";
         deleteButton.style.visibility = "hidden";
         numCheckboxesClicked = 0;
       }
@@ -103,15 +103,15 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
 
 async function listen2DeleteButton(){
   deleteButton.addEventListener("click", async e =>{
-    const deckNames = await getDeckNames();
+    const deckIDs = await getDeckIDs();
     if (confirm("Are you sure you want to delete the deck(s)?\nIt will also delete all the flashcards inside") == true)
     {
-      for (let index = 0; index < deckNames.length; index++){
-        const deckName = deckNames[index];
-        if (document.getElementById("check" + deckName).checked){
-          console.log("Deck being deleted: " + deckName)
-          await DeleteDeck(deckName);
-          deckList.removeChild(document.getElementById("line" + deckName));
+      for (let index = 0; index < deckIDs.length; index++){
+        const deckID = deckIDs[index];
+        if (document.getElementById("check" + deckID).checked){
+          console.log("Deck being deleted: " + deckID)
+          await DeleteDeck(deckID);
+          deckList.removeChild(document.getElementById("line" + deckID));
         }
       }
       deleteButton.style.visibility = "hidden";
@@ -132,18 +132,18 @@ async function getNumDecks(){
 }
 
 //retrieve the total number of decks a user has
-async function getDeckNames(){
+async function getDeckIDs(){
   const decks = query(collection(db, "decks"), where("userID", "==", user));
   const decksSnapshot = await getDocs(decks);
-  var deckNames = [];
+  var deckIDs = [];
   var counter = 0;
 
   //get existing deck names
   decksSnapshot.forEach((deck) => {
-    deckNames[counter] = deck.data().DeckName;
+    deckIDs[counter] = deck.id;
     ++counter;
   });
-  return deckNames;
+  return deckIDs;
 }
 
 //displays add deck button for less than 5 decks
@@ -176,17 +176,17 @@ async function displayDecks()
   decksSnapshot.forEach((deck) => {
 
     var deckLine = document.createElement('li');
-    deckLine.setAttribute('id', "line" + deck.data().DeckName);
+    deckLine.setAttribute('id', "line" + deck.id);
     deckLine.className = "deck-line";
     
     var checkbox4Delete = document.createElement("input");
     checkbox4Delete.type = "checkbox";
-    checkbox4Delete.id = "check" + deck.data().DeckName;
+    checkbox4Delete.id = "check" + deck.id;
     checkbox4Delete.style.visibility = "hidden"; //@Justin Do NOT remove the following line. Not for styling purposes
     checkbox4Delete.className = "checkbox-4-delete";
 
     var deck_i = document.createElement("span");
-    deck_i.id = deck.data().DeckName;
+    deck_i.id = deck.id;
     deck_i.innerHTML = deck.data().DeckName;
 
     var startReviewButton = document.createElement("span");
@@ -227,14 +227,14 @@ async function displayDecks()
     //If so, start a review session
     deck_i.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
+      sessionStorage.setItem("DeckID", deck.data().DeckName);
       sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./deckDetails.html";
     });
 
     startReviewButton.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
+      sessionStorage.setItem("DeckID", deck.data().DeckName);
       sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./reviewSession.html";
     });

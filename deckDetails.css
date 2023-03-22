@@ -340,3 +340,8 @@ form {
   transform: translate(-5px, 5px);
   box-shadow: none;
 }
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}

@@ -59,7 +59,29 @@
 
         <!-- Display content for Settings tab -->
         <section id = "settingsContent" style="display: none;">
-          <p>In Settings! Just a temporary placeholder</p>
+          <div>
+            <label for="editDeckName">Deck Name</label>
+            <input type="text" id="editDeckName" name="editDeckName">
+            <br/>
+            <br/>
+            <div class="dropdown">
+              <label for="reviewTypeOptions">Review Type</label>
+              <select id = "reviewTypeOptions">
+                <option id = "Daily">Daily</option>
+                <option id = "Continuous">Continuous</option>
+              </select>
+            </div>
+            <br/>
+            <br/>
+            <div class="dropdown">
+              <label for="orderTypeOptions">Order Type</label>
+              <select id = "orderTypeOptions">
+                <option id = "Random">Random</option>
+                <option id = "Low to High">Low to High</option>
+              </select>
+            </div>
+
+          </div>
         </section>
       </div>
     </body>

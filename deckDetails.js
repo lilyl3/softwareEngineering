@@ -39,7 +39,8 @@ let db = getFirestore(app);
 //CONSTANTs
 const nullDate = "2023/01/01";
 const deckID = sessionStorage.getItem('DeckID');
-const deckName = (await getDoc(doc(db, "decks", deckID))).data().DeckName;
+const deckSnap = await getDoc(doc(db, "decks", deckID));
+const deckName = deckSnap.data().DeckName;
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 //Document Elements
@@ -62,6 +63,36 @@ const flashcardContent = document.getElementById('flashcardContent');
 const summaryContent = document.getElementById('summaryContent');
 const settingsContent = document.getElementById('settingsContent');
 const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
+
+//Inside Settings tab
+const editDeckName = document.getElementById('editDeckName');
+const reviewTypeOptions = document.getElementById('reviewTypeOptions');
+
+//Initialize with current Deck settings
+editDeckName.value = deckName;  
+document.getElementById(deckSnap.data().reviewType).selected = 'selected';
+document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
+
+reviewTypeOptions.addEventListener("click", async ()=>{
+  console.log("In here")
+  console.log(reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id)
+  var currentSelectedOption = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
+
+  const latestSnap = new Promise((resolve) =>{
+    getDoc(doc(db, "decks", deckID)).then((docRef) => {
+      if(currentSelectedOption != deckSnap.data().reviewType){
+        console.log("Update")
+      }else{
+        console.log("No update")
+      }
+      resolve(console.log("Finish"));
+    }).catch(error => {
+      console.log(error);
+      })
+  })
+  
+  await latestSnap;
+})
 
 var numCheckboxesClicked = 0;
 var editOpen = false; // to keep track of whether we already have the edit menu open
@@ -92,27 +123,6 @@ function DeleteCard(DocID) //it is expected that the id of the card being delete
     }).catch(error => {
     console.log(error);
     });
-}
-
-//DeleteDeck to be fixed...
-async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
-{
-  const DeckRef = doc(db, "decks", DeckID);
-  const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
-  const batch = writeBatch(db);//create batch
-
-  const deckSearchQuerySnapshot = await getDocs(deckSearch);//get documents related to the query
-
-  deckSearchQuerySnapshot.forEach(doc => batch.delete(doc.ref));//delete all the documents related to the query
-
-  batch.commit();
-
-  deleteDoc(DeckRef).then(() => {
-    console.log("Entire Document has been deleted successfully.")
-    }).catch(error => {
-    console.log(error);
-    });
-  
 }
 
 //retrieve the total number of decks a user has

@@ -1,4 +1,30 @@
-//get document elements
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDjmx_8Xdr9-kqDsjs_zlhdupZJD0keO4M",
+  authDomain: "weblogindemo-2640e.firebaseapp.com",
+  projectId: "weblogindemo-2640e",
+  storageBucket: "weblogindemo-2640e.appspot.com",
+  messagingSenderId: "61954503747",
+  appId: "1:61954503747:web:f1aaa27126f738a1c410f6"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Add the Firebase products and methods that you want to use
+// addDoc: adds new "row"
+// collection: "table" of users, decks, flashcards, etc.
+import {
+    getFirestore,
+    doc,
+    getDoc
+  } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
+
+let db = getFirestore(app);
+
 const pgStartReviewClicked = sessionStorage.getItem('PrevHTMLPg');
 const returnButton = document.getElementById('returnHome');
 if (pgStartReviewClicked === "homeScreen"){
@@ -14,7 +40,8 @@ const numMissed = document.getElementById('numMissed');
 const score = document.getElementById('score');
 
 //display results from review session
-deckID.innerHTML = sessionStorage.getItem("DeckID");
+const deckName = (await getDoc(doc(db, "decks", sessionStorage.getItem('DeckID')))).data().DeckName;
+deckID.innerHTML = deckName;
 const correct = sessionStorage.getItem("numCorrect");
 const incorrect = sessionStorage.getItem("numMissed");
 const total = parseInt(correct) + parseInt(incorrect);

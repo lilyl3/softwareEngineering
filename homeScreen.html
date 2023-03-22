@@ -9,16 +9,17 @@
     </head>
     <body>
       <div class="appName">
-        <span>Kinda Like Quizlet</span>
+        <div class="title">Dorki <span class="acronym">(doing online really kool information)</span></div>
         <button class="logoutButton" type = "button" id ="logoutButton">Logout</button>
       </div>
       <script type="module" src="./homeScreen.js"></script>
-      <div id = "deleteArea" class="container">
-        <input type="checkbox" id="selectAll" name="selectAll" class="select-all">
+      <div id = "deleteArea" class="delete-area">
+        <input type="checkbox" id="selectAll" name="selectAll" class="select-checkmark">
         <label for="selectAll" class="select-all">Select All</label>
-        <button type="button" id = "deleteDeck" style="visibility: hidden;">Delete</button>
+        <button type="button" id = "deleteDeck" class="delete-button"
+          style="visibility: hidden;">Delete</button>
       </div>
-      <div class="container" id = "DeckList"></div>
+      <ul class="deck-list" id = "DeckList"></ul>
       <section id="afterDeck"></section>
     </body>
 </html>

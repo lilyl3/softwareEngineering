@@ -52,21 +52,21 @@ var numCheckboxesClicked = 0;
 
 async function listen2SelectAll(){
   selectAllDecks.addEventListener("click", async e=>{
-    const deckNames = await getDeckNames();
+    const deckIDs = await getDeckIDs();
     if (selectAllDecks.checked){
       //check all boxes
-      for (let index = 0; index < deckNames.length; index++){
-        document.getElementById("check" + deckNames[index]).checked = true;
-        document.getElementById("check" + deckNames[index]).style.visibility = "visible";
-        document.getElementById("line" + deckNames[index]).style.backgroundColor = "#def1fd";
-        numCheckboxesClicked = deckNames.length;
+      for (let index = 0; index < deckIDs.length; index++){
+        document.getElementById("check" + deckIDs[index]).checked = true;
+        document.getElementById("check" + deckIDs[index]).style.visibility = "visible";
+        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "#def1fd";
+        numCheckboxesClicked = deckIDs.length;
       }
     }else{
       //UNcheck all boxes
-      for (let index = 0; index < deckNames.length; index++){
-        document.getElementById("check" + deckNames[index]).checked = false;
-        document.getElementById("check" + deckNames[index]).style.visibility = "hidden";
-        document.getElementById("line" + deckNames[index]).style.backgroundColor = "white";
+      for (let index = 0; index < deckIDs.length; index++){
+        document.getElementById("check" + deckIDs[index]).checked = false;
+        document.getElementById("check" + deckIDs[index]).style.visibility = "hidden";
+        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "white";
         deleteButton.style.visibility = "hidden";
         numCheckboxesClicked = 0;
       }
@@ -103,17 +103,20 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
 
 async function listen2DeleteButton(){
   deleteButton.addEventListener("click", async e =>{
-    const deckNames = await getDeckNames();
-    for (let index = 0; index < deckNames.length; index++){
-      const deckName = deckNames[index];
-      if (document.getElementById("check" + deckName).checked){
-        console.log("Deck being deleted: " + deckName)
-        await DeleteDeck(deckName);
-        deckList.removeChild(document.getElementById("line" + deckName));
+    const deckIDs = await getDeckIDs();
+    if (confirm("Are you sure you want to delete the deck(s)?\nIt will also delete all the flashcards inside") == true)
+    {
+      for (let index = 0; index < deckIDs.length; index++){
+        const deckID = deckIDs[index];
+        if (document.getElementById("check" + deckID).checked){
+          console.log("Deck being deleted: " + deckID)
+          await DeleteDeck(deckID);
+          deckList.removeChild(document.getElementById("line" + deckID));
+        }
       }
+      deleteButton.style.visibility = "hidden";
+      //window.location.href = "./homeScreen.html";   //reload the webpage after delete
     }
-    deleteButton.style.visibility = "hidden";
-    //window.location.href = "./homeScreen.html";   //reload the webpage after delete
   });
 }
 
@@ -128,19 +131,19 @@ async function getNumDecks(){
   return numDecks;
 }
 
-//retrieve the total number of decks a user has
-async function getDeckNames(){
+//retrieve the deckIDs of user
+async function getDeckIDs(){
   const decks = query(collection(db, "decks"), where("userID", "==", user));
   const decksSnapshot = await getDocs(decks);
-  var deckNames = [];
+  var deckIDs = [];
   var counter = 0;
 
-  //get existing deck names
+  //get existing deck ids
   decksSnapshot.forEach((deck) => {
-    deckNames[counter] = deck.data().DeckName;
+    deckIDs[counter] = deck.id;
     ++counter;
   });
-  return deckNames;
+  return deckIDs;
 }
 
 //displays add deck button for less than 5 decks
@@ -148,7 +151,7 @@ async function displayAddDecksButton()
 {
   const numDecks = await getNumDecks();
   console.log(numDecks)
-  if (numDecks < 5)
+  if (numDecks < 20)
   {
     var addDecks = document.createElement("button")
     addDecks.innerHTML = "+";
@@ -172,28 +175,34 @@ async function displayDecks()
   const decksSnapshot = await getDocs(decks);
   decksSnapshot.forEach((deck) => {
 
-    var deckLine = document.createElement('li');
-    deckLine.setAttribute('id', "line" + deck.data().DeckName);
+    // overall deck line
+    var deckLine = document.createElement('div');
+    deckLine.setAttribute('id', "line" + deck.id);
     deckLine.className = "deck-line";
     
+    // checkbox
     var checkbox4Delete = document.createElement("input");
     checkbox4Delete.type = "checkbox";
-    checkbox4Delete.id = "check" + deck.data().DeckName;
+    checkbox4Delete.id = "check" + deck.id;
     checkbox4Delete.style.visibility = "hidden"; //@Justin Do NOT remove the following line. Not for styling purposes
     checkbox4Delete.className = "checkbox-4-delete";
 
-    var deck_i = document.createElement("span");
-    deck_i.id = deck.data().DeckName;
-    deck_i.innerHTML = deck.data().DeckName;
+    // button to open deck
+    var deckButton = document.createElement('button');
+    deckButton.className = "deck-button";
+    deckButton.innerHTML = deck.data().DeckName;
 
-    var startReviewButton = document.createElement("span");
+    // start review button
+    var startReviewButton = document.createElement("button");
     startReviewButton.innerHTML = "&#8594";
     startReviewButton.className = "start-review-button";
 
+    // append elements to deckline
     deckLine.appendChild(checkbox4Delete);
-    deckLine.appendChild(deck_i);
+    deckLine.appendChild(deckButton)
     deckLine.appendChild(startReviewButton);
 
+    // append deckline to decklist
     deckList.appendChild(deckLine);
 
     //listen to see if user clicks on checkbox4Delete
@@ -206,10 +215,10 @@ async function displayDecks()
       if (checkbox4Delete.checked){
         numCheckboxesClicked++;
         checkbox4Delete.style.visibility = "visible";
-        deckLine.style.backgroundColor = "#def1fd";
+        deckLine.style.backgroundColor = "#0041CA";
       }else{
         numCheckboxesClicked--;
-        deckLine.style.backgroundColor = "white";
+        deckLine.style.backgroundColor = "#12a5da";
       }
     
       if(numCheckboxesClicked > 0){
@@ -220,33 +229,43 @@ async function displayDecks()
       }
     });
 
+    console.log(deckLine.innerText.substring(0, deckLine.innerText.length - 2));
+    console.log(deckLine.innerText.length);
+    console.log(deckLine.innerText.substring(0, deckLine.innerText.length - 2).length)
+
     //listen to see if user clicks on a deck
     //If so, start a review session
-    deck_i.addEventListener("click", async e =>{
+    deckButton.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
+      sessionStorage.setItem("DeckID", deck.id);
       sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./deckDetails.html";
+      deckLine.style.transform = "translate(-5px, 5px)";
+      deckLine.style.boxShadow = "none";
     });
 
     startReviewButton.addEventListener("click", async e =>{
       //save cookie of deck clicked by user
-      sessionStorage.setItem("DeckID", deck_i.getAttribute("id"));
+      sessionStorage.setItem("DeckID", deck.id);
       sessionStorage.setItem("PrevHTMLPg", "homeScreen");
       window.location.href = "./reviewSession.html";
     });
 
     deckLine.addEventListener("mouseover", e =>{
-      deckLine.style.borderStyle = "outset";
       if (!selectAllDecks.checked){
         checkbox4Delete.style.visibility = "visible";   //@Justin Do NOT delete this line
+        if (!checkbox4Delete.checked) {
+          deckLine.style.opacity = "0.8";
+        }
       }
     })
 
     deckLine.addEventListener("mouseout", e =>{
-      deckLine.style.borderStyle = "none";
       if (!checkbox4Delete.checked){
-        checkbox4Delete.style.visibility = "hidden";     //@Justin Do NOT delete this line
+        checkbox4Delete.style.visibility = "hidden";     //@Justin Do NOT delete this line\
+        if (!checkbox4Delete.checked) {
+          deckLine.style.opacity = "1";
+        }
       }
     })
   });

@@ -38,18 +38,20 @@ let db = getFirestore(app);
 
 //CONSTANTs
 const nullDate = "2023/01/01";
-const deck = sessionStorage.getItem('DeckID');
+const deckID = sessionStorage.getItem('DeckID');
+const deckName = (await getDoc(doc(db, "decks", deckID))).data().DeckName;
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
-deckTitle.innerHTML = " > " + deck;
+deckTitle.innerHTML = " > " + deckName;
 
 const flashcardList = document.getElementById('FlashcardList');
 const afterContent = document.getElementById('afterContent');
 const deleteButton = document.getElementById('deleteFlashcard');
 const selectAll = document.getElementById('selectAll');
 const startReviewButton = document.getElementById('startReview');
+const logoutButton = document.getElementById('logoutButton');
 
 //Side bar tabs
 const flashcardTab = document.getElementById('FlashcardsTab');
@@ -62,6 +64,7 @@ const settingsContent = document.getElementById('settingsContent');
 const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
 
 var numCheckboxesClicked = 0;
+var editOpen = false; // to keep track of whether we already have the edit menu open
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
@@ -114,7 +117,7 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
 
 //retrieve the total number of decks a user has
 async function getFlashcardIDs(){
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardSnapshot = await getDocs(flashcards);
   var flashcardIDs = [];
   var counter = 0;
@@ -129,7 +132,7 @@ async function getFlashcardIDs(){
 
 //retrieve the total number of decks a user has
 async function getNumFlashcards(){
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardsSnapshot = await getDocs(flashcards);
   var numFlash = 0;
   flashcardsSnapshot.forEach((FC) => {
@@ -142,7 +145,7 @@ async function displayAddFlashcardsButton()
 {
   const numFlash = await getNumFlashcards();
   console.log(numFlash)
-  if (numFlash < 15)
+  if (numFlash < 50)
   {
     var addFlashcard = document.createElement("button")
     addFlashcard.innerHTML = "+";
@@ -193,30 +196,53 @@ async function listen2SelectAll(){
 async function listen2DeleteButton(){
   deleteButton.addEventListener("click", async e =>{
     const flashcardIDs = await getFlashcardIDs();
-    for (let index = 0; index < flashcardIDs.length; index++){
-      const flashcardID = flashcardIDs[index];
-      if (document.getElementById("check" + flashcardID).checked){
-        console.log("Flashcard being deleted: " + flashcardID)
-        await DeleteCard(flashcardID);
-        flashcardList.removeChild(document.getElementById("line" + flashcardID));
+    if (confirm("Are you sure you want to delete the flashcard(s)?") == true)
+    {
+      for (let index = 0; index < flashcardIDs.length; index++){
+        const flashcardID = flashcardIDs[index];
+        if (document.getElementById("check" + flashcardID).checked){
+          console.log("Flashcard being deleted: " + flashcardID)
+          await DeleteCard(flashcardID);
+          flashcardList.removeChild(document.getElementById("line" + flashcardID));
+        }
       }
+      deleteButton.style.visibility = "hidden";
+      //window.location.href = "./homeScreen.html";   //reload the webpage after delete
     }
-    deleteButton.style.visibility = "hidden";
-    //window.location.href = "./homeScreen.html";   //reload the webpage after delete
   });
 }
 
 // displays the user's flashcards on the home screen
 async function displayFlashcards()
 {
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardsSnapshot = await getDocs(flashcards);
+  var numOfFlashCards = await getNumFlashcards();
   var counter = 0;
   flashcardsSnapshot.forEach((flashcard) => {
     ++counter;
-    var flashcardLine = document.createElement('li');
+
+    // create flashcard line
+    var flashcardLine = document.createElement('div');
     flashcardLine.setAttribute('id', "line" + flashcard.id);
     flashcardLine.className = "flashcard-line";
+
+    // two rows of flashcard line
+    var flashcardLineRow1 = document.createElement('div');
+    flashcardLineRow1.className = "flashcard-line-row-1";
+    flashcardLineRow1.setAttribute('id', "row1" + flashcard.id);
+
+    // to round corners of first and last flashcard line and when an edit window opens
+    if (counter === 1)
+    {
+      flashcardLine.style.borderRadius = "1em 1em 0 0";
+      flashcardLineRow1.style.borderRadius = "1em 1em 0 0";
+    }
+    if (counter === numOfFlashCards)
+    {
+      flashcardLine.style.borderRadius = "0 0 1em 1em";
+      flashcardLineRow1.style.borderRadius = "0 0 1em 1em";
+    }
     
     var checkbox4Delete = document.createElement("input");
     checkbox4Delete.type = "checkbox";
@@ -225,20 +251,22 @@ async function displayFlashcards()
     checkbox4Delete.className="checkbox-4-delete";
 
     //display flashcard question
-    var flashcardQuestion = document.createElement("span");
+    var flashcardQuestion = document.createElement("div");
     flashcardQuestion.id = flashcard.id;
     flashcardQuestion.innerHTML = flashcard.data().Question;
     flashcardQuestion.className = "flashcard-question";
 
     //add icon to edit flashcard
-    var editFlashcard = document.createElement("span");
+    var editFlashcard = document.createElement("div");
     editFlashcard.innerHTML = "Edit";  
+    editFlashcard.id = counter;
     editFlashcard.className = "edit-flashcard";   
 
-    flashcardLine.appendChild(checkbox4Delete);
-    flashcardLine.appendChild(flashcardQuestion);
-    flashcardLine.appendChild(editFlashcard);
+    flashcardLineRow1.appendChild(checkbox4Delete);
+    flashcardLineRow1.appendChild(flashcardQuestion);
+    flashcardLineRow1.appendChild(editFlashcard);
 
+    flashcardLine.appendChild(flashcardLineRow1);
     flashcardList.appendChild(flashcardLine);
 
     //listen to see if user clicks on checkbox4Delete
@@ -251,10 +279,10 @@ async function displayFlashcards()
       if (checkbox4Delete.checked){
         numCheckboxesClicked++;
         checkbox4Delete.style.visibility = "visible";
-        flashcardLine.style.backgroundColor = "#def1fd";
+        flashcardLineRow1.style.backgroundColor = "#def1fd";
       }else{
         numCheckboxesClicked--;
-        flashcardLine.style.backgroundColor = "#ededed";
+        flashcardLineRow1.style.backgroundColor = "#ededed";
       }
     
       if(numCheckboxesClicked > 0){
@@ -266,21 +294,31 @@ async function displayFlashcards()
     });
 
     editFlashcard.addEventListener("click", async e =>{
+      // so we can only open one edit box
+      if (editOpen)
+        return;
+      else
+        editOpen = true;
+
       const flashcardRef = doc(db, "Flashcard", flashcard.id);
       const flashcardSnap = await getDoc(flashcardRef);
 
-      const edit = document.createElement("ul");
-      edit.className = "edit-style";
+      const edit = document.createElement("div");
+      edit.className = "edit";
 
       //Edit Question field
-      const editQuestion = document.createElement("li");
+      const editQuestion = document.createElement("div");
+      editQuestion.className = "edit-question-row";
       const inputQuestion = document.createElement('input');
       inputQuestion.type = "text";
       inputQuestion.value = flashcardSnap.data().Question;
       inputQuestion.id = "editQuestion";
+      inputQuestion.className = "question-input";
+
       var questionLabel = document.createElement("Label");
       questionLabel.setAttribute("for",inputQuestion);
       questionLabel.innerHTML = "Question";
+      questionLabel.className = "question-label";
 
       //add label & input field for question
       editQuestion.appendChild(questionLabel);
@@ -288,49 +326,81 @@ async function displayFlashcards()
       edit.appendChild(editQuestion);
 
       //Edit Answer field
-      const editAnswer = document.createElement("li");
+      const editAnswer = document.createElement("div");
+      editAnswer.className = "edit-answer-row";
       const inputAnswer = document.createElement('input');
       inputAnswer.type = "text";
       inputAnswer.id = "editAnswer";
       inputAnswer.value = flashcardSnap.data().Answer;
+      inputAnswer.className = "answer-input";
+
+      //add label & input field for answer
       var answerLabel = document.createElement("Label");
       answerLabel.setAttribute("for",inputAnswer);
       answerLabel.innerHTML = "Answer";
+      answerLabel.className = "answer-label";
 
       editAnswer.appendChild(answerLabel);
       editAnswer.appendChild(inputAnswer);
       edit.appendChild(editAnswer);
 
       //buttons to submit or cancel
-      const buttonsLine = document.createElement("li");
+      const buttonsLine = document.createElement("div");
+      buttonsLine.className = "buttons-row";
       const saveChanges = document.createElement('button');
       saveChanges.innerHTML = "Save";
-      saveChanges.id = "saveChanges";
+      saveChanges.id = "save-" + editFlashcard.id;
+      saveChanges.className = "save-button";
 
       const cancelChanges = document.createElement('button');
       cancelChanges.innerHTML = "Cancel";
       cancelChanges.id = "cancelChanges";
+      cancelChanges.className = "cancel-button";
+      console.log(edit.id);
+      cancelChanges.id = "cancel-" + editFlashcard.id;
 
       buttonsLine.append(saveChanges);
       buttonsLine.append(cancelChanges);
 
+      edit.appendChild(buttonsLine);
       flashcardLine.appendChild(edit);
-      flashcardLine.appendChild(buttonsLine);
+      
+      // if edit is placed last we want it to look like it isn't out of place
+      if (e.target.id == numOfFlashCards)
+      {
+        edit.style.borderRadius = "0 0 1em 1em";
+        edit.parentNode.style.borderRadius = "0";
+        edit.parentNode.firstChild.style.borderRadius = "0";
+      }
 
       const removeEdit = (e) =>{
+
+        if (e.target.id === "cancel-" + numOfFlashCards)
+        {
+          e.target.parentNode.parentNode.parentNode.firstChild.style.borderRadius = "0 0 1em 1em";
+          e.target.parentNode.parentNode.parentNode.style.borderRadius = "0 0 1em 1em";
+        }
+        
         cancelChanges.removeEventListener("click", removeEdit);
         saveChanges.removeEventListener("click", saveChangesListener);
         flashcardLine.removeChild(edit);
-        flashcardLine.removeChild(buttonsLine);
+        editOpen = false;
       }
 
       const saveChangesListener = async (e) =>{
+
+        if (e.target.id === "save-" + numOfFlashCards)
+        {
+          e.target.parentNode.parentNode.parentNode.firstChild.style.borderRadius = "0 0 1em 1em";
+          e.target.parentNode.parentNode.parentNode.style.borderRadius = "0 0 1em 1em";
+        }
+
         await UpdateCard (flashcard.id, inputQuestion.value, inputAnswer.value);
         flashcardQuestion.innerHTML = inputQuestion.value;
         cancelChanges.removeEventListener("click", removeEdit);
         saveChanges.removeEventListener("click", saveChangesListener);
         flashcardLine.removeChild(edit);
-        flashcardLine.removeChild(buttonsLine);
+        editOpen = false;
       }
 
       saveChanges.addEventListener("click", saveChangesListener);
@@ -339,7 +409,6 @@ async function displayFlashcards()
     });
 
     flashcardLine.addEventListener("mouseover", e =>{
-      flashcardLine.style.borderStyle = "outset";
       if (!selectAll.checked){
         checkbox4Delete.style.visibility = "visible";   //@Justin Do NOT delete this line
       }
@@ -410,6 +479,19 @@ if (prevHTMLPg === "newCard"){
   summaryContent.style.display = "none";
   flashcardContent.style.display = "initial";
 }
+
+//listen to see if user clicks on the logout button
+//If so, return to login page
+async function listen4Logout(){
+  logoutButton.addEventListener('click', async e => {
+    e.preventDefault();         // Prevent the default form redirect
+    console.log("Logging out")
+    sessionStorage.clear();     // Clear all saved "cookies"
+    window.location.href = "./login.html";
+  });
+}
+
 listen2RemoveTip();
 listen2StartReview();
 listen2Tabs();
+listen4Logout();

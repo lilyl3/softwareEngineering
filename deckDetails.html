@@ -11,53 +11,56 @@
     <body>
       <script type="module" src="./deckDetails.js"></script>
       <!-- App Name -->
-      <div class = "appName">
-        <div class="title">Dorki</div>
+      <div class="appName">
+        <div class="title">Dorki </div>
+        <button class="logoutButton" type = "button" id ="logoutButton">Logout</button>
       </div>
 
       <!-- Side Bar + Tabs -->
-      <div class="sidebar">
-        <div>
-          <button class ="sideButton" type = "button" id = "startReview">Start Review</button>
-        </div>
-        <a href="#summary" id = "SummaryTab">Summary</a>
-        <a href="#flashcards" id = "FlashcardsTab">Flashcards</a>
-        <a href="#settings" id = "SettingsTab">Settings</a>
-      </div>
-
-      <!-- Tool tip will appear if deck has no flashcards -->
-      <div>
-        <span class="tooltiptext" id="tipNoFlashcards" style="visibility: hidden;">
-          <button type ="button" id = "closeTipNoFlashcard">X</button>
-          <br/>
-          No flashcards. Click here to add flashcards.
-        </span>
-      </div>
-
-      <!-- Displays the content of the Tabs -->
-      <section class = "contentAreaStyle">
-        <div class = "deckTitle">
-          <a href="./homeScreen.html">Home</a>
-          <span id="deckTitle" class="deck-title-style"></span>
-        </div>
-        <!-- Display content for Summary tab -->
-        <section id = "summaryContent">
-          <p>In Summary! Just a temporary placeholder</p>
-        </section>
-        <!-- Display content for Flashcards tab -->
-        <section id="flashcardContent" style = "display: none;">
-          <div id = "deleteArea" class="container">
-            <input type="checkbox" class="select-all" id="selectAll" name="selectAll">
-            <label for="selectAll" class="select-all">Select All</label>
-            <button type="button" id = "deleteFlashcard" class="delete-flashcard">Delete</button>
+      <div class="sidebar-and-content-area">
+        <div class="sidebar">
+          <div>
+            <button class ="start-review-button" type = "button" id = "startReview">Start Review</button>
           </div>
-          <div class="container" id = "FlashcardList"></div>
-          <section id="afterContent"></section>
-      </section>
-      <!-- Display content for Settings tab -->
-      <section id = "settingsContent" style="display: none;">
-        <p>In Settings! Just a temporary placeholder</p>
-      </section>
-      </section>
+          <a href="#summary" id = "SummaryTab">Summary</a>
+          <a href="#flashcards" id = "FlashcardsTab">Flashcards</a>
+          <a href="#settings" id = "SettingsTab">Settings</a>
+        </div>
+
+        <!-- Tool tip will appear if deck has no flashcards -->
+        <div>
+          <span class="tooltiptext" id="tipNoFlashcards" style="visibility: hidden;">
+            <button type ="button" id = "closeTipNoFlashcard">X</button>
+            <br/>
+            No flashcards. Click here to add flashcards.
+          </span>
+        </div>
+
+        <!-- Displays the content of the Tabs -->
+        <section class = "contentAreaStyle">
+          <div class = "deckTitle">
+            <a href="./homeScreen.html">Home</a>
+            <span id="deckTitle" class="deck-title-style"></span>
+          </div>
+          <!-- Display content for Summary tab -->
+          <section id = "summaryContent">
+            <p>In Summary! Just a temporary placeholder</p>
+          </section>
+          <!-- Display content for Flashcards tab -->
+          <section id="flashcardContent" style = "display: none;">
+            <div id = "deleteArea" class="delete-area">
+              <input type="checkbox" class="select-all-checkbox" id="selectAll" name="selectAll">
+              <label for="selectAll" class="select-all">Select All</label>
+              <button type="button" id = "deleteFlashcard" class="delete-button">Delete</button>
+            </div>
+            <div class="flashcard-list" id = "FlashcardList"></div>
+            <section id="afterContent" class="after-content"></section>
+        </section>
+
+        <!-- Display content for Settings tab -->
+        <section id = "settingsContent" style="display: none;">
+          <p>In Settings! Just a temporary placeholder</p>
+        </section>
+      </div>
     </body>
 </html>

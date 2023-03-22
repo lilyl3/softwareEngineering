@@ -64,7 +64,6 @@ const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
 
 var numCheckboxesClicked = 0;
 var editOpen = false; // to keep track of whether we already have the edit menu open
-var lineWithEdit;
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
@@ -203,6 +202,7 @@ async function listen2DeleteButton(){
         flashcardList.removeChild(document.getElementById("line" + flashcardID));
       }
     }
+    //console.log("Finished delete!")
     deleteButton.style.visibility = "hidden";
     //window.location.href = "./homeScreen.html";   //reload the webpage after delete
   });
@@ -220,12 +220,13 @@ async function displayFlashcards()
 
     // create flashcard line
     var flashcardLine = document.createElement('div');
+    flashcardLine.setAttribute('id', "line" + flashcard.id);
     flashcardLine.className = "flashcard-line";
 
     // two rows of flashcard line
     var flashcardLineRow1 = document.createElement('div');
     flashcardLineRow1.className = "flashcard-line-row-1";
-    flashcardLineRow1.setAttribute('id', "line" + flashcard.id);
+    flashcardLineRow1.setAttribute('id', "row1" + flashcard.id);
 
     // to round corners of first and last flashcard line and when an edit window opens
     if (counter === 1)

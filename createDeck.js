@@ -22,6 +22,7 @@ import {
     query,
     where,
     doc, 
+    getDoc,
     getDocs,
     addDoc
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
@@ -51,8 +52,10 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
             orderType: defaultOrderType,
             numNewCards: 0,
             resume: null
-        }).then(() => {
+        }).then((docRef) => {
                 console.log("Entire Document has been deleted successfully.")
+                console.log("docRef.id: " + docRef.id)
+                sessionStorage.setItem("DeckID", docRef.id);
                 resolve();
             }).catch(error => {
                 console.log("ERROR here!")
@@ -116,8 +119,7 @@ async function listen2CreateDeck(){
                 //add deck
                 console.log("Creating deck...")
                 await DeckCreate(newDeckName.value, user);
-                console.log("Successfully created!")
-                sessionStorage.setItem("DeckID", newDeckName.value);
+                console.log("Successfully created!");
                 window.location.href = "./deckDetails.html";
             }
         }

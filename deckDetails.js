@@ -38,12 +38,13 @@ let db = getFirestore(app);
 
 //CONSTANTs
 const nullDate = "2023/01/01";
-const deck = sessionStorage.getItem('DeckID');
+const deckID = sessionStorage.getItem('DeckID');
+const deckName = (await getDoc(doc(db, "decks", deckID))).data().DeckName;
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
-deckTitle.innerHTML = " > " + deck;
+deckTitle.innerHTML = " > " + deckName;
 
 const flashcardList = document.getElementById('FlashcardList');
 const afterContent = document.getElementById('afterContent');
@@ -116,7 +117,7 @@ async function DeleteDeck(DeckID) //it is expected that the id of the deck being
 
 //retrieve the total number of decks a user has
 async function getFlashcardIDs(){
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardSnapshot = await getDocs(flashcards);
   var flashcardIDs = [];
   var counter = 0;
@@ -131,7 +132,7 @@ async function getFlashcardIDs(){
 
 //retrieve the total number of decks a user has
 async function getNumFlashcards(){
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardsSnapshot = await getDocs(flashcards);
   var numFlash = 0;
   flashcardsSnapshot.forEach((FC) => {
@@ -143,7 +144,8 @@ async function getNumFlashcards(){
 async function displayAddFlashcardsButton()
 {
   const numFlash = await getNumFlashcards();
-  if (numFlash < 15)
+  console.log(numFlash)
+  if (numFlash < 50)
   {
     var addFlashcard = document.createElement("button")
     addFlashcard.innerHTML = "+";
@@ -194,24 +196,26 @@ async function listen2SelectAll(){
 async function listen2DeleteButton(){
   deleteButton.addEventListener("click", async e =>{
     const flashcardIDs = await getFlashcardIDs();
-    for (let index = 0; index < flashcardIDs.length; index++){
-      const flashcardID = flashcardIDs[index];
-      if (document.getElementById("check" + flashcardID).checked){
-        console.log("Flashcard being deleted: " + flashcardID)
-        await DeleteCard(flashcardID);
-        flashcardList.removeChild(document.getElementById("line" + flashcardID));
+    if (confirm("Are you sure you want to delete the flashcard(s)?") == true)
+    {
+      for (let index = 0; index < flashcardIDs.length; index++){
+        const flashcardID = flashcardIDs[index];
+        if (document.getElementById("check" + flashcardID).checked){
+          console.log("Flashcard being deleted: " + flashcardID)
+          await DeleteCard(flashcardID);
+          flashcardList.removeChild(document.getElementById("line" + flashcardID));
+        }
       }
+      deleteButton.style.visibility = "hidden";
+      //window.location.href = "./homeScreen.html";   //reload the webpage after delete
     }
-    //console.log("Finished delete!")
-    deleteButton.style.visibility = "hidden";
-    //window.location.href = "./homeScreen.html";   //reload the webpage after delete
   });
 }
 
 // displays the user's flashcards on the home screen
 async function displayFlashcards()
 {
-  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deck));
+  const flashcards = query(collection(db, "Flashcard"), where("DeckID", "==", deckID));
   const flashcardsSnapshot = await getDocs(flashcards);
   var numOfFlashCards = await getNumFlashcards();
   var counter = 0;

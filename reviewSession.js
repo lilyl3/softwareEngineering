@@ -193,8 +193,8 @@ function waitForCorrectIncorrectResponse() {
     
     //resolve key press only if user pressed 0 or 1
     const pressed01 = (e) => {
-      //user presssed 0 = incorrect = keyCode 96
-      if(e.keyCode === 96 || e.keyCode === 48 || e.keyCode === 50){
+      //user presssed 0 or 2= incorrect
+      if(e.keyCode === 96 || e.keyCode === 48 || e.keyCode === 50 || e.keyCode === 98){
         console.log("0 pressed")
         pause = false;
         correctlyAnswered = false;

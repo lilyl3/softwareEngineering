@@ -506,7 +506,7 @@ async function dailyReview(DeckID, orderType){
   if (orderType === "Random"){
     orderReview = shuffle(flashcardID);
   }
-  else if (orderType === "LowHigh"){
+  else if (orderType === "Low to High"){
     console.log("LowHigh");
     const maxLevel = Math.max.apply(null, flashcardLevel);    //maximum level of any flashcard from DeckID
     console.log("Max Level:", maxLevel);
@@ -630,7 +630,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   if (orderType === "Random"){
     reviewCardID = shuffle(reviewCardID);
   }
-  else if (orderType === "LowHigh"){
+  else if (orderType === "Low to High"){
     const maxReviewLevel = Math.max.apply(null, reviewCardLevel);    //maximum level of to be reviewed flashcard from DeckID
     console.log("Max Level:", maxReviewLevel);
 

@@ -53,6 +53,8 @@ const deleteButton = document.getElementById('deleteFlashcard');
 const selectAll = document.getElementById('selectAll');
 const startReviewButton = document.getElementById('startReview');
 const logoutButton = document.getElementById('logoutButton');
+var numCheckboxesClicked = 0;
+var editOpen = false; // to keep track of whether we already have the edit menu open
 
 //Side bar tabs
 const flashcardTab = document.getElementById('FlashcardsTab');
@@ -64,38 +66,119 @@ const summaryContent = document.getElementById('summaryContent');
 const settingsContent = document.getElementById('settingsContent');
 const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
 
-//Inside Settings tab
+/********************* SETTINGS TAB ****************************************/ 
 const editDeckName = document.getElementById('editDeckName');
+const editSettingsButton = document.getElementById('editSettingsButton');
 const reviewTypeOptions = document.getElementById('reviewTypeOptions');
+const orderTypeOptions = document.getElementById('orderTypeOptions');
+const saveSettingButton = document.getElementById('saveSettingButton');
+const cancelSettingButton = document.getElementById('cancelSettingButton');
+const editNumNewCards = document.getElementById('editNumNewCards');
+const editNewCardsArea = document.getElementById('editNewCardsArea');
 
 //Initialize with current Deck settings
-editDeckName.value = deckName;  
+editDeckName.value = deckName;
+editDeckName.readOnly = true;     //set this to read Only initially
 document.getElementById(deckSnap.data().reviewType).selected = 'selected';
 document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
+reviewTypeOptions.disabled = true;
+orderTypeOptions.disabled = true;
+editNumNewCards.readOnly = true;
 
-reviewTypeOptions.addEventListener("click", async ()=>{
-  console.log("In here")
-  console.log(reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id)
-  var currentSelectedOption = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
+if (deckSnap.data().reviewType === "Continuous"){
+  editNewCardsArea.style.display = "initial";
+  editNumNewCards.value = deckSnap.data().newNumCards;
+}
 
-  const latestSnap = new Promise((resolve) =>{
-    getDoc(doc(db, "decks", deckID)).then((docRef) => {
-      if(currentSelectedOption != deckSnap.data().reviewType){
-        console.log("Update")
-      }else{
-        console.log("No update")
-      }
-      resolve(console.log("Finish"));
+reviewTypeOptions.onchange = function(){
+  const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
+  // console.log(selectedReviewType)
+
+  if(selectedReviewType === "Daily"){
+    editNumNewCards.readOnly = true;
+    editNewCardsArea.style.display = "none";
+  }
+  else{
+    editNumNewCards.readOnly = false;
+    editNewCardsArea.style.display = "initial";
+  }
+};
+
+function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD){
+  return new Promise((resolve) =>{
+    //create reference variables for the document and the data that will be updated
+    const deckRef = doc(db, "decks", DeckID);
+    const data = {
+      DeckName: DeckNameD,
+      reviewType: reviewTypeD,
+      orderType: orderTypeD,
+      numNewCards: numNewCardsD
+    };
+    //function that updates the document; adds info to the console if successful or not
+    updateDoc(deckRef, data).then(() => {
+      resolve(console.log("Updates have been made to the deck"));
     }).catch(error => {
       console.log(error);
       })
   })
-  
-  await latestSnap;
-})
+}
 
-var numCheckboxesClicked = 0;
-var editOpen = false; // to keep track of whether we already have the edit menu open
+const clickEditSettingsButton = (e) =>{
+  console.log("Listened to Edit")
+
+  //allow edits
+  editDeckName.readOnly = false;
+  editNumNewCards.readOnly = false;
+  reviewTypeOptions.disabled = false;
+  orderTypeOptions.disabled = false;
+  saveSettingButton.style.visibility = "visible";
+  cancelSettingButton.style.visibility = "visible";
+  editSettingsButton.removeEventListener("click", clickEditSettingsButton);
+  cancelSettingButton.addEventListener("click", clickedCancelSettingsButton);
+  saveSettingButton.addEventListener("click", clickedSaveSettingsButton);
+}
+
+const clickedCancelSettingsButton = (e) =>{
+  console.log("Listened to Cancel")
+
+  //disable edits
+  editDeckName.readOnly = true;  
+  reviewTypeOptions.disabled = true;
+  orderTypeOptions.disabled = true;
+  saveSettingButton.style.visibility = "hidden";
+  cancelSettingButton.style.visibility = "hidden";
+
+  cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
+  editSettingsButton.addEventListener("click", clickEditSettingsButton);
+}
+
+const clickedSaveSettingsButton = async (e) =>{
+  console.log("Listened to Save")
+
+  //get the selected reviewType & orderType option
+  const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
+  const selectedOrderType = orderTypeOptions.options[orderTypeOptions.options.selectedIndex].id;
+  console.log(selectedReviewType + ", " + selectedOrderType)
+  var selectedNumNewCards = 0;
+
+  if (selectedReviewType === "Continuous"){
+    selectedNumNewCards = editNumNewCards.value;
+  }
+
+  await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
+
+  editDeckName.readOnly = true;  
+  reviewTypeOptions.disabled = true;
+  orderTypeOptions.disabled = true;
+  saveSettingButton.style.visibility = "hidden";
+  cancelSettingButton.style.visibility = "hidden";
+
+  saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
+  cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
+  editSettingsButton.addEventListener("click", clickEditSettingsButton);
+}
+
+/********************* END SETTINGS TAB ****************************************/
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
@@ -501,6 +584,7 @@ async function listen4Logout(){
   });
 }
 
+editSettingsButton.addEventListener("click", clickEditSettingsButton);
 listen2RemoveTip();
 listen2StartReview();
 listen2Tabs();

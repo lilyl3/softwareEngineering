@@ -344,7 +344,7 @@ async function displayFlashcards()
       buttonsLine.className = "buttons-row";
       const saveChanges = document.createElement('button');
       saveChanges.innerHTML = "Save";
-      saveChanges.id = "saveChanges";
+      saveChanges.id = "save-" + editFlashcard.id;
       saveChanges.className = "save-button";
 
       const cancelChanges = document.createElement('button');
@@ -383,12 +383,19 @@ async function displayFlashcards()
       }
 
       const saveChangesListener = async (e) =>{
+
+        if (e.target.id === "save-" + numOfFlashCards)
+        {
+          e.target.parentNode.parentNode.parentNode.firstChild.style.borderRadius = "0 0 1em 1em";
+          e.target.parentNode.parentNode.parentNode.style.borderRadius = "0 0 1em 1em";
+        }
+
         await UpdateCard (flashcard.id, inputQuestion.value, inputAnswer.value);
         flashcardQuestion.innerHTML = inputQuestion.value;
         cancelChanges.removeEventListener("click", removeEdit);
         saveChanges.removeEventListener("click", saveChangesListener);
         flashcardLine.removeChild(edit);
-        flashcardLine.removeChild(buttonsLine);
+        editOpen = false;
       }
 
       saveChanges.addEventListener("click", saveChangesListener);

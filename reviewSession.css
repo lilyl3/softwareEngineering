@@ -17,12 +17,6 @@ form {
 	border-radius: 0.5em;
 }
 
-.question-div {
-	clear: both; 
-	width: 70%; 
-	margin: auto;
-}
-
 .question {
 	margin-bottom: 1em;
 }
@@ -43,11 +37,23 @@ form {
 	color: white;
 }
 
-.new-old-cards {
-	float: right; 
+.question-div {
+	clear: both; 
+	width: 70%; 
+	margin: auto;
+}
+
+.accuracy-style{
+	float: right;
 	margin-top: 1%; 
 	color: white;
 }
+
+/* .new-old-cards {
+	float: right;  
+	margin-top: 1%; 
+	color: white;
+} */
 
 .pause-button-div {
 	text-align: right;

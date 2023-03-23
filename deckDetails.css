@@ -395,3 +395,8 @@ form {
   cursor: pointer;
   font-size: 1rem;
 } */
+
+.bar-chart{
+  width: 1000px;
+  height: 500px;
+}

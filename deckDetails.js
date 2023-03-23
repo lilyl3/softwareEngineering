@@ -41,7 +41,9 @@ const nullDate = "2023/01/01";
 const deckID = sessionStorage.getItem('DeckID');
 const deckSnap = await getDoc(doc(db, "decks", deckID));
 const deckName = deckSnap.data().DeckName;
-const delay = ms => new Promise(res => setTimeout(res, ms));
+
+google.charts.load("current", {packages:["corechart"]});
+google.charts.setOnLoadCallback(drawChart);
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
@@ -88,6 +90,46 @@ editNumNewCards.readOnly = true;
 if (deckSnap.data().reviewType === "Continuous"){
   editNewCardsArea.style.display = "initial";
   editNumNewCards.value = deckSnap.data().newNumCards;
+}
+
+//for the progress tab
+async function drawChart() {
+  const deckSnap = await getDoc(doc(db, "decks", deckID));
+  const dateReviewed = deckSnap.data().dateReviewed;
+  const correct = deckSnap.data().correct;
+  const incorrect = deckSnap.data().incorrect;
+
+  var rowsOfData = dateReviewed.map(function(d, j) {
+    return [d, correct[j], incorrect[j], ""];
+  });
+
+  console.log([['Date', 'Correct', "Incorrect", { role: 'annotation' }]].concat(rowsOfData))
+
+  var data = google.visualization.arrayToDataTable([['Date', 'Correct', "Incorrect", { role: 'annotation' }]].concat(rowsOfData));
+
+  var view = new google.visualization.DataView(data);
+  view.setColumns([0, 1,
+    { calc: "stringify",
+      sourceColumn: 1,
+      type: "string",
+      role: "annotation" },
+    2,{ calc: "stringify",
+    sourceColumn: 2,
+    type: "string",
+    role: "annotation" }]);
+
+  var options = {
+    title: "Progress in the Last 7 Days",
+    width: 900,
+    height: 600,
+    legend: { position: 'right'},
+    bar: { groupWidth: '75%' },
+    isStacked: false,
+    vAxis: {minValue: 0}
+  };
+
+  var chart = new google.visualization.ColumnChart(document.getElementById("barchart_values"));
+  chart.draw(view, options);
 }
 
 reviewTypeOptions.onchange = function(){
@@ -546,6 +588,7 @@ async function listen2RemoveTip(){
 }
 
 async function listen2Tabs(){
+  drawChart();
   displayFlashcards();
   displayAddFlashcardsButton();
 

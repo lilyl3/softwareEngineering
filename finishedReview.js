@@ -48,8 +48,31 @@ const total = parseInt(correct) + parseInt(incorrect);
 totalReviewed.innerHTML += total;
 numCorrect.innerHTML += correct;
 numMissed.innerHTML += incorrect;
-score.innerHTML += (Math.round((correct / total) * 100 * 100)) / 100 + "%";
+// if (total > 0){
+//     score.innerHTML += (Math.round((correct / total) * 100 * 100)) / 100 + "%";
+// }
+// else{
+//     score.innerHTML = "0%";
+// }
 
+google.charts.load("current", {packages:["corechart"]});
+google.charts.setOnLoadCallback(drawChart);
+
+function drawChart() {
+    var data = google.visualization.arrayToDataTable([
+        ['Task', 'Hours per Day'],
+        ['Correct',  parseInt(correct)],
+        ['Incorrect', parseInt(incorrect)]
+    ]);
+
+    var options = {
+        title: '',
+        is3D: true,
+    };
+
+    var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+    chart.draw(data, options);
+}
 //delete cookie on number of flashcards correct/missed in last review session
 sessionStorage.removeItem("numCorrect");
 sessionStorage.removeItem("numMissed");

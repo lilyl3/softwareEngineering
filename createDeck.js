@@ -38,12 +38,21 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 const defaultOrderType = "Random";
 const defaultReviewType = "Daily";
+const nullDate = "2023/01/01";
 
 async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate function in terms of variables
 {
     return new Promise((resolve) =>{
         //this variation allows us to specify the document ID rather than letting it randomize
         console.log("Adding deck... in DeckCreate")
+        const date = new Date();
+        var past7Days = [];
+        for (let d = 6; d >= 0; d--){
+            const day = new Date(date.getTime() - (d * 24 * 60 * 60 * 1000));
+            past7Days.push((day.getMonth() + 1) + "/" + day.getDate());
+        }
+        var correctPast7Days = new Array(7).fill(0);
+        var incorrectPast7Days = new Array(7).fill(0);
         addDoc(collection(db, "decks"),
         {
             userID: userIDD,
@@ -51,7 +60,10 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
             reviewType: defaultReviewType,
             orderType: defaultOrderType,
             numNewCards: 0,
-            resume: null
+            resume: nullDate,
+            dateReviewed: past7Days,
+            correct: correctPast7Days,
+            incorrect: incorrectPast7Days
         }).then((docRef) => {
                 console.log("Entire Document has been deleted successfully.")
                 console.log("docRef.id: " + docRef.id)

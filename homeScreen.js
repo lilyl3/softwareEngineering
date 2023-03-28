@@ -65,7 +65,7 @@ async function listen2SelectAll(){
       for (let index = 0; index < deckIDs.length; index++){
         document.getElementById("check" + deckIDs[index]).checked = true;
         document.getElementById("check" + deckIDs[index]).style.visibility = "visible";
-        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "#def1fd";
+        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "#0041CA";
         document.getElementById("line" + deckIDs[index]).style.color = "black";
         numCheckboxesClicked = deckIDs.length;
       }

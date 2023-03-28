@@ -23,17 +23,17 @@
             <button class ="start-review-button" type = "button" id = "startReview">Start Review</button>
           </div>
           <a href="#summary" id = "SummaryTab">Summary</a>
-          <a href="#flashcards" id = "FlashcardsTab">Flashcards</a>
+          <a href="#flashcards" id = "FlashcardsTab" class="flashcards-tab">
+            Flashcards
+            <!-- Tool tip will appear if deck has no flashcards -->
+            <div>
+              <span class="tooltiptext" id="tipNoFlashcards" style="visibility: hidden;">
+                <button type ="button" id = "closeTipNoFlashcard" class="closeToolTip">X</button>
+                No flashcards. Click here to add flashcards.
+              </span>
+            </div>
+          </a>
           <a href="#settings" id = "SettingsTab">Settings</a>
-        </div>
-
-        <!-- Tool tip will appear if deck has no flashcards -->
-        <div>
-          <span class="tooltiptext" id="tipNoFlashcards" style="visibility: hidden;">
-            <button type ="button" id = "closeTipNoFlashcard">X</button>
-            <br/>
-            No flashcards. Click here to add flashcards.
-          </span>
         </div>
 
         <!-- Displays the content of the Tabs -->
@@ -55,6 +55,18 @@
             </div>
             <div class="flashcard-list" id = "FlashcardList"></div>
             <section id="afterContent" class="after-content"></section>
+            <div class="new-card-window" id="new-card-window">
+              <script type="module" src="./newCard.js"></script>
+              <h3 class="new-card-window-title">New Card</h3>
+              <label class="front-label">Front</label>
+              <textarea id="cardFront" class="card-front-input" type="text" placeholder="Enter the flashcard prompt"></textarea>  
+              <label class="back-label">Back</label>
+              <textarea id="cardBack" class="card-back-input" type="text" placeholder="Enter the flashcard answer"></textarea>
+              <div class="button-row">
+                <button type="button" id = "createFlashcard" class="create-flashcard-button">Create Flashcard</button>
+                <button type = "button" id = "cancelButton" class="cancel-button">Cancel</button>
+              </div>
+            </div>
         </section>
 
         <!-- Display content for Settings tab -->

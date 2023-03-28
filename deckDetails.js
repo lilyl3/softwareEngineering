@@ -57,6 +57,7 @@ const logoutButton = document.getElementById('logoutButton');
 const flashcardTab = document.getElementById('FlashcardsTab');
 const SummaryTab = document.getElementById('SummaryTab');
 const SettingsTab = document.getElementById('SettingsTab');
+
 //Content for each side bar tab
 const flashcardContent = document.getElementById('flashcardContent');
 const summaryContent = document.getElementById('summaryContent');
@@ -65,6 +66,13 @@ const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
 
 var numCheckboxesClicked = 0;
 var editOpen = false; // to keep track of whether we already have the edit menu open
+
+// New Card window
+const question = document.getElementById('cardFront');
+const answer = document.getElementById('cardBack');
+const createFlashcardButton = document.getElementById('createFlashcard');
+const newCardWindow = document.getElementById('new-card-window');
+const newCardWindowCancelButton = document.getElementById('cancelButton');
 
 function UpdateCard (DocID, Question, Answer)//it is expected that the id of the card being updated will be provided to this function
 {
@@ -150,10 +158,15 @@ async function displayAddFlashcardsButton()
     var addFlashcard = document.createElement("button")
     addFlashcard.innerHTML = "+";
     addFlashcard.className = "add-flashcard";
+    addFlashcard.id = "addFlashcardButton";
     afterContent.appendChild(addFlashcard);
     addFlashcard.addEventListener("click", e => {
       //go to newCard.html to add new flashcard
-      window.location.href = "./newCard.html";
+      //window.location.href = "./newCard.html";
+
+      // open create card window
+      newCardWindow.style.display = "flex";
+      addFlashcard.style.display = "none";
     })
   }
   else
@@ -172,6 +185,7 @@ async function listen2SelectAll(){
         document.getElementById("check" + flashcardIDs[index]).checked = true;
         document.getElementById("check" + flashcardIDs[index]).style.visibility = "visible";
         document.getElementById("line" + flashcardIDs[index]).style.backgroundColor = "#def1fd";
+        document.getElementById("line" + flashcardIDs[index]).firstChild.style.backgroundColor = "#def1fd";
         numCheckboxesClicked = flashcardIDs.length;
       }
     }else{
@@ -180,6 +194,7 @@ async function listen2SelectAll(){
         document.getElementById("check" + flashcardIDs[index]).checked = false;
         document.getElementById("check" + flashcardIDs[index]).style.visibility = "hidden";
         document.getElementById("line" + flashcardIDs[index]).style.backgroundColor = "#ededed";
+        document.getElementById("line" + flashcardIDs[index]).firstChild.style.backgroundColor = "#ededed";
         deleteButton.style.visibility = "hidden";
         numCheckboxesClicked = 0;
       }
@@ -207,7 +222,8 @@ async function listen2DeleteButton(){
         }
       }
       deleteButton.style.visibility = "hidden";
-      //window.location.href = "./homeScreen.html";   //reload the webpage after delete
+      // reload webpage after delete for nice corners
+      window.location.href = "./deckDetails.html";   //reload the webpage after delete
     }
   });
 }
@@ -242,6 +258,11 @@ async function displayFlashcards()
     {
       flashcardLine.style.borderRadius = "0 0 1em 1em";
       flashcardLineRow1.style.borderRadius = "0 0 1em 1em";
+    }
+    if (counter === 1 && counter === numOfFlashCards)
+    {
+      flashcardLine.style.borderRadius = "1em 1em 1em 1em";
+      flashcardLineRow1.style.borderRadius = "1em 1em 1em 1em";
     }
     
     var checkbox4Delete = document.createElement("input");
@@ -346,7 +367,7 @@ async function displayFlashcards()
 
       //buttons to submit or cancel
       const buttonsLine = document.createElement("div");
-      buttonsLine.className = "buttons-row";
+      buttonsLine.className = "edit-buttons-row";
       const saveChanges = document.createElement('button');
       saveChanges.innerHTML = "Save";
       saveChanges.id = "save-" + editFlashcard.id;
@@ -355,7 +376,7 @@ async function displayFlashcards()
       const cancelChanges = document.createElement('button');
       cancelChanges.innerHTML = "Cancel";
       cancelChanges.id = "cancelChanges";
-      cancelChanges.className = "cancel-button";
+      cancelChanges.className = "edit-cancel-button";
       console.log(edit.id);
       cancelChanges.id = "cancel-" + editFlashcard.id;
 
@@ -373,12 +394,26 @@ async function displayFlashcards()
         edit.parentNode.firstChild.style.borderRadius = "0";
       }
 
+      if (e.target.id == numOfFlashCards && e.target.id == 1)
+      {
+        edit.style.borderRadius = "0 0 1em 1em";
+        edit.parentNode.style.borderRadius = "1em 1em 0 0";
+        edit.parentNode.firstChild.style.borderRadius = "1em 1em 0 0";
+      }
+
       const removeEdit = (e) =>{
 
         if (e.target.id === "cancel-" + numOfFlashCards)
         {
           e.target.parentNode.parentNode.parentNode.firstChild.style.borderRadius = "0 0 1em 1em";
           e.target.parentNode.parentNode.parentNode.style.borderRadius = "0 0 1em 1em";
+        }
+
+        // if there is only one flashcard
+        if (e.target.id === "cancel-" + numOfFlashCards && e.target.id === "cancel-1")
+        {
+          e.target.parentNode.parentNode.parentNode.firstChild.style.borderRadius = "1em 1em 1em 1em";
+          e.target.parentNode.parentNode.parentNode.style.borderRadius = "1em 1em 1em 1em";
         }
         
         cancelChanges.removeEventListener("click", removeEdit);
@@ -393,6 +428,13 @@ async function displayFlashcards()
         {
           e.target.parentNode.parentNode.parentNode.firstChild.style.borderRadius = "0 0 1em 1em";
           e.target.parentNode.parentNode.parentNode.style.borderRadius = "0 0 1em 1em";
+        }
+
+        // if there is only one flashcard
+        if (e.target.id === "save-" + numOfFlashCards && e.target.id === "save-1")
+        {
+          e.target.parentNode.parentNode.parentNode.firstChild.style.borderRadius = "1em 1em 1em 1em";
+          e.target.parentNode.parentNode.parentNode.style.borderRadius = "1em 1em 1em 1em";
         }
 
         await UpdateCard (flashcard.id, inputQuestion.value, inputAnswer.value);
@@ -491,7 +533,62 @@ async function listen4Logout(){
   });
 }
 
+// For creating card with create card window
+//Level initialized to 0
+//nextDateAppearance initialize to nullDate
+async function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
+{
+  //the 'D' was added to the variables to distinguish them as the data
+  //document ID for these will end up being randomized
+  return new Promise((resolve) =>{
+    addDoc(collection(db, "Flashcard"),{
+      DeckID: DeckIDD,
+      Question: QuestionD,
+      Answer: AnswerD,
+      Level: 0,
+      nextDateAppearance: nullDate
+    }).then(() => {
+        resolve("Completed delete. Returning to listen2SubmitButton.");
+        }).catch(error => {
+          console.log(error);
+        });
+  })
+}
+
+async function listen2SubmitButton(){
+    createFlashcardButton.addEventListener("click", async e => {
+        if (question.value === ""){
+            question.placeholder = "Question can not be empty.";
+        }
+
+        else if (answer.value === ""){
+            answer.placeholder = "Answer can not be empty.";
+        }
+
+        if (question.value != "" && answer.value != ""){
+            await CardCreate(answer.value, deckID, question.value);
+            //console.log("Returning to main!")
+            sessionStorage.setItem('PrevHTMLPg', "newCard");
+            window.location.href = "./deckDetails.html";
+        }
+    });
+}
+
+async function listen2CancelButton() {
+  newCardWindowCancelButton.addEventListener("click", async e =>{
+    //return to home screen
+    //window.location.href = "./deckDetails.html";
+    newCardWindow.style.display = "none";
+
+    var addFlashcardButton = document.getElementById("addFlashcardButton");
+
+    addFlashcardButton.style.display = "block";
+})
+}
+
 listen2RemoveTip();
 listen2StartReview();
 listen2Tabs();
 listen4Logout();
+listen2SubmitButton();
+listen2CancelButton();

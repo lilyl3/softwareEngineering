@@ -39,6 +39,8 @@ let db = getFirestore(app);
 //CONSTANTs
 const nullDate = "2023/01/01";
 const defaultOrderType = "Random";
+const defaultReviewType = "Daily";
+
 const user = sessionStorage.getItem('userID');
 
 //Document Elements
@@ -47,6 +49,11 @@ const afterdeck = document.getElementById('afterDeck');
 const selectAllDecks = document.getElementById('selectAll');
 const deleteButton = document.getElementById('deleteDeck');
 const deckList = document.getElementById('DeckList');
+
+const createDeckSection = document.getElementById('createDeckSection');
+const newDeckName = document.getElementById('DeckName');
+const warningMessage = document.getElementById('warningMessage');
+const cancelButton = document.getElementById('Cancel');
 
 var numCheckboxesClicked = 0;
 
@@ -59,6 +66,7 @@ async function listen2SelectAll(){
         document.getElementById("check" + deckIDs[index]).checked = true;
         document.getElementById("check" + deckIDs[index]).style.visibility = "visible";
         document.getElementById("line" + deckIDs[index]).style.backgroundColor = "#def1fd";
+        document.getElementById("line" + deckIDs[index]).style.color = "black";
         numCheckboxesClicked = deckIDs.length;
       }
     }else{
@@ -66,7 +74,8 @@ async function listen2SelectAll(){
       for (let index = 0; index < deckIDs.length; index++){
         document.getElementById("check" + deckIDs[index]).checked = false;
         document.getElementById("check" + deckIDs[index]).style.visibility = "hidden";
-        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "white";
+        document.getElementById("line" + deckIDs[index]).style.backgroundColor = "#12a5da";
+        document.getElementById("line" + deckIDs[index]).style.color = "white";
         deleteButton.style.visibility = "hidden";
         numCheckboxesClicked = 0;
       }
@@ -155,11 +164,14 @@ async function displayAddDecksButton()
   {
     var addDecks = document.createElement("button")
     addDecks.innerHTML = "+";
+    addDecks.id = "addDecks";
     addDecks.className = "add-decks";
     afterdeck.appendChild(addDecks);
     addDecks.addEventListener("click", async e =>{
       //if user presses add deck button, go to createDeck.html
-      window.location.href = "./createDeck.html";
+      //window.location.href = "./createDeck.html";
+      createDeckSection.style.display = "flex";
+      addDecks.style.visibility = "hidden";
     })
   }
   else
@@ -285,7 +297,92 @@ async function listen4Logout(){
   });
 }
 
+async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate function in terms of variables
+{
+    return new Promise((resolve) =>{
+        //this variation allows us to specify the document ID rather than letting it randomize
+        console.log("Adding deck... in DeckCreate")
+        addDoc(collection(db, "decks"),
+        {
+            userID: userIDD,
+            DeckName: DeckNameD,
+            reviewType: defaultReviewType,
+            orderType: defaultOrderType,
+            numNewCards: 0,
+            resume: null
+        }).then((docRef) => {
+                console.log("Entire Document has been deleted successfully.")
+                console.log("docRef.id: " + docRef.id)
+                sessionStorage.setItem("DeckID", docRef.id);
+                resolve();
+            }).catch(error => {
+                console.log("ERROR here!")
+                console.log(error);
+            });
+    })
+}
+
+async function listen2CreateDeck(){
+    
+  createDeckSection.addEventListener("submit", async e =>{
+      e.preventDefault();
+      var numDecks = await getNumDecks();
+      //check that the number of decks is < 5
+      if (numDecks >= 20){
+          warningMessage.innerHTML = "Maximum of 20 decks already created. Returning to home in 5 seconds."
+          warningMessage.style.color = "red";
+          await delay(5000);
+          window.location.href = "./homeScreen.html";
+      }
+      //check that inputted deck name is not empty
+      else if (newDeckName.value.length === 0){
+          warningMessage.innerHTML = "Deck name can not be empty.";
+          warningMessage.style.color = "red";
+      }
+      else{
+          console.log("Inputted Deck Name: " + newDeckName.value)
+          console.log("user: " + user)
+          //check that inputted deck name is unique (APPLIES TO ALL REGARDLESS OF USER)
+          const decks = query(collection(db, "decks"), where('userID', '==', user));
+          const decksSnapshot = await getDocs(decks);
+          var existingDeckNames = [];
+          var counter = 0;
+          console.log("Successfully queried")
+
+          //get existing deck names
+          decksSnapshot.forEach((deck) => {
+              existingDeckNames[counter] = deck.data().DeckName;
+              ++counter;
+          });
+
+          if (existingDeckNames.includes(newDeckName.value)){
+              //inputted deck name already exists
+              warningMessage.innerHTML = "Deck name already exists. Please try another."
+              warningMessage.style.color = "red";
+              newDeckName.value = "";                 //reset value
+          }
+          else{
+              //inputted deck name is unique
+              //add deck
+              console.log("Creating deck...")
+              await DeckCreate(newDeckName.value, user);
+              console.log("Successfully created!");
+              window.location.href = "./deckDetails.html";
+          }
+      }
+  })
+
+  cancelButton.addEventListener("click", async e =>{
+      //return to home screen
+      //window.location.href = "./homeScreen.html";
+      var addDecks = document.getElementById("addDecks");
+      createDeckSection.style.display = "none";
+      addDecks.style.visibility = "visible";
+  })
+}
+
 //listen4DeleteDeck();
 listen4Logout();
 displayDecks();
 displayAddDecksButton();
+listen2CreateDeck();

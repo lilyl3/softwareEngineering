@@ -68,7 +68,8 @@ body {
 
 .sidebar-and-content-area {
   display: flex;
-  direction: row;
+  flex-direction: row;
+  height: 85vh;
 }
 
 .sidebar {
@@ -78,7 +79,7 @@ body {
   border-radius: 1em;
   display: flex;
   flex-direction: column;
-  height: 85vh;
+  height: auto;
 }
 
 .start-review-button {
@@ -131,19 +132,29 @@ form {
   padding: 0%;
 }
 
+.flashcards-tab {
+  position: relative;
+}
+
 .tooltiptext {
   width: 20%;
   background-color: rgb(85, 85, 85);
   color: hsl(0, 0%, 100%);
-  text-align: center;
   border-radius: 6px;
-  padding: 5px 0;
+  padding: 0.8em 0.2em 0.8em 0.2em;
   position: absolute;
-  z-index: 1;
-  left: 16%;          /*1% more than the width of sidebar!*/
-  top: 18.5%;         /*Approx. formula = appName:height + sideButton:height + a:height*2
+  width: 26em;
+  left: 110%;          /*1% more than the width of sidebar!*/
+  top: 0;         /*Approx. formula = appName:height + sideButton:height + a:height*2
                       a:height is multiplied by 2 bc tab for summary AND Flashcard*/
   font-size: 18px;
+  z-index: 1;
+}
+
+.closeToolTip {
+  cursor: pointer; 
+  margin-right: 2em;
+  margin-left: 1em;
 }
 
 .tooltiptext::after {
@@ -280,7 +291,7 @@ form {
 	padding-left: 0.3em;
 }
 
-.save-button, .cancel-button {
+.save-button, .edit-cancel-button {
   padding: 0.5em 1em 0.5em 1em;
   font-size: 1rem;
   color: white;
@@ -288,7 +299,7 @@ form {
 	cursor: pointer;
 }
 
-.save-button, .cancel-button {
+.save-button, .edit-cancel-button {
 	border-radius: 1em;
   box-shadow: -5px 5px 3px rgb(0, 0, 0, 0.2);
   transition: 0.35s;
@@ -299,7 +310,7 @@ form {
   margin-right: 0.5em;
 }
 
-.cancel-button {
+.edit-cancel-button {
   background-color: #f44336;
   margin-left: 0.5em;
 }
@@ -337,6 +348,81 @@ form {
 }
 
 .add-flashcard:active, .save-button:active, .cancel-button:active {
+  transform: translate(-5px, 5px);
+  box-shadow: none;
+}
+
+.new-card-window {
+  display: none;
+  flex-direction: column;
+  justify-content:space-around;
+  background-color: #12a5da;
+  color: white;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 10em;
+  width: 28em;
+  height: auto;
+  border-radius: 1em;
+  padding: 2em;
+  box-shadow: -5px 5px 3px rgb(0, 0, 0, 0.2);
+}
+
+.new-card-window-title {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.back-label {
+  margin-top: 1em;
+}
+
+.card-front-input, .card-back-input {
+  border: 0.2em solid black;
+	border-radius: 0.5em;
+	height: 1.5em;
+  width: auto;
+	font-size: 0.9em;
+	font-style: arial;
+}
+
+.button-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+
+.create-flashcard-button, .cancel-button {
+  padding: 0.5em 1em 0.5em 1em;
+  font-size: 1rem;
+  color: white;
+  border: none;
+	cursor: pointer;
+  width: 12em;
+  margin: auto;
+  margin-top: 2em;
+  border-radius: 1em;
+  box-shadow: -5px 5px 3px rgb(0, 0, 0, 0.2);
+  transition: 0.35s;
+}
+
+.create-flashcard-button {
+  background-color: #0eaf29;
+  margin-right: 0.5em;
+}
+
+.cancel-button {
+  background-color: #f44336;
+  margin-left: 0.5em;
+}
+
+.create-flashcard-button:hover, .cancel-button:hover, .edit-cancel-button:hover {
+  opacity: 0.8;
+  transform: translate(-2px, 2px);
+  box-shadow: -3px 3px 3px rgb(0, 0, 0, 0.2);
+}
+
+.create-flashcard-button:active, .cancel-button:active, .edit-cancel-button:active {
   transform: translate(-5px, 5px);
   box-shadow: none;
 }

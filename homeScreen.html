@@ -20,6 +20,18 @@
           style="visibility: hidden;">Delete</button>
       </div>
       <ul class="deck-list" id = "DeckList"></ul>
-      <section id="afterDeck"></section>
+      <section id="afterDeck">
+        <form class="create-deck-section" id = "createDeckSection">
+          <p id="warningMessage" class="warning-message"></p>
+          <div class="deck-name-and-input">
+            <label class="deck-name-label">Deck Name</label>
+            <input type="text" id="DeckName" class="deck-name-input">
+          </div>
+          <div class="deck-create-and-cancel-button-row">
+            <button type="submit" id = "CreateDeck" class="create-deck-button">Create Deck</button>
+            <button type = "button" id = "Cancel" class="cancel-button">Cancel</button>
+          </div>
+        </form>       
+      </section>
     </body>
 </html>

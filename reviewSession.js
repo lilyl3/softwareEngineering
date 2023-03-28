@@ -114,6 +114,7 @@ function waitForRevealAnswer() {
     revealButton.id = "revealButton";
     revealButton.className = "reveal-button";
     revealButton.innerHTML = "Reveal Answer";
+    revealButton.title = "Hotkey(s): space";
     reviewSession.appendChild(revealButton);
 
     function removeListeners(){
@@ -178,12 +179,14 @@ function waitForCorrectIncorrectResponse() {
     correct.innerHTML = "Correct";
     correct.id = "correct";
     correct.className = "correct-button";
+    correct.title = "Hotkey(s): 1";
     correctButtons.appendChild(correct);
 
     const incorrect = document.createElement('button');
     incorrect.innerHTML = "Incorrect";
     incorrect.id = "incorrect";
     incorrect.className = "incorrect-button";
+    correct.title = "Hotkey(s): 0, 2";
     correctButtons.appendChild(incorrect);
 
     function removeListeners(){

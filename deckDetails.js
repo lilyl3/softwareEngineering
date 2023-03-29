@@ -68,31 +68,7 @@ const summaryContent = document.getElementById('summaryContent');
 const settingsContent = document.getElementById('settingsContent');
 const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
 
-/********************* SETTINGS TAB ****************************************/ 
-const editDeckName = document.getElementById('editDeckName');
-const editSettingsButton = document.getElementById('editSettingsButton');
-const reviewTypeOptions = document.getElementById('reviewTypeOptions');
-const orderTypeOptions = document.getElementById('orderTypeOptions');
-const saveSettingButton = document.getElementById('saveSettingButton');
-const cancelSettingButton = document.getElementById('cancelSettingButton');
-const editNumNewCards = document.getElementById('editNumNewCards');
-const editNewCardsArea = document.getElementById('editNewCardsArea');
-
-//Initialize with current Deck settings
-editDeckName.value = deckName;
-editDeckName.readOnly = true;     //set this to read Only initially
-document.getElementById(deckSnap.data().reviewType).selected = 'selected';
-document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
-reviewTypeOptions.disabled = true;
-orderTypeOptions.disabled = true;
-editNumNewCards.readOnly = true;
-
-if (deckSnap.data().reviewType === "Continuous"){
-  editNewCardsArea.style.display = "initial";
-  editNumNewCards.value = deckSnap.data().newNumCards;
-}
-
-//for the progress tab
+/******************* PROGRESS TAB************************************/
 async function drawChart() {
   const deckSnap = await getDoc(doc(db, "decks", deckID));
   const dateReviewed = deckSnap.data().dateReviewed;
@@ -132,17 +108,45 @@ async function drawChart() {
   chart.draw(view, options);
 }
 
+/********************* SETTINGS TAB ****************************************/ 
+const editDeckName = document.getElementById('editDeckName');
+const editSettingsButton = document.getElementById('editSettingsButton');
+const reviewTypeOptions = document.getElementById('reviewTypeOptions');
+const orderTypeOptions = document.getElementById('orderTypeOptions');
+const saveSettingButton = document.getElementById('saveSettingButton');
+const cancelSettingButton = document.getElementById('cancelSettingButton');
+const editNumNewCards = document.getElementById('editNumNewCards');
+const editNewCardsArea = document.getElementById('editNewCardsArea');
+
+var editingSettings = false;
+
+//Initialize with current Deck settings
+editDeckName.value = deckName;
+editDeckName.readOnly = true;     //set this to read Only initially
+document.getElementById(deckSnap.data().reviewType).selected = 'selected';
+document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
+editNumNewCards.value = deckSnap.data().numNewCards;
+console.log("Num new cards: " + deckSnap.data().numNewCards)
+
+if (deckSnap.data().reviewType === "Continuous"){
+  editNewCardsArea.style.display = "initial";
+}
+reviewTypeOptions.disabled = true;
+orderTypeOptions.disabled = true;
+editNumNewCards.readOnly = true;
+
 reviewTypeOptions.onchange = function(){
   const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
   // console.log(selectedReviewType)
 
-  if(selectedReviewType === "Daily"){
-    editNumNewCards.readOnly = true;
-    editNewCardsArea.style.display = "none";
-  }
-  else{
+  if(selectedReviewType === "Continuous" && editingSettings){
+    //allow user to edit the number of new flashcards to appear
     editNumNewCards.readOnly = false;
     editNewCardsArea.style.display = "initial";
+  }
+  else{
+    editNumNewCards.readOnly = true;
+    editNewCardsArea.style.display = "none";
   }
 };
 
@@ -167,31 +171,56 @@ function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD){
 
 const clickEditSettingsButton = (e) =>{
   console.log("Listened to Edit")
+  editingSettings = true;
 
   //allow edits
   editDeckName.readOnly = false;
   editNumNewCards.readOnly = false;
   reviewTypeOptions.disabled = false;
   orderTypeOptions.disabled = false;
+
+  //make save and cancel button appear
+  //hide edit button
   saveSettingButton.style.visibility = "visible";
   cancelSettingButton.style.visibility = "visible";
+  editSettingsButton.style.visibility = "hidden";
+
   editSettingsButton.removeEventListener("click", clickEditSettingsButton);
   cancelSettingButton.addEventListener("click", clickedCancelSettingsButton);
   saveSettingButton.addEventListener("click", clickedSaveSettingsButton);
 }
 
-const clickedCancelSettingsButton = (e) =>{
+const clickedCancelSettingsButton = async (e) =>{
   console.log("Listened to Cancel")
+
+  // Reset deck settings to original
+  const deckSnapCurrent = await getDoc(doc(db, "decks", deckID));
+  editDeckName.value = deckSnapCurrent.data().DeckName;
+  document.getElementById(deckSnapCurrent.data().reviewType).selected = 'selected';
+  document.getElementById(deckSnapCurrent.data().orderType).selected = 'selected'; 
+  editNumNewCards.value = deckSnapCurrent.data().numNewCards;
+
+  if (deckSnapCurrent.data().reviewType === "Continuous"){
+    editNewCardsArea.style.display = "initial";
+  }else{
+    editNewCardsArea.style.display = "none";
+  }
+
+  //make edit button visible
+  editSettingsButton.style.visibility = "visible";
+  saveSettingButton.style.visibility = "hidden";
+  cancelSettingButton.style.visibility = "hidden";
 
   //disable edits
   editDeckName.readOnly = true;  
   reviewTypeOptions.disabled = true;
   orderTypeOptions.disabled = true;
-  saveSettingButton.style.visibility = "hidden";
-  cancelSettingButton.style.visibility = "hidden";
+  editNumNewCards.readOnly = true;
 
+  editingSettings = false;
   cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
   editSettingsButton.addEventListener("click", clickEditSettingsButton);
+  saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
 }
 
 const clickedSaveSettingsButton = async (e) =>{
@@ -209,15 +238,22 @@ const clickedSaveSettingsButton = async (e) =>{
 
   await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
 
+  //disable edits
   editDeckName.readOnly = true;  
   reviewTypeOptions.disabled = true;
   orderTypeOptions.disabled = true;
+  editNumNewCards.readOnly = true;
+
+  //make edit button visible
+  editSettingsButton.style.visibility = "visible";
   saveSettingButton.style.visibility = "hidden";
   cancelSettingButton.style.visibility = "hidden";
 
   saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
   cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
   editSettingsButton.addEventListener("click", clickEditSettingsButton);
+
+  editingSettings = false;
 }
 
 /********************* END SETTINGS TAB ****************************************/

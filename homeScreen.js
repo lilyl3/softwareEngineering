@@ -26,7 +26,7 @@ import {
     collection,
     query,
     where,
-    doc,
+    doc, 
     updateDoc,
     getDoc, 
     deleteDoc,
@@ -352,7 +352,7 @@ async function listen4Logout(){
 
 async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate function in terms of variables
 {
-    return new Promise((resolve) =>{
+    return new Promise(async (resolve) =>{
         //this variation allows us to specify the document ID rather than letting it randomize
         console.log("Adding deck... in DeckCreate")
         const date = new Date();
@@ -363,21 +363,24 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
         }
         var correctPast7Days = new Array(7).fill(0);
         var incorrectPast7Days = new Array(7).fill(0);
-        addDoc(collection(db, "decks"),
+        //addDoc(collection(db, "decks"),
+        await setDoc(doc(db, "decks", userIDD + "_" + DeckNameD), 
         {
             userID: userIDD,
             DeckName: DeckNameD,
             reviewType: defaultReviewType,
             orderType: defaultOrderType,
-            numNewCards: 0,
+            numNewCards: 1,
             resume: nullDate,
+            cardNum: 0, //"id" of next flashcard from this deck
             dateReviewed: past7Days,
             correct: correctPast7Days,
             incorrect: incorrectPast7Days
         }).then((docRef) => {
                 console.log("Entire Document has been deleted successfully.")
-                console.log("docRef.id: " + docRef.id)
-                sessionStorage.setItem("DeckID", docRef.id);
+                // console.log("docRef.id: " + docRef.id)
+                // sessionStorage.setItem("DeckID", docRef.id);
+                sessionStorage.setItem("DeckID", userIDD + "_" + DeckNameD);
                 resolve();
             }).catch(error => {
                 console.log("ERROR here!")
@@ -402,6 +405,7 @@ async function listen2CreateDeck(){
       else if (newDeckName.value.length === 0){
           warningMessage.innerHTML = "Deck name can not be empty.";
           warningMessage.style.color = "red";
+          newDeckName.placeholder = "Can not be empty.";
       }
       else{
           console.log("Inputted Deck Name: " + newDeckName.value)
@@ -423,7 +427,9 @@ async function listen2CreateDeck(){
               //inputted deck name already exists
               warningMessage.innerHTML = "Deck name already exists. Please try another."
               warningMessage.style.color = "red";
+
               newDeckName.value = "";                 //reset value
+              newDeckName.placeholder = "Deck name already exists. Please try another.";
           }
           else{
               //inputted deck name is unique

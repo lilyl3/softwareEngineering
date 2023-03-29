@@ -577,7 +577,10 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
       newCards2Review = newCardID.length;
     }
     //append level = 0 of new cards
-    reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
+    for (var i = 0; i < newCards2Review; i++){
+      reviewCardLevel = reviewCardLevel.concat(new Array(1).fill(0));
+    }
+    console.log("Review card level: " + reviewCardLevel)
   }
   console.log("Review cards: ", reviewCardID);
 
@@ -588,7 +591,6 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     finishedReviewingAll = true;
     return;
   }
-
 
   //set nextDateAppearance for all cards to be reviewed today = nowDate
   //sets newCards from null -> nowDate

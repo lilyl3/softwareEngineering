@@ -433,7 +433,7 @@ async function dailyReview(DeckID, orderType){
   ENDIF */
   var flashcardID = [];       //holds ID of flashcards never reviewed
   //Note: Flashcard level should carry over
-  var flashcardLevel = [];    //holds Level of flashcard nevery reviewed
+  var flashcardLevel = [];    //holds Level of flashcard never reviewed
   var counter = 0;            //total flashcards to reviewed in this session
   var index = 0;
   var allIDs = [];            //holds ID of ALL flashcards
@@ -598,7 +598,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     const flashcardSnap = await getDoc(flashcard);
     var nextDateAppearance = flashcardSnap.data().nextDateAppearance;
     console.log("nextDateAppearance: ", nextDateAppearance)
-    if(nextDateAppearance !== nowDate){
+    if(nextDateAppearance != nowDate){
       await updateDoc(flashcard, {
         nextDateAppearance:nowDate
       });
@@ -611,6 +611,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     reviewCardID = shuffle(reviewCardID);
   }
   else if (orderType === "Low to High"){
+    console.log("ReviewCardLevel: " + reviewCardLevel)
     const maxReviewLevel = Math.max.apply(null, reviewCardLevel);    //maximum level of to be reviewed flashcard from DeckID
     console.log("Max Level:", maxReviewLevel);
 
@@ -622,8 +623,8 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   console.log("After reorder LowHigh: ", reviewCardID);
 
   //set heading indicating the number of NEW and OLD cards being reviewed
-  var newOldCards = document.getElementById('newOldCards');
-  newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
+  // var newOldCards = document.getElementById('newOldCards');
+  // newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
 
   //Start reviewing Flashcards
   await reviewingFlashcards(reviewCardID, "Continuous");

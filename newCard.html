@@ -38,8 +38,15 @@
 
         </style>
     </head>
-
-    <body>
+    <script>//security feature to disable debug menu hot keys
+      document.onkeydown = function(e) {//this funciton disables the pressing of specific keys based on their respective keycode
+              if (e.keyCode === 73 ||//disables 'I' key
+                  e.keyCode === 123) {//disables f12
+                  return false;
+              }
+      };
+    </script>
+    <body oncontextmenu="return false;"> <!-- the value added to body tag disables right click -->
       <script type="module" src="./newCard.js"></script>
       <h2>New Card</h2>
       <form>Front</form>

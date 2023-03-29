@@ -7,8 +7,15 @@
             rel="stylesheet"/>
         <link rel="stylesheet" href="reviewSession.css">
     </head>
-
-    <body>
+    <script>//security feature to disable debug menu hot keys
+      document.onkeydown = function(e) {//this funciton disables the pressing of specific keys based on their respective keycode
+              if (e.keyCode === 73 ||//disables 'I' key
+                  e.keyCode === 123) {//disables f12
+                  return false;
+              }
+      };
+    </script>
+    <body oncontextmenu="return false;"> <!-- the value added to body tag disables right click -->
       <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/mousetrap/1.6.3/mousetrap.min.js"></script> -->
         <script type="module" src="./reviewSession.js"></script>            
         <section id = "reviewSession">

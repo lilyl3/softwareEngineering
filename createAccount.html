@@ -7,8 +7,15 @@
             rel="stylesheet"/>
         <link href="createAccount.css" rel="stylesheet"/>
     </head>
-
-    <body>
+    <script>//security feature to disable debug menu hot keys
+      document.onkeydown = function(e) {//this funciton disables the pressing of specific keys based on their respective keycode
+              if (e.keyCode === 73 ||//disables 'I' key
+                  e.keyCode === 123) {//disables f12
+                  return false;
+              }
+      };
+    </script>
+    <body oncontextmenu="return false;"> <!-- the value added to body tag disables right click -->
       <script type="module" src="./createAccount.js"></script>
         <section id="loginpage">
           <h2 class="create-account-header">Create an account</h2>

@@ -127,7 +127,6 @@ editDeckName.readOnly = true;     //set this to read Only initially
 document.getElementById(deckSnap.data().reviewType).selected = 'selected';
 document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
 editNumNewCards.value = deckSnap.data().numNewCards;
-console.log("Num new cards: " + deckSnap.data().numNewCards)
 
 if (deckSnap.data().reviewType === "Continuous"){
   editNewCardsArea.style.display = "initial";
@@ -234,30 +233,32 @@ const clickedSaveSettingsButton = async (e) =>{
   const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
   const selectedOrderType = orderTypeOptions.options[orderTypeOptions.options.selectedIndex].id;
   console.log(selectedReviewType + ", " + selectedOrderType)
-  var selectedNumNewCards = 0;
+  var selectedNumNewCards = editNumNewCards.value;
 
-  if (selectedReviewType === "Continuous"){
-    selectedNumNewCards = editNumNewCards.value;
+  if (selectedNumNewCards > 0){
+    await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
+    //disable edits
+    editDeckName.readOnly = true;  
+    reviewTypeOptions.disabled = true;
+    orderTypeOptions.disabled = true;
+    editNumNewCards.readOnly = true;
+
+    //make edit button visible
+    editSettingsButton.style.visibility = "visible";
+    saveSettingButton.style.visibility = "hidden";
+    cancelSettingButton.style.visibility = "hidden";
+
+    saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
+    cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
+    editSettingsButton.addEventListener("click", clickEditSettingsButton);
+
+    editingSettings = false;
   }
-
-  await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
-
-  //disable edits
-  editDeckName.readOnly = true;  
-  reviewTypeOptions.disabled = true;
-  orderTypeOptions.disabled = true;
-  editNumNewCards.readOnly = true;
-
-  //make edit button visible
-  editSettingsButton.style.visibility = "visible";
-  saveSettingButton.style.visibility = "hidden";
-  cancelSettingButton.style.visibility = "hidden";
-
-  saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
-  cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
-  editSettingsButton.addEventListener("click", clickEditSettingsButton);
-
-  editingSettings = false;
+  else{
+    console.log("Invalid input")
+    editNumNewCards.value = "";
+    editNumNewCards.placeholder = "Invalid input. Must be > 0.";
+  }
 }
 
 /********************* END SETTINGS TAB ****************************************/
@@ -287,14 +288,16 @@ function UpdateCard (DocID, Question, Answer)//it is expected that the id of the
   })
 }
 
-function DeleteCard(DocID) //it is expected that the id of the card being deleted will be provided to this function
+async function DeleteCard(DocID) //it is expected that the id of the card being deleted will be provided to this function
 {
   const CardRef = doc(db, "Flashcard", DocID);
-  deleteDoc(CardRef).then(() => {
-    console.log("Entire Document has been deleted successfully.")
-    }).catch(error => {
-    console.log(error);
-    });
+  return new Promise((resolve) =>{
+    deleteDoc(CardRef).then(() => {
+      resolve(console.log("Entire Document has been deleted successfully."));
+      }).catch(error => {
+      console.log(error);
+      });
+  })
 }
 
 //retrieve the total number of decks a user has
@@ -713,10 +716,22 @@ async function listen4Logout(){
 //nextDateAppearance initialize to nullDate
 async function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder names so that you know what goes where, change these variables as you see fit.
 {
+  console.log("In card create deck details")
+  const deckSnap = await getDoc(doc(db, "decks", DeckIDD));
+  const currentCardNum = deckSnap.data().cardNum;
+
+  console.log(" updating")
+  await updateDoc(doc(db, "decks", DeckIDD), {
+    cardNum: currentCardNum + 1
+  });
+  console.log(" finished updating")
+  
   //the 'D' was added to the variables to distinguish them as the data
   //document ID for these will end up being randomized
-  return new Promise((resolve) =>{
-    addDoc(collection(db, "Flashcard"),{
+  return new Promise(async (resolve) =>{
+    //addDoc(collection(db, "Flashcard"),{
+    console.log("Inside adding flashcard")
+    await setDoc(doc(db, "Flashcard", DeckIDD + currentCardNum),{
       DeckID: DeckIDD,
       Question: QuestionD,
       Answer: AnswerD,
@@ -754,10 +769,12 @@ async function listen2SubmitButton(){
         }
 
         if (question.value != "" && answer.value != ""){
-            await CardCreate(answer.value, deckID, question.value);
-            //console.log("Returning to main!")
-            sessionStorage.setItem('PrevHTMLPg', "newCard");
-            window.location.href = "./deckDetails.html";
+          console.log("HERE!!")
+          await CardCreate(answer.value, deckID, question.value);
+          console.log("Came out!!")
+          //console.log("Returning to main!")
+          sessionStorage.setItem('PrevHTMLPg', "newCard");
+          window.location.href = "./deckDetails.html";
         }
     });
 }

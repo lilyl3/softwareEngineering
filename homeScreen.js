@@ -377,6 +377,7 @@ async function listen2CreateDeck(){
       //window.location.href = "./homeScreen.html";
       var addDecks = document.getElementById("addDecks");
       createDeckSection.style.display = "none";
+      newDeckName.value = "";   //set to empty string when cancel
       addDecks.style.visibility = "visible";
   })
 }

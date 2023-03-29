@@ -579,9 +579,10 @@ async function listen2CancelButton() {
     //return to home screen
     //window.location.href = "./deckDetails.html";
     newCardWindow.style.display = "none";
+    question.value = "";
+    answer.value = "";
 
     var addFlashcardButton = document.getElementById("addFlashcardButton");
-
     addFlashcardButton.style.display = "block";
 })
 }

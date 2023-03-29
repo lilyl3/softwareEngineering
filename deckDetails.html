@@ -6,6 +6,7 @@
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
             rel="stylesheet"/>
         <link rel="stylesheet" href="deckDetails.css">
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     </head>
 
     <body>
@@ -40,11 +41,12 @@
         <section class = "contentAreaStyle">
           <div class = "deckTitle">
             <a href="./homeScreen.html">Home</a>
+            <!-- <button type="button" class = "home-button" onclick="window.location.href = './homeScreen.html'">Home</button> -->
             <span id="deckTitle" class="deck-title-style"></span>
           </div>
           <!-- Display content for Summary tab -->
           <section id = "summaryContent">
-            <p>In Summary! Just a temporary placeholder</p>
+            <div id="barchart_values" class="bar-chart"></div>
           </section>
           <!-- Display content for Flashcards tab -->
           <section id="flashcardContent" style = "display: none;">
@@ -71,7 +73,41 @@
 
         <!-- Display content for Settings tab -->
         <section id = "settingsContent" style="display: none;">
-          <p>In Settings! Just a temporary placeholder</p>
+          <div>
+            <br/>
+            <br/>
+            <label for="editDeckName">Deck Name</label>
+            <input type="text" id="editDeckName" name="editDeckName">
+            <br/>
+            <br/>
+            <div class="dropdown">
+              <label for="reviewTypeOptions">Review Type</label>
+              <select id = "reviewTypeOptions">
+                <option id = "Daily">Daily</option>
+                <option id = "Continuous">Continuous</option>
+              </select>
+            </div>
+            <br/>
+            <br/>
+            <div class="dropdown">
+              <label for="orderTypeOptions">Order Type</label>
+              <select id = "orderTypeOptions">
+                <option id = "Random">Random</option>
+                <option id = "Low to High">Low to High</option>
+              </select>
+            </div>
+            <br/>
+            <br/>
+            <div class = "num-new-cards" id = "editNewCardsArea">
+              <label for="editNumNewCards">Number of New Cards Per Day</label>
+              <input type="text" id="editNumNewCards" name="editDeckName">
+            </div>
+            <br/>
+            <br/>
+            <button type = "button" id="editSettingsButton" class = "edit-settings-button">Edit</button>
+            <button type = "button" id="saveSettingButton" class="save-setting-button">Save</button>
+            <button type = "button" id="cancelSettingButton" class="cancel-setting-button">Cancel</button>
+          </div>
         </section>
       </div>
     </body>

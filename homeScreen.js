@@ -180,12 +180,69 @@ async function displayAddDecksButton()
   }
 }
 
+function UpdateDeck(DeckID, dateReviewedD, correctD, incorrectD){
+  return new Promise((resolve) =>{
+    //create reference variables for the document and the data that will be updated
+    const deckRef = doc(db, "decks", DeckID);
+    const data = {
+      dateReviewed: dateReviewedD,
+      correct: correctD,
+      incorrect: incorrectD
+    };
+    //function that updates the document; adds info to the console if successful or not
+    updateDoc(deckRef, data).then(() => {
+      resolve(console.log("Updates have been made to the deck"));
+    }).catch(error => {
+      console.log(error);
+      })
+  })
+}
+
 // displays the user's decks on the home screen
 async function displayDecks()
 {
   const decks = query(collection(db, "decks"), where("userID", "==", user));
   const decksSnapshot = await getDocs(decks);
-  decksSnapshot.forEach((deck) => {
+  decksSnapshot.forEach(async (deck) => {
+    /*Update the deck's history*/
+    const dateReviewed = deck.data().dateReviewed;
+    const correct = deck.data().correct;
+    const incorrect = deck.data().incorrect;
+
+    const date = new Date();
+    
+    console.log("Line 214: " + deck.id)
+    if (dateReviewed[dateReviewed.length-1] != ((date.getMonth() + 1) + "/" + date.getDate())){
+      console.log("Updating Deck History!!")
+      //gets the last seven days
+      var past7Days = [];
+      for (let d = 6; d >= 0; d--){
+        const day = new Date(date.getTime() - (d * 24 * 60 * 60 * 1000));
+        past7Days.push((day.getMonth() + 1) + "/" + day.getDate());
+      }
+      console.log(dateReviewed)
+      console.log(past7Days)
+
+      var startDate = -1;     //already 7 days user has not reviewed
+      for (let i = 0; i < dateReviewed.length; i++){
+        if (past7Days.includes(dateReviewed[i])){
+          startDate = i;
+          break;
+        }
+      }
+      var correctPast7Days = new Array(7).fill(0);
+      var incorrectPast7Days = new Array(7).fill(0);
+
+      if (startDate != -1){
+        correctPast7Days = correct.slice(startDate).concat(new Array(startDate).fill(0));
+        incorrectPast7Days = incorrect.slice(startDate).concat(new Array(startDate).fill(0));
+        await UpdateDeck(deck.id, past7Days, correctPast7Days, incorrectPast7Days);        
+      }
+    }
+    else{
+      console.log("did NOT update Deck History!!")
+    }
+    /*End Updating the deck's history */
 
     // overall deck line
     var deckLine = document.createElement('div');
@@ -240,10 +297,6 @@ async function displayDecks()
         deleteButton.style.visibility = "hidden";;     //@Justin Do not delete this line
       }
     });
-
-    console.log(deckLine.innerText.substring(0, deckLine.innerText.length - 2));
-    console.log(deckLine.innerText.length);
-    console.log(deckLine.innerText.substring(0, deckLine.innerText.length - 2).length)
 
     //listen to see if user clicks on a deck
     //If so, start a review session
@@ -302,6 +355,14 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
     return new Promise((resolve) =>{
         //this variation allows us to specify the document ID rather than letting it randomize
         console.log("Adding deck... in DeckCreate")
+        const date = new Date();
+        var past7Days = [];
+        for (let d = 6; d >= 0; d--){
+            const day = new Date(date.getTime() - (d * 24 * 60 * 60 * 1000));
+            past7Days.push((day.getMonth() + 1) + "/" + day.getDate());
+        }
+        var correctPast7Days = new Array(7).fill(0);
+        var incorrectPast7Days = new Array(7).fill(0);
         addDoc(collection(db, "decks"),
         {
             userID: userIDD,
@@ -309,7 +370,10 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
             reviewType: defaultReviewType,
             orderType: defaultOrderType,
             numNewCards: 0,
-            resume: null
+            resume: nullDate,
+            dateReviewed: past7Days,
+            correct: correctPast7Days,
+            incorrect: incorrectPast7Days
         }).then((docRef) => {
                 console.log("Entire Document has been deleted successfully.")
                 console.log("docRef.id: " + docRef.id)

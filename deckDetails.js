@@ -39,8 +39,11 @@ let db = getFirestore(app);
 //CONSTANTs
 const nullDate = "2023/01/01";
 const deckID = sessionStorage.getItem('DeckID');
-const deckName = (await getDoc(doc(db, "decks", deckID))).data().DeckName;
-const delay = ms => new Promise(res => setTimeout(res, ms));
+const deckSnap = await getDoc(doc(db, "decks", deckID));
+const deckName = deckSnap.data().DeckName;
+
+google.charts.load("current", {packages:["corechart"]});
+google.charts.setOnLoadCallback(drawChart);
 
 //Document Elements
 const deckTitle = document.getElementById('deckTitle');
@@ -52,6 +55,8 @@ const deleteButton = document.getElementById('deleteFlashcard');
 const selectAll = document.getElementById('selectAll');
 const startReviewButton = document.getElementById('startReview');
 const logoutButton = document.getElementById('logoutButton');
+var numCheckboxesClicked = 0;
+var editOpen = false; // to keep track of whether we already have the edit menu open
 
 //Side bar tabs
 const flashcardTab = document.getElementById('FlashcardsTab');
@@ -64,8 +69,198 @@ const summaryContent = document.getElementById('summaryContent');
 const settingsContent = document.getElementById('settingsContent');
 const prevHTMLPg = sessionStorage.getItem("PrevHTMLPg");
 
-var numCheckboxesClicked = 0;
-var editOpen = false; // to keep track of whether we already have the edit menu open
+/******************* PROGRESS TAB************************************/
+async function drawChart() {
+  const deckSnap = await getDoc(doc(db, "decks", deckID));
+  const dateReviewed = deckSnap.data().dateReviewed;
+  const correct = deckSnap.data().correct;
+  const incorrect = deckSnap.data().incorrect;
+
+  var rowsOfData = dateReviewed.map(function(d, j) {
+    return [d, correct[j], incorrect[j], ""];
+  });
+
+  console.log([['Date', 'Correct', "Incorrect", { role: 'annotation' }]].concat(rowsOfData))
+
+  var data = google.visualization.arrayToDataTable([['Date', 'Correct', "Incorrect", { role: 'annotation' }]].concat(rowsOfData));
+
+  var view = new google.visualization.DataView(data);
+  view.setColumns([0, 1,
+    { calc: "stringify",
+      sourceColumn: 1,
+      type: "string",
+      role: "annotation" },
+    2,{ calc: "stringify",
+    sourceColumn: 2,
+    type: "string",
+    role: "annotation" }]);
+
+  var options = {
+    title: "Progress in the Last 7 Days",
+    width: 900,
+    height: 600,
+    legend: { position: 'right'},
+    bar: { groupWidth: '75%' },
+    isStacked: false,
+    vAxis: {minValue: 0}
+  };
+
+  var chart = new google.visualization.ColumnChart(document.getElementById("barchart_values"));
+  chart.draw(view, options);
+}
+
+/********************* SETTINGS TAB ****************************************/ 
+const editDeckName = document.getElementById('editDeckName');
+const editSettingsButton = document.getElementById('editSettingsButton');
+const reviewTypeOptions = document.getElementById('reviewTypeOptions');
+const orderTypeOptions = document.getElementById('orderTypeOptions');
+const saveSettingButton = document.getElementById('saveSettingButton');
+const cancelSettingButton = document.getElementById('cancelSettingButton');
+const editNumNewCards = document.getElementById('editNumNewCards');
+const editNewCardsArea = document.getElementById('editNewCardsArea');
+
+var editingSettings = false;
+
+//Initialize with current Deck settings
+editDeckName.value = deckName;
+editDeckName.readOnly = true;     //set this to read Only initially
+document.getElementById(deckSnap.data().reviewType).selected = 'selected';
+document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
+editNumNewCards.value = deckSnap.data().numNewCards;
+console.log("Num new cards: " + deckSnap.data().numNewCards)
+
+if (deckSnap.data().reviewType === "Continuous"){
+  editNewCardsArea.style.display = "initial";
+}
+else{
+  editNewCardsArea.style.display = "none";
+}
+reviewTypeOptions.disabled = true;
+orderTypeOptions.disabled = true;
+editNumNewCards.readOnly = true;
+
+reviewTypeOptions.onchange = function(){
+  const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
+  // console.log(selectedReviewType)
+
+  if(selectedReviewType === "Continuous" && editingSettings){
+    //allow user to edit the number of new flashcards to appear
+    editNumNewCards.readOnly = false;
+    editNewCardsArea.style.display = "initial";
+  }
+  else{
+    editNumNewCards.readOnly = true;
+    editNewCardsArea.style.display = "none";
+  }
+};
+
+function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD){
+  return new Promise((resolve) =>{
+    //create reference variables for the document and the data that will be updated
+    const deckRef = doc(db, "decks", DeckID);
+    const data = {
+      DeckName: DeckNameD,
+      reviewType: reviewTypeD,
+      orderType: orderTypeD,
+      numNewCards: numNewCardsD
+    };
+    //function that updates the document; adds info to the console if successful or not
+    updateDoc(deckRef, data).then(() => {
+      resolve(console.log("Updates have been made to the deck"));
+    }).catch(error => {
+      console.log(error);
+      })
+  })
+}
+
+const clickEditSettingsButton = (e) =>{
+  console.log("Listened to Edit")
+  editingSettings = true;
+
+  //allow edits
+  editDeckName.readOnly = false;
+  editNumNewCards.readOnly = false;
+  reviewTypeOptions.disabled = false;
+  orderTypeOptions.disabled = false;
+
+  //make save and cancel button appear
+  //hide edit button
+  saveSettingButton.style.visibility = "visible";
+  cancelSettingButton.style.visibility = "visible";
+  editSettingsButton.style.visibility = "hidden";
+
+  editSettingsButton.removeEventListener("click", clickEditSettingsButton);
+  cancelSettingButton.addEventListener("click", clickedCancelSettingsButton);
+  saveSettingButton.addEventListener("click", clickedSaveSettingsButton);
+}
+
+const clickedCancelSettingsButton = async (e) =>{
+  console.log("Listened to Cancel")
+
+  // Reset deck settings to original
+  const deckSnapCurrent = await getDoc(doc(db, "decks", deckID));
+  editDeckName.value = deckSnapCurrent.data().DeckName;
+  document.getElementById(deckSnapCurrent.data().reviewType).selected = 'selected';
+  document.getElementById(deckSnapCurrent.data().orderType).selected = 'selected'; 
+  editNumNewCards.value = deckSnapCurrent.data().numNewCards;
+
+  if (deckSnapCurrent.data().reviewType === "Continuous"){
+    editNewCardsArea.style.display = "initial";
+  }else{
+    editNewCardsArea.style.display = "none";
+  }
+
+  //make edit button visible
+  editSettingsButton.style.visibility = "visible";
+  saveSettingButton.style.visibility = "hidden";
+  cancelSettingButton.style.visibility = "hidden";
+
+  //disable edits
+  editDeckName.readOnly = true;  
+  reviewTypeOptions.disabled = true;
+  orderTypeOptions.disabled = true;
+  editNumNewCards.readOnly = true;
+
+  editingSettings = false;
+  cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
+  editSettingsButton.addEventListener("click", clickEditSettingsButton);
+  saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
+}
+
+const clickedSaveSettingsButton = async (e) =>{
+  console.log("Listened to Save")
+
+  //get the selected reviewType & orderType option
+  const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
+  const selectedOrderType = orderTypeOptions.options[orderTypeOptions.options.selectedIndex].id;
+  console.log(selectedReviewType + ", " + selectedOrderType)
+  var selectedNumNewCards = 0;
+
+  if (selectedReviewType === "Continuous"){
+    selectedNumNewCards = editNumNewCards.value;
+  }
+
+  await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
+
+  //disable edits
+  editDeckName.readOnly = true;  
+  reviewTypeOptions.disabled = true;
+  orderTypeOptions.disabled = true;
+  editNumNewCards.readOnly = true;
+
+  //make edit button visible
+  editSettingsButton.style.visibility = "visible";
+  saveSettingButton.style.visibility = "hidden";
+  cancelSettingButton.style.visibility = "hidden";
+
+  saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
+  cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
+  editSettingsButton.addEventListener("click", clickEditSettingsButton);
+
+  editingSettings = false;
+}
+
+/********************* END SETTINGS TAB ****************************************/
 
 // New Card window
 const question = document.getElementById('cardFront');
@@ -100,27 +295,6 @@ function DeleteCard(DocID) //it is expected that the id of the card being delete
     }).catch(error => {
     console.log(error);
     });
-}
-
-//DeleteDeck to be fixed...
-async function DeleteDeck(DeckID) //it is expected that the id of the deck being deleted will be provided to this function
-{
-  const DeckRef = doc(db, "decks", DeckID);
-  const deckSearch = query(collection(db, 'Flashcard'), where('DeckID', '==', DeckID));
-  const batch = writeBatch(db);//create batch
-
-  const deckSearchQuerySnapshot = await getDocs(deckSearch);//get documents related to the query
-
-  deckSearchQuerySnapshot.forEach(doc => batch.delete(doc.ref));//delete all the documents related to the query
-
-  batch.commit();
-
-  deleteDoc(DeckRef).then(() => {
-    console.log("Entire Document has been deleted successfully.")
-    }).catch(error => {
-    console.log(error);
-    });
-  
 }
 
 //retrieve the total number of decks a user has
@@ -495,6 +669,7 @@ async function listen2RemoveTip(){
 }
 
 async function listen2Tabs(){
+  drawChart();
   displayFlashcards();
   displayAddFlashcardsButton();
 
@@ -555,6 +730,19 @@ async function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder 
   })
 }
 
+async function listen2CancelButton() {
+  newCardWindowCancelButton.addEventListener("click", async e =>{
+    //return to home screen
+    //window.location.href = "./deckDetails.html";
+    newCardWindow.style.display = "none";
+    question.value = "";
+    answer.value = "";
+
+    var addFlashcardButton = document.getElementById("addFlashcardButton");
+    addFlashcardButton.style.display = "block";
+})
+}
+
 async function listen2SubmitButton(){
     createFlashcardButton.addEventListener("click", async e => {
         if (question.value === ""){
@@ -574,19 +762,7 @@ async function listen2SubmitButton(){
     });
 }
 
-async function listen2CancelButton() {
-  newCardWindowCancelButton.addEventListener("click", async e =>{
-    //return to home screen
-    //window.location.href = "./deckDetails.html";
-    newCardWindow.style.display = "none";
-    question.value = "";
-    answer.value = "";
-
-    var addFlashcardButton = document.getElementById("addFlashcardButton");
-    addFlashcardButton.style.display = "block";
-})
-}
-
+editSettingsButton.addEventListener("click", clickEditSettingsButton);
 listen2RemoveTip();
 listen2StartReview();
 listen2Tabs();

@@ -73,15 +73,6 @@ const pausePressedOutside = (e) =>{
   pause = true;
 }
 
-//check to see if user pressed the pause button
-// function listen2PauseReview(){
-//   pauseButton.addEventListener("click", async e =>{
-//     console.log("outside pause review listener")
-//     e.preventDefault();
-//     pause = true;                       //set pause to true
-//   })
-// }
-
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));    //idea of permutation: first (i+1) items to choose from since floored
@@ -321,23 +312,12 @@ async function reviewingFlashcards(reviewOrder, reviewType){
   var progress = document.getElementById('progress');
   progress.style.textAlign = "center";
 
-  //dynamically make question and answer header appear
-  // var questionHeader = document.getElementById('questionHeader');
-  // questionHeader.innerHTML = "Question";
-
-  // const answerHeading = document.getElementById('answerHeading');
-  // answerHeading.innerHTML = "Answer";
-
-  //dynamically style the reviewAnswerSession
-  // reviewAnswerSession.style.margin = "0 auto";
-  // reviewAnswerSession.style.backgroundColor = "#0041CA";
-  // reviewAnswerSession.style.color = "white";
-  // reviewAnswerSession.style.width = "75%";
-  // reviewAnswerSession.style.padding = "100px 0";
-  // reviewAnswerSession.style.fontSize = "26px";    
+  var accuracy = document.getElementById('accuracy');
+  accuracy.style.textAlign = "center";
 
   for (let index = 0; index < reviewOrder.length; index++){
     progress.innerHTML = "Progress: " + (index+1) + "/" + reviewOrder.length;
+    accuracy.innerHTML = "Correct: " + numCorrect + "; Incorrect: " + numIncorrect;
     console.log("Flashcard ID in Review: ", reviewOrder[index]);
     const flashcard = doc(db, "Flashcard", reviewOrder[index]);
     const flashcardDoc = await getDoc(flashcard);
@@ -456,7 +436,7 @@ async function dailyReview(DeckID, orderType){
   ENDIF */
   var flashcardID = [];       //holds ID of flashcards never reviewed
   //Note: Flashcard level should carry over
-  var flashcardLevel = [];    //holds Level of flashcard nevery reviewed
+  var flashcardLevel = [];    //holds Level of flashcard never reviewed
   var counter = 0;            //total flashcards to reviewed in this session
   var index = 0;
   var allIDs = [];            //holds ID of ALL flashcards
@@ -509,7 +489,7 @@ async function dailyReview(DeckID, orderType){
   if (orderType === "Random"){
     orderReview = shuffle(flashcardID);
   }
-  else if (orderType === "LowHigh"){
+  else if (orderType === "Low to High"){
     console.log("LowHigh");
     const maxLevel = Math.max.apply(null, flashcardLevel);    //maximum level of any flashcard from DeckID
     console.log("Max Level:", maxLevel);
@@ -600,7 +580,10 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
       newCards2Review = newCardID.length;
     }
     //append level = 0 of new cards
-    reviewCardLevel = reviewCardLevel.concat(new Array(numberNewCards).fill(0));
+    for (var i = 0; i < newCards2Review; i++){
+      reviewCardLevel = reviewCardLevel.concat(new Array(1).fill(0));
+    }
+    console.log("Review card level: " + reviewCardLevel)
   }
   console.log("Review cards: ", reviewCardID);
 
@@ -612,7 +595,6 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     return;
   }
 
-
   //set nextDateAppearance for all cards to be reviewed today = nowDate
   //sets newCards from null -> nowDate
   //sets reviewedCards < nowDate to nowDate
@@ -621,7 +603,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     const flashcardSnap = await getDoc(flashcard);
     var nextDateAppearance = flashcardSnap.data().nextDateAppearance;
     console.log("nextDateAppearance: ", nextDateAppearance)
-    if(nextDateAppearance !== nowDate){
+    if(nextDateAppearance != nowDate){
       await updateDoc(flashcard, {
         nextDateAppearance:nowDate
       });
@@ -633,7 +615,8 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   if (orderType === "Random"){
     reviewCardID = shuffle(reviewCardID);
   }
-  else if (orderType === "LowHigh"){
+  else if (orderType === "Low to High"){
+    console.log("ReviewCardLevel: " + reviewCardLevel)
     const maxReviewLevel = Math.max.apply(null, reviewCardLevel);    //maximum level of to be reviewed flashcard from DeckID
     console.log("Max Level:", maxReviewLevel);
 
@@ -644,11 +627,9 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   }
   console.log("After reorder LowHigh: ", reviewCardID);
 
-  //if (newCards2Review > 0){
   //set heading indicating the number of NEW and OLD cards being reviewed
-  var newOldCards = document.getElementById('newOldCards');
-  newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
-  //}
+  // var newOldCards = document.getElementById('newOldCards');
+  // newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
 
   //Start reviewing Flashcards
   await reviewingFlashcards(reviewCardID, "Continuous");
@@ -694,6 +675,16 @@ async function main() {
 
   console.log("return to the main!")
 
+  if (numCorrect > 0 || numIncorrect > 0){
+    const deckSnap = await getDoc(doc(db, "decks", DeckID));
+    const correct = deckSnap.data().correct;
+    const incorrect = deckSnap.data().incorrect;
+
+    correct[correct.length - 1] = correct[correct.length - 1] + numCorrect;
+    incorrect[incorrect.length - 1] = incorrect[correct.length - 1] + numIncorrect;
+    await UpdateDeck(DeckID, correct, incorrect);
+  }
+
   if (pause || finishedReviewingAll){
     //didn't finish review
     //return to home screen
@@ -714,6 +705,22 @@ async function main() {
   }
 }
 
+function UpdateDeck(DeckID, correctD, incorrectD){
+  return new Promise((resolve) =>{
+    //create reference variables for the document and the data that will be updated
+    const deckRef = doc(db, "decks", DeckID);
+    const data = {
+      correct: correctD,
+      incorrect: incorrectD
+    };
+    //function that updates the document; adds info to the console if successful or not
+    updateDoc(deckRef, data).then(() => {
+      resolve(console.log("Updates have been made to the deck"));
+    }).catch(error => {
+      console.log(error);
+      })
+  })
+}
+
 pauseButton.addEventListener("click", pausePressedOutside);
-//listen2PauseReview();
 main();

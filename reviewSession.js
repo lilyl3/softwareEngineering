@@ -402,7 +402,8 @@ async function reviewingFlashcards(reviewOrder, reviewType){
 
     await updateDoc(flashcard, {
       Level:updateLevel,
-      nextDateAppearance: updateNextDateAppr
+      nextDateAppearance: updateNextDateAppr,
+      reviewedToday: true
     });
 
     if (updateLevel === maximumLevel){

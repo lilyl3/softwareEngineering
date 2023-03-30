@@ -36,8 +36,20 @@ import {
 
 let db = getFirestore(app);
 
+function addZero2Date(num){
+  if (num < 10){
+    return '0' + num;
+  }
+  return num;
+}
+
 //CONSTANTs
-const nullDate = "2023/01/01";
+
+const nullDate = "2023/01/01";  //default date
+//get current date
+var nowDate = new Date();
+nowDate = nowDate.getFullYear()+'/'+addZero2Date((nowDate.getMonth()+1))+'/'+ addZero2Date(nowDate.getDate());
+
 const deckID = sessionStorage.getItem('DeckID');
 const deckSnap = await getDoc(doc(db, "decks", deckID));
 const deckName = deckSnap.data().DeckName;
@@ -236,7 +248,77 @@ const clickedSaveSettingsButton = async (e) =>{
   var selectedNumNewCards = editNumNewCards.value;
 
   if (selectedNumNewCards > 0){
+    const deckSnapCurrent = await getDoc(doc(db, "decks", deckID));
+    console.log("current: " + deckSnapCurrent.data().reviewType)
+    console.log("selected: " + selectedReviewType)
+
+    //switching from daily to continuous
+    if (deckSnapCurrent.data().reviewType === "Daily" & selectedReviewType === "Continuous"){
+      console.log("Fixing dates when change from daily -> continuous")
+        /*
+        Level     reviewedToday     nextDateAppearance
+          0           yes             use formula: current + 1
+          0           no              current => or should this be NULLDate??
+          >0          yes             use formula
+          >0          no              current      
+        */
+
+      const flashcardIDs = await getFlashcardIDs();
+      for (var i = 0; i < flashcardIDs.length; i++){
+        const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
+        var updateNextDateAppr = nowDate;
+        if (flashcardSnap.data().reviewedToday){
+          //use formula based on level to calculate next date of appearance
+          var date = new Date();                              //get current date
+          if (flashcardSnap.data().Level === 0){
+            //if level = 0, review flashcard the following day
+            date.setDate(date.getDate() + 1);
+          }
+          else{
+            date.setDate(date.getDate() + (2*flashcardSnap.data().Level));     //next date to be reviewed is 2*updateLevel days later
+          }
+          updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
+        }
+        else{
+          //flashcard NOT reviewed today & Level 0 THEN treat as a NEW card
+          if(flashcardSnap.data().Level === 0){
+            updateNextDateAppr = nullDate;
+          }
+        }
+
+        await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
+          nextDateAppearance: updateNextDateAppr
+        });
+        //resume field is NOT reset since only Continuous sessions update it. 
+      }
+    }
+
+    //change from continuous -> daily
+    if (deckSnapCurrent.data().reviewType === "Continuous" & selectedReviewType === "Daily"){
+      /*
+        reviewedToday     nextDateAppearance      updatedNextDateAppearance
+            yes             <=current                 current
+            no              <=current                 null
+            yes             >current                  current
+            no              >current                  null
+      */
+      const flashcardIDs = await getFlashcardIDs();
+      for (var i = 0; i < flashcardIDs.length; i++){
+        const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
+
+        var updateNextDateAppr = nullDate;
+        if (flashcardSnap.data().reviewedToday){
+          updateNextDateAppr = nowDate;
+        }
+
+        await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
+          nextDateAppearance: updateNextDateAppr
+        });
+      }
+    }
+
     await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
+
     //disable edits
     editDeckName.readOnly = true;  
     reviewTypeOptions.disabled = true;
@@ -399,6 +481,8 @@ async function listen2DeleteButton(){
         }
       }
       deleteButton.style.visibility = "hidden";
+      sessionStorage.setItem('PrevHTMLPg', "newCard");
+
       // reload webpage after delete for nice corners
       window.location.href = "./deckDetails.html";   //reload the webpage after delete
     }
@@ -736,7 +820,8 @@ async function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder 
       Question: QuestionD,
       Answer: AnswerD,
       Level: 0,
-      nextDateAppearance: nullDate
+      nextDateAppearance: nullDate,
+      reviewedToday: false
     }).then(() => {
         resolve("Completed delete. Returning to listen2SubmitButton.");
         }).catch(error => {

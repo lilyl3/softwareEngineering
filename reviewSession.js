@@ -33,16 +33,13 @@ import {
 
 let db = getFirestore(app);
 
-//CONSTANTs
-const maximumLevel = 10;
-
 function addZero2Date(num){
   if (num < 10){
     return '0' + num;
   }
   return num;
 }
-
+//CONSTANTs
 const nullDate = "2023/01/01";
 //get current date
 var nowDate = new Date();
@@ -308,7 +305,7 @@ async function handlePauseCorrectIncorrectResponse(answer){
 }
 
 //reviewOrder = flashcardIDs in order of how they will be reviewed
-async function reviewingFlashcards(reviewOrder, reviewType){
+async function reviewingFlashcards(reviewOrder, reviewType, maximumLevel){
   //<p> element that indicates num_cards_reviewed / total_cards_2be_reviewed
   var progress = document.getElementById('progress');
   progress.style.textAlign = "center";
@@ -422,7 +419,7 @@ async function reviewingFlashcards(reviewOrder, reviewType){
 
 //ASSUMPTION: all nextDateAppearance = {nullDate, nowDate}
 //BUT maybe better just to have a resume field associated a deck
-async function dailyReview(DeckID, orderType){
+async function dailyReview(DeckID, orderType, maximumLevel, reviewBurnedCards){
   //Retrieve the orderType = determines the order that flashcards will be reviewed
 
   //query all flashcards in deck DeckID
@@ -457,8 +454,9 @@ async function dailyReview(DeckID, orderType){
       // flashcardDate = flashcardDate.getFullYear()+'/'+(flashcardDate.getMonth()+1)+'/'+flashcardDate.getDate();
 
       console.log(flashcardDate);
-      if (flashcardDate === nowDate || flashcardDoc.data().Level === maximumLevel){
+      if (flashcardDate === nowDate || (!reviewBurnedCards && flashcardDoc.data().Level >= maximumLevel)){
           resumeSession = true;
+          //cards NOT being reviewed
       }
       else{
         //flashcard was NOT viewed in CURRENT date & is NOT burned out (Level = 10)
@@ -514,7 +512,7 @@ async function dailyReview(DeckID, orderType){
   }
 
   //Start reviewing flashcards
-  await reviewingFlashcards(orderReview, "Daily");
+  await reviewingFlashcards(orderReview, "Daily", maximumLevel);
 
   if (!pause){
     // Finished reviewing all flashcards
@@ -531,7 +529,7 @@ async function dailyReview(DeckID, orderType){
 }
 
 //Decks with reviewType = "Continuous" MUST have a resume field!!!
-async function continuousReview(DeckID, orderType, numberNewCards, resume){
+async function continuousReview(DeckID, orderType, numberNewCards, resume, maximumLevel, reviewBurnedCards){
   //new cards nextDateAppearance = nullDate
   //cards reviewed at least once have nextDateAppearance > nullDate && < currentDate
   var newCardID = [];             //IDs of all cards not yet reveiwed; newCard Level = 0
@@ -554,7 +552,8 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
       newCardID[index] = flashcardDoc.id;
       ++index;
     }
-    else if (nextDateAppearance <= nowDate && flashcardDoc.data().Level < maximumLevel){
+    else if (nextDateAppearance <= nowDate && 
+      (flashcardDoc.data().Level < maximumLevel || (reviewBurnedCards && flashcardDoc.data().Level >= maximumLevel))){
       // 	IF nextDateAppearance < currentDate
       // 		Set nextDateAppearance = currentDate
       console.log("old card: " + flashcardDoc.id)
@@ -644,7 +643,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   // newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
 
   //Start reviewing Flashcards
-  await reviewingFlashcards(reviewCardID, "Continuous");
+  await reviewingFlashcards(reviewCardID, "Continuous", maximumLevel);
 
   return;
 }
@@ -656,11 +655,13 @@ async function main() {
   var deck = await getDoc(deckDoc);
   const reviewType = deck.data().reviewType;
   const orderType = deck.data().orderType;
+  const maximumLevel = deck.data().maximumLevel;
+  const reviewBurnedCards = deck.data().reviewBurnedCards;
   console.log("OrderType: ", orderType)
 
   if (reviewType == "Daily"){
     console.log("Daily")
-    await dailyReview(DeckID, orderType);
+    await dailyReview(DeckID, orderType, maximumLevel, reviewBurnedCards);
   }
   else if (reviewType == "Continuous"){
     console.log("Continuous")
@@ -672,7 +673,7 @@ async function main() {
       console.log("resuming...")
     }
     const numNewCards = deck.data().numNewCards;
-    await continuousReview(DeckID, orderType, numNewCards, resume);
+    await continuousReview(DeckID, orderType, numNewCards, resume, maximumLevel, reviewBurnedCards);
 
     //only need to update resume for decks with reviewType = Continuous
     await updateDoc(deckDoc, {

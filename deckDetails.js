@@ -35,7 +35,6 @@ import {
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
 let db = getFirestore(app);
-
 function addZero2Date(num){
   if (num < 10){
     return '0' + num;
@@ -44,7 +43,6 @@ function addZero2Date(num){
 }
 
 //CONSTANTs
-
 const nullDate = "2023/01/01";  //default date
 //get current date
 var nowDate = new Date();
@@ -53,6 +51,7 @@ nowDate = nowDate.getFullYear()+'/'+addZero2Date((nowDate.getMonth()+1))+'/'+ ad
 const deckID = sessionStorage.getItem('DeckID');
 const deckSnap = await getDoc(doc(db, "decks", deckID));
 const deckName = deckSnap.data().DeckName;
+var maximumLevel = deckSnap.data().maximumLevel;
 
 google.charts.load("current", {packages:["corechart"]});
 google.charts.setOnLoadCallback(drawChart);
@@ -130,14 +129,22 @@ const saveSettingButton = document.getElementById('saveSettingButton');
 const cancelSettingButton = document.getElementById('cancelSettingButton');
 const editNumNewCards = document.getElementById('editNumNewCards');
 const editNewCardsArea = document.getElementById('editNewCardsArea');
+const editMaxFlashcardLevel = document.getElementById('editMaxFlashcardLevel');
+const reviewBurnedCards = document.getElementById('reviewBurnedCards');
 
 var editingSettings = false;
 
 //Initialize with current Deck settings
 editDeckName.value = deckName;
-editDeckName.readOnly = true;     //set this to read Only initially
+editMaxFlashcardLevel.value = deckSnap.data().maximumLevel;
 document.getElementById(deckSnap.data().reviewType).selected = 'selected';
-document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
+document.getElementById(deckSnap.data().orderType).selected = 'selected';
+if (deckSnap.data().reviewBurnedCards){
+  document.getElementById('reviewBurned').selected = "selected";
+}
+else{
+  document.getElementById('noReviewBurned').selected = "selected";
+}
 editNumNewCards.value = deckSnap.data().numNewCards;
 
 if (deckSnap.data().reviewType === "Continuous"){
@@ -146,9 +153,12 @@ if (deckSnap.data().reviewType === "Continuous"){
 else{
   editNewCardsArea.style.display = "none";
 }
+editDeckName.readOnly = true;     //set this to read Only initially
 reviewTypeOptions.disabled = true;
 orderTypeOptions.disabled = true;
+reviewBurnedCards.disabled = true;
 editNumNewCards.readOnly = true;
+editMaxFlashcardLevel.readOnly = true;
 
 reviewTypeOptions.onchange = function(){
   const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
@@ -165,7 +175,7 @@ reviewTypeOptions.onchange = function(){
   }
 };
 
-function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD){
+function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD, maxFlashcardLevel, reviewBurnedCardsD){
   return new Promise((resolve) =>{
     //create reference variables for the document and the data that will be updated
     const deckRef = doc(db, "decks", DeckID);
@@ -173,7 +183,9 @@ function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD){
       DeckName: DeckNameD,
       reviewType: reviewTypeD,
       orderType: orderTypeD,
-      numNewCards: numNewCardsD
+      numNewCards: numNewCardsD,
+      maximumLevel: maxFlashcardLevel,
+      reviewBurnedCards: reviewBurnedCardsD
     };
     //function that updates the document; adds info to the console if successful or not
     updateDoc(deckRef, data).then(() => {
@@ -191,8 +203,10 @@ const clickEditSettingsButton = (e) =>{
   //allow edits
   editDeckName.readOnly = false;
   editNumNewCards.readOnly = false;
+  editMaxFlashcardLevel.readOnly = false;
   reviewTypeOptions.disabled = false;
   orderTypeOptions.disabled = false;
+  reviewBurnedCards.disabled = false;
 
   //make save and cancel button appear
   //hide edit button
@@ -228,8 +242,10 @@ const clickedCancelSettingsButton = async (e) =>{
 
   //disable edits
   editDeckName.readOnly = true;  
+  editMaxFlashcardLevel.readOnly = true;
   reviewTypeOptions.disabled = true;
   orderTypeOptions.disabled = true;
+  reviewBurnedCards.disabled = true;
   editNumNewCards.readOnly = true;
 
   editingSettings = false;
@@ -240,14 +256,22 @@ const clickedCancelSettingsButton = async (e) =>{
 
 const clickedSaveSettingsButton = async (e) =>{
   console.log("Listened to Save")
+  saveSettingButton.innerHTML = "Saving";
 
   //get the selected reviewType & orderType option
   const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
   const selectedOrderType = orderTypeOptions.options[orderTypeOptions.options.selectedIndex].id;
+  var selectedReviewBurnedCards = reviewBurnedCards.options[reviewBurnedCards.options.selectedIndex].id
+  if (selectedReviewBurnedCards === "reviewBurned"){
+    selectedReviewBurnedCards = true;
+  }else{
+    selectedReviewBurnedCards = false;
+  }
   console.log(selectedReviewType + ", " + selectedOrderType)
   var selectedNumNewCards = editNumNewCards.value;
+  var selectedMaxLevel = editMaxFlashcardLevel.value;
 
-  if (selectedNumNewCards > 0){
+  if (selectedNumNewCards > 0 && selectedMaxLevel > 0){
     const deckSnapCurrent = await getDoc(doc(db, "decks", deckID));
     console.log("current: " + deckSnapCurrent.data().reviewType)
     console.log("selected: " + selectedReviewType)
@@ -333,12 +357,19 @@ const clickedSaveSettingsButton = async (e) =>{
       }
     }
 
-    await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
+    await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, 
+      selectedNumNewCards, selectedMaxLevel, selectedReviewBurnedCards);
+    saveSettingButton.innerHTML = "Save";
+   
+    window.location.href = "./deckDetails.html"
+    sessionStorage.setItem("PrevHTMLPg", "settings")
 
     //disable edits
     editDeckName.readOnly = true;  
+    editMaxFlashcardLevel.readOnly = true;
     reviewTypeOptions.disabled = true;
     orderTypeOptions.disabled = true;
+    reviewBurnedCards.disabled = true;
     editNumNewCards.readOnly = true;
 
     //make edit button visible
@@ -354,8 +385,13 @@ const clickedSaveSettingsButton = async (e) =>{
   }
   else{
     console.log("Invalid input")
-    editNumNewCards.value = "";
-    editNumNewCards.placeholder = "Invalid input. Must be > 0.";
+    if (selectedNumNewCards <= 0){
+      editNumNewCards.value = "";
+      editNumNewCards.placeholder = "Invalid input. Must be > 0.";
+    }else{
+      editMaxFlashcardLevel.value = "";
+      editMaxFlashcardLevel.placeholder = "Invalid input. Must be > 0.";
+    }
   }
 }
 
@@ -564,7 +600,7 @@ async function displayFlashcards()
     flashcardLineRow1.appendChild(flashcardQuestion);
     flashcardLineRow1.appendChild(editFlashcard);
 
-    if(flashcard.data().Level >= 10){
+    if(flashcard.data().Level >= maximumLevel){
       //flashcard has been burned!
       console.log("Flashcard: " + flashcard.id + " is burned!!!")
       flashcardLineRow1.style.backgroundColor = "#d9c6f2";
@@ -806,6 +842,12 @@ async function listen2Tabs(){
 if (prevHTMLPg === "newCard"){
   summaryContent.style.display = "none";
   flashcardContent.style.display = "initial";
+}
+
+if (prevHTMLPg === "settings"){
+  settingsContent.style.display = "initial";
+  flashcardContent.style.display = "none";
+  summaryContent.style.display = "none";
 }
 
 //listen to see if user clicks on the logout button

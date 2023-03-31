@@ -229,7 +229,7 @@ form {
 
 .flashcard-line-row-1{
   color:#0041CA;
-  background-color: #ededed;
+  /* background-color: #ededed; */
   font-size: 18px;
   border-width: 1px;
   list-style-type: none;

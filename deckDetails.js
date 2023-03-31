@@ -35,12 +35,23 @@ import {
   } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
 let db = getFirestore(app);
+function addZero2Date(num){
+  if (num < 10){
+    return '0' + num;
+  }
+  return num;
+}
 
 //CONSTANTs
-const nullDate = "2023/01/01";
+const nullDate = "2023/01/01";  //default date
+//get current date
+var nowDate = new Date();
+nowDate = nowDate.getFullYear()+'/'+addZero2Date((nowDate.getMonth()+1))+'/'+ addZero2Date(nowDate.getDate());
+
 const deckID = sessionStorage.getItem('DeckID');
 const deckSnap = await getDoc(doc(db, "decks", deckID));
 const deckName = deckSnap.data().DeckName;
+var maximumLevel = deckSnap.data().maximumLevel;
 
 google.charts.load("current", {packages:["corechart"]});
 google.charts.setOnLoadCallback(drawChart);
@@ -120,14 +131,22 @@ const saveSettingButton = document.getElementById('saveSettingButton');
 const cancelSettingButton = document.getElementById('cancelSettingButton');
 const editNumNewCards = document.getElementById('editNumNewCards');
 const editNewCardsArea = document.getElementById('editNewCardsArea');
+const editMaxFlashcardLevel = document.getElementById('editMaxFlashcardLevel');
+const reviewBurnedCards = document.getElementById('reviewBurnedCards');
 
 var editingSettings = false;
 
 //Initialize with current Deck settings
 editDeckName.value = deckName;
-editDeckName.readOnly = true;     //set this to read Only initially
+editMaxFlashcardLevel.value = deckSnap.data().maximumLevel;
 document.getElementById(deckSnap.data().reviewType).selected = 'selected';
-document.getElementById(deckSnap.data().orderType).selected = 'selected'; 
+document.getElementById(deckSnap.data().orderType).selected = 'selected';
+if (deckSnap.data().reviewBurnedCards){
+  document.getElementById('reviewBurned').selected = "selected";
+}
+else{
+  document.getElementById('noReviewBurned').selected = "selected";
+}
 editNumNewCards.value = deckSnap.data().numNewCards;
 
 if (deckSnap.data().reviewType === "Continuous"){
@@ -136,9 +155,12 @@ if (deckSnap.data().reviewType === "Continuous"){
 else{
   editNewCardsArea.style.display = "none";
 }
+editDeckName.readOnly = true;     //set this to read Only initially
 reviewTypeOptions.disabled = true;
 orderTypeOptions.disabled = true;
+reviewBurnedCards.disabled = true;
 editNumNewCards.readOnly = true;
+editMaxFlashcardLevel.readOnly = true;
 
 reviewTypeOptions.onchange = function(){
   const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
@@ -155,7 +177,7 @@ reviewTypeOptions.onchange = function(){
   }
 };
 
-function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD){
+function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD, maxFlashcardLevel, reviewBurnedCardsD){
   return new Promise((resolve) =>{
     //create reference variables for the document and the data that will be updated
     const deckRef = doc(db, "decks", DeckID);
@@ -163,7 +185,9 @@ function UpdateDeck(DeckID, DeckNameD, reviewTypeD, orderTypeD, numNewCardsD){
       DeckName: DeckNameD,
       reviewType: reviewTypeD,
       orderType: orderTypeD,
-      numNewCards: numNewCardsD
+      numNewCards: numNewCardsD,
+      maximumLevel: maxFlashcardLevel,
+      reviewBurnedCards: reviewBurnedCardsD
     };
     //function that updates the document; adds info to the console if successful or not
     updateDoc(deckRef, data).then(() => {
@@ -181,8 +205,10 @@ const clickEditSettingsButton = (e) =>{
   //allow edits
   editDeckName.readOnly = false;
   editNumNewCards.readOnly = false;
+  editMaxFlashcardLevel.readOnly = false;
   reviewTypeOptions.disabled = false;
   orderTypeOptions.disabled = false;
+  reviewBurnedCards.disabled = false;
 
   //make save and cancel button appear
   //hide edit button
@@ -218,8 +244,10 @@ const clickedCancelSettingsButton = async (e) =>{
 
   //disable edits
   editDeckName.readOnly = true;  
+  editMaxFlashcardLevel.readOnly = true;
   reviewTypeOptions.disabled = true;
   orderTypeOptions.disabled = true;
+  reviewBurnedCards.disabled = true;
   editNumNewCards.readOnly = true;
 
   editingSettings = false;
@@ -230,19 +258,120 @@ const clickedCancelSettingsButton = async (e) =>{
 
 const clickedSaveSettingsButton = async (e) =>{
   console.log("Listened to Save")
+  saveSettingButton.innerHTML = "Saving";
 
   //get the selected reviewType & orderType option
   const selectedReviewType = reviewTypeOptions.options[reviewTypeOptions.options.selectedIndex].id;
   const selectedOrderType = orderTypeOptions.options[orderTypeOptions.options.selectedIndex].id;
+  var selectedReviewBurnedCards = reviewBurnedCards.options[reviewBurnedCards.options.selectedIndex].id
+  if (selectedReviewBurnedCards === "reviewBurned"){
+    selectedReviewBurnedCards = true;
+  }else{
+    selectedReviewBurnedCards = false;
+  }
   console.log(selectedReviewType + ", " + selectedOrderType)
   var selectedNumNewCards = editNumNewCards.value;
+  var selectedMaxLevel = parseInt(editMaxFlashcardLevel.value);
 
-  if (selectedNumNewCards > 0){
-    await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, selectedNumNewCards);
+  if (selectedNumNewCards > 0 && selectedMaxLevel > 0){
+    const deckSnapCurrent = await getDoc(doc(db, "decks", deckID));
+    console.log("current: " + deckSnapCurrent.data().reviewType)
+    console.log("selected: " + selectedReviewType)
+
+    //switching from daily to continuous
+    if (deckSnapCurrent.data().reviewType === "Daily" & selectedReviewType === "Continuous"){
+      console.log("Fixing dates when change from daily -> continuous")
+        /*
+        Level     reviewedToday     nextDateAppearance
+          0           yes             use formula: current + 1
+          0           no              NULLDate
+          >0          yes             use formula
+          >0          no              current      
+        */
+
+      const flashcardIDs = await getFlashcardIDs();
+      for (var i = 0; i < flashcardIDs.length; i++){
+        const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
+        var updateNextDateAppr = nowDate;
+        if (flashcardSnap.data().reviewedToday === nowDate){
+          //use formula based on level to calculate next date of appearance
+          var date = new Date();                              //get current date
+          if (flashcardSnap.data().Level === 0){
+            //if level = 0, review flashcard the following day
+            date.setDate(date.getDate() + 1);
+          }
+          else{
+            date.setDate(date.getDate() + (2*flashcardSnap.data().Level));     //next date to be reviewed is 2*updateLevel days later
+          }
+          updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
+        }
+        else{
+          //flashcard NOT reviewed today & Level 0 THEN treat as a NEW card
+          if(flashcardSnap.data().Level === 0){
+            updateNextDateAppr = nullDate;
+          }
+        }
+
+        await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
+          nextDateAppearance: updateNextDateAppr
+        });
+        //resume field is NOT reset since only Continuous sessions update it. 
+      }
+    }
+
+    //change from continuous -> daily
+    if (deckSnapCurrent.data().reviewType === "Continuous" & selectedReviewType === "Daily"){
+      /*
+        reviewedToday     nextDateAppearance      updatedNextDateAppearance
+            yes             <=current                 current
+            no              <=current                 null
+            yes             >current                  current
+            no              >current                  null
+      */
+      const flashcardIDs = await getFlashcardIDs();
+      var numFlashcardsReviewedToday = 0;
+      var updatedDates = [];
+      for (var i = 0; i < flashcardIDs.length; i++){
+        const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
+        if (flashcardSnap.data().reviewedToday === nowDate){
+          updatedDates[i] = nowDate;
+          numFlashcardsReviewedToday = numFlashcardsReviewedToday + 1;
+        }else{
+          updatedDates[i] = nullDate;
+        }
+      }
+
+      //if all flashcards have been reviewed today, reset nextDate appearance to NULL
+      if(numFlashcardsReviewedToday === flashcardIDs.length){
+        for (var i = 0; i < flashcardIDs.length; i++){
+          await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
+            nextDateAppearance: nullDate
+          });
+        }
+      }
+      //otherwise update accordingly
+      else{
+        for (var i = 0; i < flashcardIDs.length; i++){
+          await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
+            nextDateAppearance: updatedDates[i]
+          });
+        }
+      }
+    }
+
+    await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, 
+      selectedNumNewCards, selectedMaxLevel, selectedReviewBurnedCards);
+    saveSettingButton.innerHTML = "Save";
+   
+    removeAllFlashcards();
+    displayFlashcards();
+
     //disable edits
     editDeckName.readOnly = true;  
+    editMaxFlashcardLevel.readOnly = true;
     reviewTypeOptions.disabled = true;
     orderTypeOptions.disabled = true;
+    reviewBurnedCards.disabled = true;
     editNumNewCards.readOnly = true;
 
     //make edit button visible
@@ -258,8 +387,13 @@ const clickedSaveSettingsButton = async (e) =>{
   }
   else{
     console.log("Invalid input")
-    editNumNewCards.value = "";
-    editNumNewCards.placeholder = "Invalid input. Must be > 0.";
+    if (selectedNumNewCards <= 0){
+      editNumNewCards.value = "";
+      editNumNewCards.placeholder = "Invalid input. Must be > 0.";
+    }else{
+      editMaxFlashcardLevel.value = "";
+      editMaxFlashcardLevel.placeholder = "Invalid input. Must be > 0.";
+    }
   }
 }
 
@@ -300,6 +434,14 @@ async function DeleteCard(DocID) //it is expected that the id of the card being 
       console.log(error);
       });
   })
+}
+
+async function removeAllFlashcards(){
+  const flashcardIDs = await getFlashcardIDs();
+  for (let index = 0; index < flashcardIDs.length; index++){
+    const flashcardID = flashcardIDs[index];
+    flashcardList.removeChild(document.getElementById("line" + flashcardID));
+  }
 }
 
 //retrieve the total number of decks a user has
@@ -401,9 +543,12 @@ async function listen2DeleteButton(){
         }
       }
       deleteButton.style.visibility = "hidden";
-      // reload webpage after delete for nice corners
       sessionStorage.setItem('PrevHTMLPg', "newCard");
-      window.location.href = "./deckDetails.html";   //reload the webpage after delete
+
+      // reload webpage after delete for nice corners
+      removeAllFlashcards();
+      displayFlashcards();
+      //window.location.href = "./deckDetails.html";   //reload the webpage after delete
     }
   });
 }
@@ -461,12 +606,20 @@ async function displayFlashcards()
     var editFlashcard = document.createElement("div");
     editFlashcard.innerHTML = "Edit";  
     editFlashcard.id = counter;
-    editFlashcard.className = "edit-flashcard";   
+    editFlashcard.className = "edit-flashcard";  
 
     flashcardLineRow1.appendChild(checkbox4Delete);
     flashcardLineRow1.appendChild(flashcardQuestion);
     flashcardLineRow1.appendChild(editFlashcard);
 
+    if(flashcard.data().Level >= maximumLevel){
+      //flashcard has been burned!
+      console.log("Flashcard: " + flashcard.id + " is burned!!!")
+      flashcardLineRow1.style.backgroundColor = "#d9c6f2";
+    }
+    else{
+      flashcardLineRow1.style.backgroundColor = "#ededed";
+    }
     flashcardLine.appendChild(flashcardLineRow1);
     flashcardList.appendChild(flashcardLine);
 
@@ -703,6 +856,12 @@ if (prevHTMLPg === "newCard"){
   flashcardContent.style.display = "initial";
 }
 
+if (prevHTMLPg === "settings"){
+  settingsContent.style.display = "initial";
+  flashcardContent.style.display = "none";
+  summaryContent.style.display = "none";
+}
+
 //listen to see if user clicks on the logout button
 //If so, return to login page
 async function listen4Logout(){
@@ -739,7 +898,8 @@ async function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder 
       Question: QuestionD,
       Answer: AnswerD,
       Level: 0,
-      nextDateAppearance: nullDate
+      nextDateAppearance: nullDate,
+      reviewedToday: nullDate
     }).then(() => {
         resolve("Completed delete. Returning to listen2SubmitButton.");
         }).catch(error => {
@@ -777,6 +937,8 @@ async function listen2SubmitButton(){
           console.log("Came out!!")
           //console.log("Returning to main!")
           sessionStorage.setItem('PrevHTMLPg', "newCard");
+          // removeAllFlashcards();
+          // displayFlashcards();
           window.location.href = "./deckDetails.html";
         }
     });

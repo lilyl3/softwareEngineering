@@ -375,7 +375,9 @@ async function DeckCreate(DeckNameD, userIDD)//same situation for CardCreate fun
             cardNum: 0, //"id" of next flashcard from this deck
             dateReviewed: past7Days,
             correct: correctPast7Days,
-            incorrect: incorrectPast7Days
+            incorrect: incorrectPast7Days,
+            maximumLevel: 10, 
+            reviewBurnedCards: false
         }).then((docRef) => {
                 console.log("Entire Document has been deleted successfully.")
                 // console.log("docRef.id: " + docRef.id)

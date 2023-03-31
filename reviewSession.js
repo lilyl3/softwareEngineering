@@ -39,9 +39,7 @@ function addZero2Date(num){
   }
   return num;
 }
-
 //CONSTANTs
-const maximumLevel = 10;
 const nullDate = "2023/01/01";
 //get current date
 var nowDate = new Date();
@@ -64,7 +62,7 @@ var pause = false;
 //of flashcards reviewed,...
 var numCorrect = 0;                     //number of flashcards correctly answered
 var numIncorrect = 0;                   //number of flashcards incorrectly answered
-var finishedReviewingAll = false;       //only applicable for continuous Review
+var noCards2Review = false;       //only applicable for continuous Review
                                         //true if user finished reviewing all flashcards
 
 const pausePressedOutside = (e) =>{
@@ -307,7 +305,7 @@ async function handlePauseCorrectIncorrectResponse(answer){
 }
 
 //reviewOrder = flashcardIDs in order of how they will be reviewed
-async function reviewingFlashcards(reviewOrder, reviewType){
+async function reviewingFlashcards(reviewOrder, reviewType, maximumLevel){
   //<p> element that indicates num_cards_reviewed / total_cards_2be_reviewed
   var progress = document.getElementById('progress');
   progress.style.textAlign = "center";
@@ -356,13 +354,16 @@ async function reviewingFlashcards(reviewOrder, reviewType){
     else{
       pause = false;
       await handlePauseCorrectIncorrectResponse(answer);
-      if (correctlyAnswered){
+      if (correctlyAnswered && !pause){
         ++numCorrect;
         console.log("Correct: ", numCorrect)
       }
-      else{
+      else if (!correctlyAnswered && !pause){
         ++numIncorrect;
         console.log("Incorrect: ", numIncorrect)
+      }
+      else{
+        console.log("No updates because user is pressing pause")
       }
     }
     if (pause){
@@ -402,7 +403,8 @@ async function reviewingFlashcards(reviewOrder, reviewType){
 
     await updateDoc(flashcard, {
       Level:updateLevel,
-      nextDateAppearance: updateNextDateAppr
+      nextDateAppearance: updateNextDateAppr,
+      reviewedToday: nowDate
     });
 
     if (updateLevel === maximumLevel){
@@ -417,7 +419,7 @@ async function reviewingFlashcards(reviewOrder, reviewType){
 
 //ASSUMPTION: all nextDateAppearance = {nullDate, nowDate}
 //BUT maybe better just to have a resume field associated a deck
-async function dailyReview(DeckID, orderType){
+async function dailyReview(DeckID, orderType, maximumLevel, reviewBurnedCards){
   //Retrieve the orderType = determines the order that flashcards will be reviewed
 
   //query all flashcards in deck DeckID
@@ -452,11 +454,12 @@ async function dailyReview(DeckID, orderType){
       // flashcardDate = flashcardDate.getFullYear()+'/'+(flashcardDate.getMonth()+1)+'/'+flashcardDate.getDate();
 
       console.log(flashcardDate);
-      if (flashcardDate === nowDate){
+      if (flashcardDate === nowDate || (!reviewBurnedCards && flashcardDoc.data().Level >= maximumLevel)){
           resumeSession = true;
+          //cards NOT being reviewed
       }
       else{
-        //flashcard was NOT viewed in CURRENT date
+        //flashcard was NOT viewed in CURRENT date & is NOT burned out (Level = 10)
         flashcardID[counter] = flashcardDoc.id;
         flashcardLevel[counter] = flashcardDoc.data().Level;
         counter = counter + 1;
@@ -501,8 +504,15 @@ async function dailyReview(DeckID, orderType){
   }
   console.log("After Shuffle: ", orderReview);                 //after shuffled
 
+  if (orderReview.length === 0){
+    //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
+    alert("No flashcards to be reviewed today! Returning to " + returnPg);
+    noCards2Review = true;
+    return;
+  }
+
   //Start reviewing flashcards
-  await reviewingFlashcards(orderReview, "Daily");
+  await reviewingFlashcards(orderReview, "Daily", maximumLevel);
 
   if (!pause){
     // Finished reviewing all flashcards
@@ -519,7 +529,7 @@ async function dailyReview(DeckID, orderType){
 }
 
 //Decks with reviewType = "Continuous" MUST have a resume field!!!
-async function continuousReview(DeckID, orderType, numberNewCards, resume){
+async function continuousReview(DeckID, orderType, numberNewCards, resume, maximumLevel, reviewBurnedCards){
   //new cards nextDateAppearance = nullDate
   //cards reviewed at least once have nextDateAppearance > nullDate && < currentDate
   var newCardID = [];             //IDs of all cards not yet reveiwed; newCard Level = 0
@@ -542,7 +552,8 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
       newCardID[index] = flashcardDoc.id;
       ++index;
     }
-    else if (nextDateAppearance <= nowDate){
+    else if (nextDateAppearance <= nowDate && 
+      (flashcardDoc.data().Level < maximumLevel || (reviewBurnedCards && flashcardDoc.data().Level >= maximumLevel))){
       // 	IF nextDateAppearance < currentDate
       // 		Set nextDateAppearance = currentDate
       console.log("old card: " + flashcardDoc.id)
@@ -553,7 +564,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
     else{
       //nextDateAppearance > now Date
       //card will not be reviewed today BUt will be in the future
-      console.log(flashcardDoc.id, " to be reviewed in the future")
+      console.log(flashcardDoc.id, " to be reviewed in the future or burned OUt")
     }
   });
 
@@ -591,7 +602,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   if (reviewCardID.length === 0){
     //https://www.tutorialsteacher.com/javascript/display-popup-message-in-javascript
     alert("No flashcards to be reviewed today! Returning to " + returnPg);
-    finishedReviewingAll = true;
+    noCards2Review = true;
     return;
   }
 
@@ -632,7 +643,7 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume){
   // newOldCards.innerHTML = "New: " + newCards2Review + " Old: " + oldCards2Review;
 
   //Start reviewing Flashcards
-  await reviewingFlashcards(reviewCardID, "Continuous");
+  await reviewingFlashcards(reviewCardID, "Continuous", maximumLevel);
 
   return;
 }
@@ -644,11 +655,13 @@ async function main() {
   var deck = await getDoc(deckDoc);
   const reviewType = deck.data().reviewType;
   const orderType = deck.data().orderType;
+  const maximumLevel = deck.data().maximumLevel;
+  const reviewBurnedCards = deck.data().reviewBurnedCards;
   console.log("OrderType: ", orderType)
 
   if (reviewType == "Daily"){
     console.log("Daily")
-    await dailyReview(DeckID, orderType);
+    await dailyReview(DeckID, orderType, maximumLevel, reviewBurnedCards);
   }
   else if (reviewType == "Continuous"){
     console.log("Continuous")
@@ -660,7 +673,7 @@ async function main() {
       console.log("resuming...")
     }
     const numNewCards = deck.data().numNewCards;
-    await continuousReview(DeckID, orderType, numNewCards, resume);
+    await continuousReview(DeckID, orderType, numNewCards, resume, maximumLevel, reviewBurnedCards);
 
     //only need to update resume for decks with reviewType = Continuous
     await updateDoc(deckDoc, {
@@ -676,6 +689,7 @@ async function main() {
   console.log("return to the main!")
 
   if (numCorrect > 0 || numIncorrect > 0){
+    console.log("Came to update history")
     const deckSnap = await getDoc(doc(db, "decks", DeckID));
     const correct = deckSnap.data().correct;
     const incorrect = deckSnap.data().incorrect;
@@ -685,7 +699,7 @@ async function main() {
     await UpdateDeck(DeckID, correct, incorrect);
   }
 
-  if (pause || finishedReviewingAll){
+  if (pause || noCards2Review){
     //didn't finish review
     //return to home screen
     if (pgStartReviewClicked === "homeScreen"){

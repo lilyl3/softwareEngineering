@@ -362,6 +362,8 @@ const clickedSaveSettingsButton = async (e) =>{
     await UpdateDeck(deckID, editDeckName.value, selectedReviewType, selectedOrderType, 
       selectedNumNewCards, selectedMaxLevel, selectedReviewBurnedCards);
     saveSettingButton.innerHTML = "Save";
+    deckTitle.innerHTML = " > " + editDeckName.value;
+
    
     removeAllFlashcards();
     displayFlashcards();
@@ -438,9 +440,13 @@ async function DeleteCard(DocID) //it is expected that the id of the card being 
 
 async function removeAllFlashcards(){
   const flashcardIDs = await getFlashcardIDs();
+  console.log("Deleting...")
   for (let index = 0; index < flashcardIDs.length; index++){
     const flashcardID = flashcardIDs[index];
-    flashcardList.removeChild(document.getElementById("line" + flashcardID));
+    console.log("FlashcardID: " + flashcardID)
+    if (document.getElementById("line" + flashcardID)){
+      flashcardList.removeChild(document.getElementById("line" + flashcardID));
+    }
   }
 }
 
@@ -539,7 +545,9 @@ async function listen2DeleteButton(){
         if (document.getElementById("check" + flashcardID).checked){
           console.log("Flashcard being deleted: " + flashcardID)
           await DeleteCard(flashcardID);
-          flashcardList.removeChild(document.getElementById("line" + flashcardID));
+          if (document.getElementById("line" + flashcardID)){
+            flashcardList.removeChild(document.getElementById("line" + flashcardID));
+          }
         }
       }
       deleteButton.style.visibility = "hidden";
@@ -796,9 +804,6 @@ async function displayFlashcards()
       }
     })
   });
-
-  listen2SelectAll();
-  listen2DeleteButton();
 }
 
 async function listen2StartReview(){
@@ -828,6 +833,7 @@ async function listen2RemoveTip(){
 }
 
 async function listen2Tabs(){
+  console.log("Listening 2 TABS")
   drawChart();
   displayFlashcards();
   displayAddFlashcardsButton();
@@ -856,11 +862,11 @@ if (prevHTMLPg === "newCard"){
   flashcardContent.style.display = "initial";
 }
 
-if (prevHTMLPg === "settings"){
-  settingsContent.style.display = "initial";
-  flashcardContent.style.display = "none";
-  summaryContent.style.display = "none";
-}
+// if (prevHTMLPg === "settings"){
+//   settingsContent.style.display = "initial";
+//   flashcardContent.style.display = "none";
+//   summaryContent.style.display = "none";
+// }
 
 //listen to see if user clicks on the logout button
 //If so, return to login page
@@ -937,9 +943,25 @@ async function listen2SubmitButton(){
           console.log("Came out!!")
           //console.log("Returning to main!")
           sessionStorage.setItem('PrevHTMLPg', "newCard");
-          // removeAllFlashcards();
-          // displayFlashcards();
-          window.location.href = "./deckDetails.html";
+
+          question.value = "";
+          answer.value = "";
+          newCardWindow.style.display = "none";
+          document.getElementById('addFlashcardButton').style.display = "block";
+
+          const flashcardIDs = await getFlashcardIDs();
+          //remove flashcards previously made
+          for (let index = 0; index < flashcardIDs.length; index++){
+            const flashcardID = flashcardIDs[index];
+            console.log("FlashcardID: " + flashcardID)
+            //if flashcard line exists then delete; otherwise not there because have NOT added
+            if (document.getElementById("line" + flashcardID)){
+              flashcardList.removeChild(document.getElementById("line" + flashcardID));
+            }
+          }
+          //reload flashcard list so that it includes newest flashcard
+          displayFlashcards();
+          // window.location.href = "./deckDetails.html";
         }
     });
 }
@@ -949,5 +971,9 @@ listen2RemoveTip();
 listen2StartReview();
 listen2Tabs();
 listen4Logout();
+listen2SelectAll();
+listen2DeleteButton();
 listen2SubmitButton();
 listen2CancelButton();
+
+console.log("h10" > "h2")

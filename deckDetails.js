@@ -363,7 +363,7 @@ const clickedSaveSettingsButton = async (e) =>{
       selectedNumNewCards, selectedMaxLevel, selectedReviewBurnedCards);
     saveSettingButton.innerHTML = "Save";
     deckTitle.innerHTML = " > " + editDeckName.value;
-
+    maximumLevel = selectedMaxLevel;
    
     removeAllFlashcards();
     displayFlashcards();

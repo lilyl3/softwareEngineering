@@ -108,14 +108,14 @@ async function drawChart() {
 
   var options = {
     title: "Progress in the Last 7 Days",
-    width: 900,
+    width: 700,
     height: 600,
     legend: { position: 'right'},
     bar: { groupWidth: '75%' },
     isStacked: false,
     vAxis: {minValue: 0},
     fontName: 'Times-Roman',
-    fontSize: 19
+    fontSize: 17
   };
 
   var chart = new google.visualization.ColumnChart(document.getElementById("barchart_values"));
@@ -133,6 +133,7 @@ const editNumNewCards = document.getElementById('editNumNewCards');
 const editNewCardsArea = document.getElementById('editNewCardsArea');
 const editMaxFlashcardLevel = document.getElementById('editMaxFlashcardLevel');
 const reviewBurnedCards = document.getElementById('reviewBurnedCards');
+const editSettingsButtonRow = document.getElementById('editSettingsButtonRow');
 
 var editingSettings = false;
 
@@ -212,9 +213,10 @@ const clickEditSettingsButton = (e) =>{
 
   //make save and cancel button appear
   //hide edit button
-  saveSettingButton.style.visibility = "visible";
-  cancelSettingButton.style.visibility = "visible";
-  editSettingsButton.style.visibility = "hidden";
+  editSettingsButtonRow.style.display = "flex";
+  saveSettingButton.style.display = "inline";
+  cancelSettingButton.style.display = "inline";
+  editSettingsButton.style.display = "none";
 
   editSettingsButton.removeEventListener("click", clickEditSettingsButton);
   cancelSettingButton.addEventListener("click", clickedCancelSettingsButton);
@@ -238,9 +240,9 @@ const clickedCancelSettingsButton = async (e) =>{
   }
 
   //make edit button visible
-  editSettingsButton.style.visibility = "visible";
-  saveSettingButton.style.visibility = "hidden";
-  cancelSettingButton.style.visibility = "hidden";
+  editSettingsButton.style.display = "inline";
+  saveSettingButton.style.display = "none";
+  cancelSettingButton.style.display = "none";
 
   //disable edits
   editDeckName.readOnly = true;  
@@ -377,9 +379,9 @@ const clickedSaveSettingsButton = async (e) =>{
     editNumNewCards.readOnly = true;
 
     //make edit button visible
-    editSettingsButton.style.visibility = "visible";
-    saveSettingButton.style.visibility = "hidden";
-    cancelSettingButton.style.visibility = "hidden";
+    editSettingsButton.style.display = "inline";
+    saveSettingButton.style.display = "none";
+    cancelSettingButton.style.display = "none";
 
     saveSettingButton.removeEventListener("click", clickedSaveSettingsButton);
     cancelSettingButton.removeEventListener("click", clickedCancelSettingsButton);
@@ -851,7 +853,7 @@ async function listen2Tabs(){
   })
 
   SettingsTab.addEventListener("click", async (e) =>{
-    settingsContent.style.display = "initial";
+    settingsContent.style.display = "flex";
     summaryContent.style.display = "none";
     flashcardContent.style.display = "none";
   })

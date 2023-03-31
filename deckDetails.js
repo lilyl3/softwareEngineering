@@ -258,7 +258,7 @@ const clickedSaveSettingsButton = async (e) =>{
         /*
         Level     reviewedToday     nextDateAppearance
           0           yes             use formula: current + 1
-          0           no              current => or should this be NULLDate??
+          0           no              NULLDate
           >0          yes             use formula
           >0          no              current      
         */
@@ -267,7 +267,7 @@ const clickedSaveSettingsButton = async (e) =>{
       for (var i = 0; i < flashcardIDs.length; i++){
         const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
         var updateNextDateAppr = nowDate;
-        if (flashcardSnap.data().reviewedToday){
+        if (flashcardSnap.data().reviewedToday === nowDate){
           //use formula based on level to calculate next date of appearance
           var date = new Date();                              //get current date
           if (flashcardSnap.data().Level === 0){
@@ -303,17 +303,33 @@ const clickedSaveSettingsButton = async (e) =>{
             no              >current                  null
       */
       const flashcardIDs = await getFlashcardIDs();
+      var numFlashcardsReviewedToday = 0;
+      var updatedDates = [];
       for (var i = 0; i < flashcardIDs.length; i++){
         const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
-
-        var updateNextDateAppr = nullDate;
-        if (flashcardSnap.data().reviewedToday){
-          updateNextDateAppr = nowDate;
+        if (flashcardSnap.data().reviewedToday === nowDate){
+          updatedDates[i] = nowDate;
+          numFlashcardsReviewedToday = numFlashcardsReviewedToday + 1;
+        }else{
+          updatedDates[i] = nullDate;
         }
+      }
 
-        await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
-          nextDateAppearance: updateNextDateAppr
-        });
+      //if all flashcards have been reviewed today, reset nextDate appearance to NULL
+      if(numFlashcardsReviewedToday === flashcardIDs.length){
+        for (var i = 0; i < flashcardIDs.length; i++){
+          await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
+            nextDateAppearance: nullDate
+          });
+        }
+      }
+      //otherwise update accordingly
+      else{
+        for (var i = 0; i < flashcardIDs.length; i++){
+          await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
+            nextDateAppearance: updatedDates[i]
+          });
+        }
       }
     }
 
@@ -542,12 +558,20 @@ async function displayFlashcards()
     var editFlashcard = document.createElement("div");
     editFlashcard.innerHTML = "Edit";  
     editFlashcard.id = counter;
-    editFlashcard.className = "edit-flashcard";   
+    editFlashcard.className = "edit-flashcard";  
 
     flashcardLineRow1.appendChild(checkbox4Delete);
     flashcardLineRow1.appendChild(flashcardQuestion);
     flashcardLineRow1.appendChild(editFlashcard);
 
+    if(flashcard.data().Level >= 10){
+      //flashcard has been burned!
+      console.log("Flashcard: " + flashcard.id + " is burned!!!")
+      flashcardLineRow1.style.backgroundColor = "#d9c6f2";
+    }
+    else{
+      flashcardLineRow1.style.backgroundColor = "#ededed";
+    }
     flashcardLine.appendChild(flashcardLineRow1);
     flashcardList.appendChild(flashcardLine);
 
@@ -821,7 +845,7 @@ async function CardCreate(AnswerD, DeckIDD, QuestionD)//I am using place holder 
       Answer: AnswerD,
       Level: 0,
       nextDateAppearance: nullDate,
-      reviewedToday: false
+      reviewedToday: nullDate
     }).then(() => {
         resolve("Completed delete. Returning to listen2SubmitButton.");
         }).catch(error => {

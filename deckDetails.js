@@ -363,8 +363,6 @@ const clickedSaveSettingsButton = async (e) =>{
    
     removeAllFlashcards();
     displayFlashcards();
-    // window.location.href = "./deckDetails.html"
-    // sessionStorage.setItem("PrevHTMLPg", "settings")
 
     //disable edits
     editDeckName.readOnly = true;  
@@ -546,7 +544,9 @@ async function listen2DeleteButton(){
       sessionStorage.setItem('PrevHTMLPg', "newCard");
 
       // reload webpage after delete for nice corners
-      window.location.href = "./deckDetails.html";   //reload the webpage after delete
+      removeAllFlashcards();
+      displayFlashcards();
+      //window.location.href = "./deckDetails.html";   //reload the webpage after delete
     }
   });
 }
@@ -935,6 +935,8 @@ async function listen2SubmitButton(){
           console.log("Came out!!")
           //console.log("Returning to main!")
           sessionStorage.setItem('PrevHTMLPg', "newCard");
+          // removeAllFlashcards();
+          // displayFlashcards();
           window.location.href = "./deckDetails.html";
         }
     });

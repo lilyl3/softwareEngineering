@@ -102,7 +102,9 @@ async function drawChart() {
     legend: { position: 'right'},
     bar: { groupWidth: '75%' },
     isStacked: false,
-    vAxis: {minValue: 0}
+    vAxis: {minValue: 0},
+    fontName: 'Times-Roman',
+    fontSize: 19
   };
 
   var chart = new google.visualization.ColumnChart(document.getElementById("barchart_values"));
@@ -400,6 +402,7 @@ async function listen2DeleteButton(){
       }
       deleteButton.style.visibility = "hidden";
       // reload webpage after delete for nice corners
+      sessionStorage.setItem('PrevHTMLPg', "newCard");
       window.location.href = "./deckDetails.html";   //reload the webpage after delete
     }
   });

@@ -269,7 +269,7 @@ const clickedSaveSettingsButton = async (e) =>{
   }
   console.log(selectedReviewType + ", " + selectedOrderType)
   var selectedNumNewCards = editNumNewCards.value;
-  var selectedMaxLevel = editMaxFlashcardLevel.value;
+  var selectedMaxLevel = parseInt(editMaxFlashcardLevel.value);
 
   if (selectedNumNewCards > 0 && selectedMaxLevel > 0){
     const deckSnapCurrent = await getDoc(doc(db, "decks", deckID));
@@ -361,8 +361,10 @@ const clickedSaveSettingsButton = async (e) =>{
       selectedNumNewCards, selectedMaxLevel, selectedReviewBurnedCards);
     saveSettingButton.innerHTML = "Save";
    
-    window.location.href = "./deckDetails.html"
-    sessionStorage.setItem("PrevHTMLPg", "settings")
+    removeAllFlashcards();
+    displayFlashcards();
+    // window.location.href = "./deckDetails.html"
+    // sessionStorage.setItem("PrevHTMLPg", "settings")
 
     //disable edits
     editDeckName.readOnly = true;  
@@ -432,6 +434,14 @@ async function DeleteCard(DocID) //it is expected that the id of the card being 
       console.log(error);
       });
   })
+}
+
+async function removeAllFlashcards(){
+  const flashcardIDs = await getFlashcardIDs();
+  for (let index = 0; index < flashcardIDs.length; index++){
+    const flashcardID = flashcardIDs[index];
+    flashcardList.removeChild(document.getElementById("line" + flashcardID));
+  }
 }
 
 //retrieve the total number of decks a user has

@@ -9,10 +9,12 @@
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
       <script>//security feature to disable debug menu hot keys
         document.onkeydown = function(e) {//this funciton disables the pressing of specific keys based on their respective keycode
-                if (e.keyCode === 73 ||//disables 'I' key
-                    e.keyCode === 123) {//disables f12
-                    return false;
-                }
+          if ((e.ctrlKey && e.shiftKey && e.keyCode === 73) ||//disables 'ctrl + shift + I'
+              (e.ctrlKey && e.shiftKey && e.keyCode === 67) ||  //disables 'ctrl + shift + c'
+              (e.ctrlKey && e.shiftKey && e.keyCode === 74) || //disables 'ctrl + shift + j'
+              e.keyCode === 123) {//disables f12
+                  return false;
+              }
         };
       </script>
   </head>

@@ -312,6 +312,12 @@ const clickedSaveSettingsButton = async (e) =>{
           if(flashcardSnap.data().Level === 0){
             updateNextDateAppr = nullDate;
           }
+          else{
+            //Level 1 flashcards will be reviewed on current day
+            //Level 2 flashcards reviewed the next date
+            date.setDate(date.getDate() + (2*(flashcardSnap.data().Level - 1)));     //next date to be reviewed is 2*updateLevel days later
+          }
+          updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
         }
 
         await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {

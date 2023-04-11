@@ -310,20 +310,31 @@ const clickedSaveSettingsButton = async (e) =>{
           }
           updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
         }
+        else if(flashcardSnap.data().reviewedToday === nullDate){
+          //new card never reviewed
+          updateNextDateAppr = nullDate;
+        }
         else{
           //flashcard NOT reviewed today & nextDateAppearance = nullDate THEN it is a NEW card
           if(flashcardSnap.data().nextDateAppearance === nullDate && flashcardSnap.data().Level === 0){
+            console.log("Came into reviewToday != nullDate but nextDateAppearance === nullDate & Level = 0")
             updateNextDateAppr = nullDate;
           }
           //Else, flashcard has been reviewed before
           else{
+            var reviewedTodayDate = flashcardSnap.data().reviewedToday;
+            const rTYear = parseInt(reviewedTodayDate.substring(0, 4));
+            const rTMonth = parseInt(reviewedTodayDate.substring(5, 7));
+            const rTDay = parseInt(reviewedTodayDate.substring(8));
+            reviewedTodayDate = new Date(rTYear,rTMonth,rTDay);
+
             if (flashcardSnap.data().Level === 0){
-              //if level = 0, review on the current date
-              date.setDate(date.getDate());
+              //if level = 0, review on reviewedToday + 1 date
+              date.setDate(reviewedTodayDate.getDate() + 1);
             }
             else{
               //update the nextDateAppearance by formula
-              date.setDate(date.getDate() + (2*flashcardSnap.data().Level));
+              date.setDate(reviewedTodayDate.getDate() + (2*flashcardSnap.data().Level));
             }
             updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
           }

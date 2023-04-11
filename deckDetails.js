@@ -44,6 +44,7 @@ function addZero2Date(num){
 
 //CONSTANTs
 const nullDate = "2023/01/01";  //default date
+const nullDatePlus1 = "2023/01/02";
 //get current date
 var nowDate = new Date();
 nowDate = nowDate.getFullYear()+'/'+addZero2Date((nowDate.getMonth()+1))+'/'+ addZero2Date(nowDate.getDate());
@@ -284,20 +285,22 @@ const clickedSaveSettingsButton = async (e) =>{
     if (deckSnapCurrent.data().reviewType === "Daily" & selectedReviewType === "Continuous"){
       console.log("Fixing dates when change from daily -> continuous")
         /*
-        Level     reviewedToday     nextDateAppearance
-          0           yes             use formula: current + 1
-          0           no              NULLDate
-          >0          yes             use formula
-          >0          no              current      
+        nullDatePlus1 = reviewed before at least once
+        Level     reviewedToday     prev: nextDateAppear        set: nextDateAppearance
+          0           yes            currentDate                 use formula: current + 1
+          0           no              nullDate                           NULLDate -> is a new card
+          0           no              nullDatePlus1                   currentDate
+          >0          yes             currentDate                use formula: current + 2*level
+          >0          no              nullDatePlus1                      use formula
         */
 
       const flashcardIDs = await getFlashcardIDs();
       for (var i = 0; i < flashcardIDs.length; i++){
         const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
         var updateNextDateAppr = nowDate;
+        var date = new Date();                              //get current date
         if (flashcardSnap.data().reviewedToday === nowDate){
           //use formula based on level to calculate next date of appearance
-          var date = new Date();                              //get current date
           if (flashcardSnap.data().Level === 0){
             //if level = 0, review flashcard the following day
             date.setDate(date.getDate() + 1);
@@ -308,16 +311,22 @@ const clickedSaveSettingsButton = async (e) =>{
           updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
         }
         else{
-          //flashcard NOT reviewed today & Level 0 THEN treat as a NEW card
-          if(flashcardSnap.data().Level === 0){
+          //flashcard NOT reviewed today & nextDateAppearance = nullDate THEN it is a NEW card
+          if(flashcardSnap.data().nextDateAppearance === nullDate && flashcardSnap.data().Level === 0){
             updateNextDateAppr = nullDate;
           }
+          //Else, flashcard has been reviewed before
           else{
-            //Level 1 flashcards will be reviewed on current day
-            //Level 2 flashcards reviewed the next date
-            date.setDate(date.getDate() + (2*(flashcardSnap.data().Level - 1)));     //next date to be reviewed is 2*updateLevel days later
+            if (flashcardSnap.data().Level === 0){
+              //if level = 0, review on the current date
+              date.setDate(date.getDate());
+            }
+            else{
+              //update the nextDateAppearance by formula
+              date.setDate(date.getDate() + (2*flashcardSnap.data().Level));
+            }
+            updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
           }
-          updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
         }
 
         await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
@@ -330,11 +339,12 @@ const clickedSaveSettingsButton = async (e) =>{
     //change from continuous -> daily
     if (deckSnapCurrent.data().reviewType === "Continuous" & selectedReviewType === "Daily"){
       /*
-        reviewedToday     nextDateAppearance      updatedNextDateAppearance
-            yes             <=current                 current
-            no              <=current                 null
-            yes             >current                  current
-            no              >current                  null
+        level     reviewedToday     nextDateAppearance      updatedNextDateAppearance
+          0           yes             current + 1                 current/nowDate
+          0           no              nullDate                    nullDate    -> card never reviewed
+          0           no              !nullDate                   nullDatePlus1
+          >0          yes        >current (based on formula)      current
+          >0          no              !nullDate                   nullDatePlus1
       */
       const flashcardIDs = await getFlashcardIDs();
       var numFlashcardsReviewedToday = 0;
@@ -345,15 +355,20 @@ const clickedSaveSettingsButton = async (e) =>{
           updatedDates[i] = nowDate;
           numFlashcardsReviewedToday = numFlashcardsReviewedToday + 1;
         }else{
-          updatedDates[i] = nullDate;
+          if(flashcardSnap.data().nextDateAppearance === nullDate && flashcardSnap.data().Level === 0){
+            updatedDates[i] = nullDate;
+          }
+          else{
+            updatedDates[i] = nullDatePlus1;
+          }
         }
       }
 
-      //if all flashcards have been reviewed today, reset nextDate appearance to NULL
+      //if all flashcards have been reviewed today, reset nextDate appearance to nullDatePlus1
       if(numFlashcardsReviewedToday === flashcardIDs.length){
         for (var i = 0; i < flashcardIDs.length; i++){
           await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
-            nextDateAppearance: nullDate
+            nextDateAppearance: nullDatePlus1
           });
         }
       }

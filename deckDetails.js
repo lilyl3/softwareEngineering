@@ -276,6 +276,14 @@ const clickedSaveSettingsButton = async (e) =>{
   var selectedNumNewCards = editNumNewCards.value;
   var selectedMaxLevel = parseInt(editMaxFlashcardLevel.value);
 
+  //disable edits
+  editDeckName.readOnly = true;  
+  editMaxFlashcardLevel.readOnly = true;
+  reviewTypeOptions.disabled = true;
+  orderTypeOptions.disabled = true;
+  reviewBurnedCards.disabled = true;
+  editNumNewCards.readOnly = true;
+
   if (selectedNumNewCards > 0 && selectedMaxLevel > 0){
     const deckSnapCurrent = await getDoc(doc(db, "decks", deckID));
     console.log("current: " + deckSnapCurrent.data().reviewType)
@@ -297,10 +305,20 @@ const clickedSaveSettingsButton = async (e) =>{
       const flashcardIDs = await getFlashcardIDs();
       for (var i = 0; i < flashcardIDs.length; i++){
         const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
-        var updateNextDateAppr = nowDate;
-        var date = new Date();                              //get current date
-        if (flashcardSnap.data().reviewedToday === nowDate){
-          //use formula based on level to calculate next date of appearance
+        var updateNextDateAppr = nullDate;  //new cards
+
+        //flashcard has been reviewed before
+        if (flashcardSnap.data().reviewedToday != nullDate){
+          var date = new Date();  //get current date
+          //if flashcard was NOT reviewed on now/currentDate
+          if (flashcardSnap.data().reviewedToday != nowDate){
+            const reviewedTodayDate = flashcardSnap.data().reviewedToday;
+            const rTYear = parseInt(reviewedTodayDate.substring(0, 4));
+            const rTMonth = parseInt(reviewedTodayDate.substring(5, 7)) - 1;
+            const rTDay = parseInt(reviewedTodayDate.substring(8));
+            date = new Date(rTYear,rTMonth,rTDay);
+          }
+
           if (flashcardSnap.data().Level === 0){
             //if level = 0, review flashcard the following day
             date.setDate(date.getDate() + 1);
@@ -309,35 +327,7 @@ const clickedSaveSettingsButton = async (e) =>{
             date.setDate(date.getDate() + (2*flashcardSnap.data().Level));     //next date to be reviewed is 2*updateLevel days later
           }
           updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
-        }
-        else if(flashcardSnap.data().reviewedToday === nullDate){
-          //new card never reviewed
-          updateNextDateAppr = nullDate;
-        }
-        else{
-          //flashcard NOT reviewed today & nextDateAppearance = nullDate THEN it is a NEW card
-          if(flashcardSnap.data().nextDateAppearance === nullDate && flashcardSnap.data().Level === 0){
-            console.log("Came into reviewToday != nullDate but nextDateAppearance === nullDate & Level = 0")
-            updateNextDateAppr = nullDate;
-          }
-          //Else, flashcard has been reviewed before
-          else{
-            var reviewedTodayDate = flashcardSnap.data().reviewedToday;
-            const rTYear = parseInt(reviewedTodayDate.substring(0, 4));
-            const rTMonth = parseInt(reviewedTodayDate.substring(5, 7));
-            const rTDay = parseInt(reviewedTodayDate.substring(8));
-            reviewedTodayDate = new Date(rTYear,rTMonth,rTDay);
 
-            if (flashcardSnap.data().Level === 0){
-              //if level = 0, review on reviewedToday + 1 date
-              date.setDate(reviewedTodayDate.getDate() + 1);
-            }
-            else{
-              //update the nextDateAppearance by formula
-              date.setDate(reviewedTodayDate.getDate() + (2*flashcardSnap.data().Level));
-            }
-            updateNextDateAppr = date.getFullYear()+'/'+ addZero2Date((date.getMonth()+1))+'/'+ addZero2Date(date.getDate());
-          }
         }
 
         await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
@@ -363,19 +353,21 @@ const clickedSaveSettingsButton = async (e) =>{
       for (var i = 0; i < flashcardIDs.length; i++){
         const flashcardSnap = await getDoc(doc(db, "Flashcard", flashcardIDs[i]));
         if (flashcardSnap.data().reviewedToday === nowDate){
+          //flashcard was reviewed on currentDate
           updatedDates[i] = nowDate;
           numFlashcardsReviewedToday = numFlashcardsReviewedToday + 1;
-        }else{
-          if(flashcardSnap.data().nextDateAppearance === nullDate && flashcardSnap.data().Level === 0){
-            updatedDates[i] = nullDate;
-          }
-          else{
-            updatedDates[i] = nullDatePlus1;
-          }
+        }
+        else if(flashcardSnap.data().reviewedToday === nullDate){
+          //flashcard NEVER reviewed
+          updatedDates[i] = nullDate;
+        }
+        else{
+          //flashcard reviewed sometime between nullDate and currentDate (exclusive)
+          updatedDates[i] = nullDatePlus1;
         }
       }
 
-      //if all flashcards have been reviewed today, reset nextDate appearance to nullDatePlus1
+      //if all flashcards have been reviewed on currentDate, reset nextDate appearance to nullDatePlus1
       if(numFlashcardsReviewedToday === flashcardIDs.length){
         for (var i = 0; i < flashcardIDs.length; i++){
           await updateDoc(doc(db, "Flashcard", flashcardIDs[i]), {
@@ -401,14 +393,6 @@ const clickedSaveSettingsButton = async (e) =>{
    
     removeAllFlashcards();
     displayFlashcards();
-
-    //disable edits
-    editDeckName.readOnly = true;  
-    editMaxFlashcardLevel.readOnly = true;
-    reviewTypeOptions.disabled = true;
-    orderTypeOptions.disabled = true;
-    reviewBurnedCards.disabled = true;
-    editNumNewCards.readOnly = true;
 
     //make edit button visible
     editSettingsButton.style.display = "inline";

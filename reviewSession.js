@@ -606,18 +606,21 @@ async function continuousReview(DeckID, orderType, numberNewCards, resume, maxim
 
     //check if number of new cards left > fixed numberNewCards
     if (newCardID.length >= numberNewCards){
-      reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
+      //reviewCardID = reviewCardID.concat(newCardID.slice(0, numberNewCards));
+      newCardID = newCardID.slice(0, numberNewCards);
       newCards2Review = numberNewCards;
     }
     else{
-      reviewCardID = reviewCardID.concat(newCardID);
+      //reviewCardID = reviewCardID.concat(newCardID);
       newCards2Review = newCardID.length;
     }
+
+    reviewCardID = newCardID.concat(reviewCardID);
     //append level = 0 of new cards
     // for (var i = 0; i < newCards2Review; i++){
     //   reviewCardLevel = reviewCardLevel.concat(new Array(1).fill(0));
     // }
-    reviewCardID = reviewCardID.reverse();
+    //reviewCardID = reviewCardID.reverse();
     // reviewCardLevel = reviewCardLevel.reverse();
     // console.log("Review card level: " + reviewCardLevel)
   }

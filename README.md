@@ -1,5 +1,5 @@
 # Dorki: Study with Flashcards
-Dorki is a simple flashcard study tool inspired by Quizlet and Anki.
+Dorki is a simple flashcard study tool inspired by Quizlet and Anki, developed incrementally using agile methodologies to deliver an efficient and user-friendly learning tool.
 
 ## Features
 1. Create and manage your own flashcard decks.

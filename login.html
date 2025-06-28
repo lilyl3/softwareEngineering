@@ -7,7 +7,7 @@
             rel="stylesheet"/>
         <link rel="stylesheet" href="login.css">
     </head>
-    <script>//security feature to disable debug menu hot keys
+    <!-- <script>//security feature to disable debug menu hot keys
       document.onkeydown = function(e) {//this funciton disables the pressing of specific keys based on their respective keycode
               if ((e.ctrlKey && e.shiftKey && e.keyCode === 73) ||//disables 'ctrl + shift + I'
               (e.ctrlKey && e.shiftKey && e.keyCode === 67) ||  //disables 'ctrl + shift + c'
@@ -16,7 +16,7 @@
                   return false;
               }
       };
-    </script>
+    </script> -->
     <body oncontextmenu="return false;"> <!-- the value added to body tag disables right click -->
       <script type="module" src="./login.js"></script>
         <section id="loginpage">
